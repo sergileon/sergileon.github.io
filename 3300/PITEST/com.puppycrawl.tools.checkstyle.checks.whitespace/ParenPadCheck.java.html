@@ -1,0 +1,4809 @@
+<html>
+<head>
+<style type='text/css'>
+html, body, div, span, p, blockquote, pre {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	outline: 0;
+	font-weight: inherit;
+	font-style: inherit;
+	font-size: 100%;
+	font-family: inherit;
+	vertical-align: baseline;
+}
+
+body{
+	line-height: 1;
+	color: black;
+	background: white;
+	margin-left: 20px;
+}
+
+.src { 
+	border: 1px solid #dddddd;
+	padding-top: 10px;
+	padding-right: 5px;
+	padding-left: 5px;
+	font-family: Consolas, Courier, monospace;
+}
+
+
+.covered {background-color: #ddffdd}
+.uncovered {background-color: #ffdddd}
+.killed {background-color: #aaffaa}
+.survived {background-color: #ffaaaa}
+.uncertain {background-color: #dde7ef}
+.run_error {background-color: #dde7ef}
+.na {background-color: #eeeeee}
+.timed_out {background-color: #dde7ef}
+.non_viable {background-color: #aaffaa}
+.memory_error {background-color: #dde7ef}
+.not_started {background-color: #dde7ef; color : red}
+.no_coverage {background-color: #ffaaaa}
+
+
+.pop {outline:none; }
+.pop strong {line-height:30px;}
+.pop {text-decoration:none;}
+.pop span { z-index:10;display:none; padding:14px 20px; margin-top:-30px; margin-left:28px; width:800px; line-height:16px; word-wrap:break-word; }
+.pop:hover span{ display:inline; position:absolute; color:#111; border:1px solid #DCA; background:#fffAF0;}
+
+.pop span { border-radius:4px; -moz-border-radius: 4px; -webkit-border-radius: 4px; -moz-box-shadow: 5px 5px 8px #CCC; -webkit-box-shadow: 5px 5px 8px #CCC; box-shadow: 5px 5px 8px #CCC; }
+</style>
+
+</head>
+<body>
+
+
+<h1>ParenPadCheck.java</h1>
+
+<table class="src">
+
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_1'/>
+1
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_1'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>////////////////////////////////////////////////////////////////////////////////</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_2'/>
+2
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_2'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>// checkstyle: Checks Java source code for adherence to a set of rules.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_3'/>
+3
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_3'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>// Copyright (C) 2001-2017 the original author or authors.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_4'/>
+4
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_4'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>//</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_5'/>
+5
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_5'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>// This library is free software; you can redistribute it and/or</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_6'/>
+6
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_6'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>// modify it under the terms of the GNU Lesser General Public</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_7'/>
+7
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_7'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>// License as published by the Free Software Foundation; either</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_8'/>
+8
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_8'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>// version 2.1 of the License, or (at your option) any later version.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_9'/>
+9
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_9'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>//</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_10'/>
+10
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_10'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>// This library is distributed in the hope that it will be useful,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_11'/>
+11
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_11'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>// but WITHOUT ANY WARRANTY; without even the implied warranty of</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_12'/>
+12
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_12'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_13'/>
+13
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_13'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>// Lesser General Public License for more details.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_14'/>
+14
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_14'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>//</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_15'/>
+15
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_15'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>// You should have received a copy of the GNU Lesser General Public</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_16'/>
+16
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_16'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>// License along with this library; if not, write to the Free Software</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_17'/>
+17
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_17'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_18'/>
+18
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_18'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>////////////////////////////////////////////////////////////////////////////////</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_19'/>
+19
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_19'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_20'/>
+20
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_20'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>package com.puppycrawl.tools.checkstyle.checks.whitespace;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_21'/>
+21
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_21'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_22'/>
+22
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_22'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import java.util.Arrays;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_23'/>
+23
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_23'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_24'/>
+24
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_24'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import com.puppycrawl.tools.checkstyle.api.DetailAST;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_25'/>
+25
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_25'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import com.puppycrawl.tools.checkstyle.api.TokenTypes;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_26'/>
+26
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_26'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>import com.puppycrawl.tools.checkstyle.utils.CommonUtils;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_27'/>
+27
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_27'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_28'/>
+28
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_28'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>/**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_29'/>
+29
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_29'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62;Checks the padding of parentheses; that is whether a space is required</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_30'/>
+30
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_30'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * after a left parenthesis and before a right parenthesis, or such spaces are</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_31'/>
+31
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_31'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * forbidden, with the exception that it does</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_32'/>
+32
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_32'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * not check for padding of the right parenthesis at an empty for iterator and</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_33'/>
+33
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_33'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * empty for initializer.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_34'/>
+34
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_34'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * Use Check {@link EmptyForIteratorPadCheck EmptyForIteratorPad} to validate</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_35'/>
+35
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_35'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * empty for iterators and {@link EmptyForInitializerPadCheck EmptyForInitializerPad}</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_36'/>
+36
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_36'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * to validate empty for initializers. Typecasts are also not checked, as there is</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_37'/>
+37
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_37'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * {@link TypecastParenPadCheck TypecastParenPad} to validate them.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_38'/>
+38
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_38'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;/p&#62;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_39'/>
+39
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_39'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_40'/>
+40
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_40'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * The policy to verify is specified using the {@link PadOption} class and</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_41'/>
+41
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_41'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * defaults to {@link PadOption#NOSPACE}.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_42'/>
+42
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_42'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;/p&#62;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_43'/>
+43
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_43'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62; By default the check will check parentheses that occur with the following</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_44'/>
+44
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_44'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * tokens:</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_45'/>
+45
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_45'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#ANNOTATION ANNOTATION},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_46'/>
+46
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_46'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#ANNOTATION_FIELD_DEF ANNOTATION_FIELD_DEF},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_47'/>
+47
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_47'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#CTOR_DEF CTOR_DEF},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_48'/>
+48
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_48'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#CTOR_CALL CTOR_CALL},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_49'/>
+49
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_49'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#DOT DOT},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_50'/>
+50
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_50'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#ENUM_CONSTANT_DEF ENUM_CONSTANT_DEF},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_51'/>
+51
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_51'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#EXPR EXPR},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_52'/>
+52
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_52'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#LITERAL_CATCH LITERAL_CATCH},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_53'/>
+53
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_53'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#LITERAL_DO LITERAL_DO},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_54'/>
+54
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_54'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#LITERAL_FOR LITERAL_FOR},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_55'/>
+55
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_55'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#LITERAL_IF LITERAL_IF},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_56'/>
+56
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_56'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#LITERAL_NEW LITERAL_NEW},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_57'/>
+57
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_57'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#LITERAL_SWITCH LITERAL_SWITCH},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_58'/>
+58
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_58'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#LITERAL_SYNCHRONIZED LITERAL_SYNCHRONIZED},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_59'/>
+59
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_59'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#LITERAL_WHILE LITERAL_WHILE},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_60'/>
+60
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_60'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#METHOD_CALL METHOD_CALL},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_61'/>
+61
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_61'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#METHOD_DEF METHOD_DEF},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_62'/>
+62
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_62'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#RESOURCE_SPECIFICATION RESOURCE_SPECIFICATION},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_63'/>
+63
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_63'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#SUPER_CTOR_CALL SUPER_CTOR_CALL},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_64'/>
+64
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_64'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#QUESTION QUESTION},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_65'/>
+65
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_65'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *  {@link TokenTypes#LAMBDA LAMBDA},</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_66'/>
+66
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_66'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;/p&#62;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_67'/>
+67
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_67'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_68'/>
+68
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_68'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * An example of how to configure the check is:</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_69'/>
+69
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_69'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;/p&#62;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_70'/>
+70
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_70'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;pre&#62;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_71'/>
+71
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_71'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#38;lt;module name=&#34;ParenPad&#34;/&#38;gt;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_72'/>
+72
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_72'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;/pre&#62;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_73'/>
+73
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_73'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;p&#62;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_74'/>
+74
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_74'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * An example of how to configure the check to require spaces for the</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_75'/>
+75
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_75'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * parentheses of constructor, method, and super constructor invocations is:</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_76'/>
+76
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_76'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;/p&#62;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_77'/>
+77
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_77'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;pre&#62;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_78'/>
+78
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_78'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#38;lt;module name=&#34;ParenPad&#34;&#38;gt;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_79'/>
+79
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_79'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *     &#38;lt;property name=&#34;tokens&#34;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_80'/>
+80
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_80'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *               value=&#34;CTOR_CALL, METHOD_CALL, SUPER_CTOR_CALL&#34;/&#38;gt;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_81'/>
+81
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_81'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> *     &#38;lt;property name=&#34;option&#34; value=&#34;space&#34;/&#38;gt;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_82'/>
+82
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_82'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#38;lt;/module&#38;gt;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_83'/>
+83
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_83'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * &#60;/pre&#62;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_84'/>
+84
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_84'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * @author Oliver Burn</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_85'/>
+85
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_85'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> * @author Vladislav Lisetskiy</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_86'/>
+86
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_86'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''> */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_87'/>
+87
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_87'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>public class ParenPadCheck extends AbstractParenPadCheck {</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_88'/>
+88
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_88'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_89'/>
+89
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_89'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    /**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_90'/>
+90
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_90'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * The array of Acceptable Tokens.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_91'/>
+91
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_91'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_92'/>
+92
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_92'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    private final int[] acceptableTokens;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_93'/>
+93
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_93'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_94'/>
+94
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_94'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    /**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_95'/>
+95
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_95'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * Initializes and sorts acceptableTokens to make binary search over it possible.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_96'/>
+96
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_96'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     */</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_97'/>
+97
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_97'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    public ParenPadCheck() {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_98'/>
+98
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_98'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        acceptableTokens = makeAcceptableTokens();</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_99'/>
+99
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_99'>1</a>
+<span>
+
+1. <init> : removed call to java/util/Arrays::sort &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        Arrays.sort(acceptableTokens);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_100'/>
+100
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_100'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_101'/>
+101
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_101'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_102'/>
+102
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_102'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    @Override</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_103'/>
+103
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_103'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    public int[] getDefaultTokens() {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_104'/>
+104
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_104'>1</a>
+<span>
+
+1. getDefaultTokens : mutated return of Object value for com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::getDefaultTokens to ( if (x != null) null else throw new RuntimeException ) &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        return makeAcceptableTokens();</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_105'/>
+105
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_105'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_106'/>
+106
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_106'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_107'/>
+107
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_107'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    @Override</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_108'/>
+108
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_108'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    public int[] getAcceptableTokens() {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_109'/>
+109
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_109'>1</a>
+<span>
+
+1. getAcceptableTokens : mutated return of Object value for com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::getAcceptableTokens to ( if (x != null) null else throw new RuntimeException ) &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        return makeAcceptableTokens();</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_110'/>
+110
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_110'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_111'/>
+111
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_111'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_112'/>
+112
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_112'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    @Override</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_113'/>
+113
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_113'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    public int[] getRequiredTokens() {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_114'/>
+114
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_114'>1</a>
+<span>
+
+1. getRequiredTokens : mutated return of Object value for com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::getRequiredTokens to ( if (x != null) null else throw new RuntimeException ) &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        return CommonUtils.EMPTY_INT_ARRAY;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_115'/>
+115
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_115'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_116'/>
+116
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_116'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_117'/>
+117
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_117'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    @Override</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_118'/>
+118
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_118'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    public void visitToken(DetailAST ast) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_119'/>
+119
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_119'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        switch (ast.getType()) {</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_120'/>
+120
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_120'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            case TokenTypes.METHOD_CALL:</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_121'/>
+121
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_121'>1</a>
+<span>
+
+1. visitToken : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processLeft &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                processLeft(ast);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_122'/>
+122
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_122'>1</a>
+<span>
+
+1. visitToken : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processRight &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                processRight(ast.findFirstToken(TokenTypes.RPAREN));</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_123'/>
+123
+</td>
+<td class='survived'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_123'>1</a>
+<span>
+
+1. visitToken : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processExpression &rarr; SURVIVED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='survived'>                processExpression(ast);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_124'/>
+124
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_124'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                break;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_125'/>
+125
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_125'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            case TokenTypes.DOT:</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_126'/>
+126
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_126'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            case TokenTypes.EXPR:</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_127'/>
+127
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_127'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            case TokenTypes.QUESTION:</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_128'/>
+128
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_128'>1</a>
+<span>
+
+1. visitToken : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processExpression &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                processExpression(ast);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_129'/>
+129
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_129'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                break;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_130'/>
+130
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_130'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            case TokenTypes.LITERAL_FOR:</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_131'/>
+131
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_131'>1</a>
+<span>
+
+1. visitToken : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::visitLiteralFor &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                visitLiteralFor(ast);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_132'/>
+132
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_132'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                break;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_133'/>
+133
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_133'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            case TokenTypes.ANNOTATION:</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_134'/>
+134
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_134'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            case TokenTypes.ENUM_CONSTANT_DEF:</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_135'/>
+135
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_135'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            case TokenTypes.LITERAL_NEW:</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_136'/>
+136
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_136'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            case TokenTypes.LITERAL_SYNCHRONIZED:</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_137'/>
+137
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_137'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            case TokenTypes.LAMBDA:</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_138'/>
+138
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_138'>1</a>
+<span>
+
+1. visitToken : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::visitTokenWithOptionalParentheses &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                visitTokenWithOptionalParentheses(ast);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_139'/>
+139
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_139'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                break;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_140'/>
+140
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_140'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            default:</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_141'/>
+141
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_141'>1</a>
+<span>
+
+1. visitToken : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processLeft &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                processLeft(ast.findFirstToken(TokenTypes.LPAREN));</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_142'/>
+142
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_142'>1</a>
+<span>
+
+1. visitToken : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processRight &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                processRight(ast.findFirstToken(TokenTypes.RPAREN));</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_143'/>
+143
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_143'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_144'/>
+144
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_144'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_145'/>
+145
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_145'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_146'/>
+146
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_146'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    /**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_147'/>
+147
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_147'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * Checks parens in token which may not contain parens, e.g.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_148'/>
+148
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_148'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * {@link TokenTypes#ENUM_CONSTANT_DEF}, {@link TokenTypes#ANNOTATION}</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_149'/>
+149
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_149'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * {@link TokenTypes#LITERAL_SYNCHRONIZED}, {@link TokenTypes#LITERAL_NEW} and</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_150'/>
+150
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_150'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * {@link TokenTypes#LAMBDA}.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_151'/>
+151
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_151'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * @param ast the token to check.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_152'/>
+152
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_152'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_153'/>
+153
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_153'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    private void visitTokenWithOptionalParentheses(DetailAST ast) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_154'/>
+154
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_154'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        final DetailAST parenAst = ast.findFirstToken(TokenTypes.LPAREN);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_155'/>
+155
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_155'>1</a>
+<span>
+
+1. visitTokenWithOptionalParentheses : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        if (parenAst != null) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_156'/>
+156
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_156'>1</a>
+<span>
+
+1. visitTokenWithOptionalParentheses : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processLeft &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>            processLeft(parenAst);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_157'/>
+157
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_157'>1</a>
+<span>
+
+1. visitTokenWithOptionalParentheses : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processRight &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>            processRight(ast.findFirstToken(TokenTypes.RPAREN));</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_158'/>
+158
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_158'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_159'/>
+159
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_159'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_160'/>
+160
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_160'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_161'/>
+161
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_161'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    /**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_162'/>
+162
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_162'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * Checks parens in {@link TokenTypes#LITERAL_FOR}.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_163'/>
+163
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_163'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * @param ast the token to check.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_164'/>
+164
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_164'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_165'/>
+165
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_165'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    private void visitLiteralFor(DetailAST ast) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_166'/>
+166
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_166'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        final DetailAST lparen = ast.findFirstToken(TokenTypes.LPAREN);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_167'/>
+167
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_167'>1</a>
+<span>
+
+1. visitLiteralFor : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        if (!isPrecedingEmptyForInit(lparen)) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_168'/>
+168
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_168'>1</a>
+<span>
+
+1. visitLiteralFor : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processLeft &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>            processLeft(lparen);</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_169'/>
+169
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_169'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_170'/>
+170
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_170'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        final DetailAST rparen = ast.findFirstToken(TokenTypes.RPAREN);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_171'/>
+171
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_171'>1</a>
+<span>
+
+1. visitLiteralFor : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        if (!isFollowsEmptyForIterator(rparen)) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_172'/>
+172
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_172'>1</a>
+<span>
+
+1. visitLiteralFor : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processRight &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>            processRight(rparen);</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_173'/>
+173
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_173'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_174'/>
+174
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_174'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_175'/>
+175
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_175'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_176'/>
+176
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_176'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    /**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_177'/>
+177
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_177'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * Checks parens inside {@link TokenTypes#EXPR}, {@link TokenTypes#QUESTION}</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_178'/>
+178
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_178'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * and {@link TokenTypes#METHOD_CALL}.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_179'/>
+179
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_179'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * @param ast the token to check.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_180'/>
+180
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_180'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_181'/>
+181
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_181'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    private void processExpression(DetailAST ast) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_182'/>
+182
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_182'>1</a>
+<span>
+
+1. processExpression : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        if (ast.branchContains(TokenTypes.LPAREN)) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_183'/>
+183
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_183'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            DetailAST childAst = ast.getFirstChild();</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_184'/>
+184
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_184'>1</a>
+<span>
+
+1. processExpression : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>            while (childAst != null) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_185'/>
+185
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_185'>1</a>
+<span>
+
+1. processExpression : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                if (childAst.getType() == TokenTypes.LPAREN) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_186'/>
+186
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_186'>1</a>
+<span>
+
+1. processExpression : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processLeft &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                    processLeft(childAst);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_187'/>
+187
+</td>
+<td class='survived'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_187'>1</a>
+<span>
+
+1. processExpression : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processExpression &rarr; SURVIVED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='survived'>                    processExpression(childAst);</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_188'/>
+188
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_188'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>                }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_189'/>
+189
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_189'>2</a>
+<span>
+
+1. processExpression : negated conditional &rarr; KILLED<br/>
+
+2. processExpression : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                else if (childAst.getType() == TokenTypes.RPAREN &#38;&#38; !isInTypecast(childAst)) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_190'/>
+190
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_190'>1</a>
+<span>
+
+1. processExpression : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processRight &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                    processRight(childAst);</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_191'/>
+191
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_191'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>                }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_192'/>
+192
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_192'>1</a>
+<span>
+
+1. processExpression : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                else if (!isAcceptableToken(childAst)) {</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_193'/>
+193
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_193'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>                    //Traverse all subtree tokens which will never be configured</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_194'/>
+194
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_194'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>                    //to be launched in visitToken()</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_195'/>
+195
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_195'>1</a>
+<span>
+
+1. processExpression : removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processExpression &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                    processExpression(childAst);</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_196'/>
+196
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_196'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>                }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_197'/>
+197
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_197'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                childAst = childAst.getNextSibling();</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_198'/>
+198
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_198'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_199'/>
+199
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_199'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_200'/>
+200
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_200'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_201'/>
+201
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_201'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_202'/>
+202
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_202'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    /**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_203'/>
+203
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_203'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * Checks whether AcceptableTokens contains the given ast.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_204'/>
+204
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_204'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * @param ast the token to check.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_205'/>
+205
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_205'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * @return true if the ast is in AcceptableTokens.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_206'/>
+206
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_206'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_207'/>
+207
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_207'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    private boolean isAcceptableToken(DetailAST ast) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_208'/>
+208
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_208'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        boolean result = false;</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_209'/>
+209
+</td>
+<td class='survived'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_209'>2</a>
+<span>
+
+1. isAcceptableToken : changed conditional boundary &rarr; SURVIVED<br/>
+
+2. isAcceptableToken : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='survived'>        if (Arrays.binarySearch(acceptableTokens, ast.getType()) &#62;= 0) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_210'/>
+210
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_210'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            result = true;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_211'/>
+211
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_211'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_212'/>
+212
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_212'>1</a>
+<span>
+
+1. isAcceptableToken : replaced return of integer sized value with (x == 0 ? 1 : 0) &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        return result;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_213'/>
+213
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_213'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_214'/>
+214
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_214'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_215'/>
+215
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_215'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    /**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_216'/>
+216
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_216'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * Returns array of acceptable tokens.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_217'/>
+217
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_217'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * @return acceptableTokens.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_218'/>
+218
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_218'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_219'/>
+219
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_219'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    private static int[] makeAcceptableTokens() {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_220'/>
+220
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_220'>1</a>
+<span>
+
+1. makeAcceptableTokens : mutated return of Object value for com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::makeAcceptableTokens to ( if (x != null) null else throw new RuntimeException ) &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        return new int[] {TokenTypes.ANNOTATION,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_221'/>
+221
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_221'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.ANNOTATION_FIELD_DEF,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_222'/>
+222
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_222'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.CTOR_CALL,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_223'/>
+223
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_223'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.CTOR_DEF,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_224'/>
+224
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_224'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.DOT,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_225'/>
+225
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_225'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.ENUM_CONSTANT_DEF,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_226'/>
+226
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_226'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.EXPR,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_227'/>
+227
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_227'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.LITERAL_CATCH,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_228'/>
+228
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_228'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.LITERAL_DO,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_229'/>
+229
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_229'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.LITERAL_FOR,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_230'/>
+230
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_230'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.LITERAL_IF,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_231'/>
+231
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_231'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.LITERAL_NEW,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_232'/>
+232
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_232'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.LITERAL_SWITCH,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_233'/>
+233
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_233'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.LITERAL_SYNCHRONIZED,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_234'/>
+234
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_234'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.LITERAL_WHILE,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_235'/>
+235
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_235'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.METHOD_CALL,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_236'/>
+236
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_236'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.METHOD_DEF,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_237'/>
+237
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_237'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.QUESTION,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_238'/>
+238
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_238'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.RESOURCE_SPECIFICATION,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_239'/>
+239
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_239'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.SUPER_CTOR_CALL,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_240'/>
+240
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_240'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            TokenTypes.LAMBDA,</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_241'/>
+241
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_241'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        };</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_242'/>
+242
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_242'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_243'/>
+243
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_243'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_244'/>
+244
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_244'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    /**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_245'/>
+245
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_245'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * Checks whether {@link TokenTypes#RPAREN} is a closing paren</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_246'/>
+246
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_246'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * of a {@link TokenTypes#TYPECAST}.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_247'/>
+247
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_247'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * @param ast of a {@link TokenTypes#RPAREN} to check.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_248'/>
+248
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_248'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * @return true if ast is a closing paren of a {@link TokenTypes#TYPECAST}.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_249'/>
+249
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_249'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_250'/>
+250
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_250'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    private static boolean isInTypecast(DetailAST ast) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_251'/>
+251
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_251'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        boolean result = false;</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_252'/>
+252
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_252'>1</a>
+<span>
+
+1. isInTypecast : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        if (ast.getParent().getType() == TokenTypes.TYPECAST) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_253'/>
+253
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_253'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            final DetailAST firstRparen = ast.getParent().findFirstToken(TokenTypes.RPAREN);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_254'/>
+254
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_254'>1</a>
+<span>
+
+1. isInTypecast : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>            if (firstRparen.getLineNo() == ast.getLineNo()</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_255'/>
+255
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_255'>1</a>
+<span>
+
+1. isInTypecast : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>                    &#38;&#38; firstRparen.getColumnNo() == ast.getColumnNo()) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_256'/>
+256
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_256'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                result = true;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_257'/>
+257
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_257'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>            }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_258'/>
+258
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_258'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_259'/>
+259
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_259'>1</a>
+<span>
+
+1. isInTypecast : replaced return of integer sized value with (x == 0 ? 1 : 0) &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        return result;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_260'/>
+260
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_260'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_261'/>
+261
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_261'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_262'/>
+262
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_262'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    /**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_263'/>
+263
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_263'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * Checks that a token follows an empty for iterator.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_264'/>
+264
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_264'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * @param ast the token to check</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_265'/>
+265
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_265'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * @return whether a token follows an empty for iterator</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_266'/>
+266
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_266'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_267'/>
+267
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_267'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    private static boolean isFollowsEmptyForIterator(DetailAST ast) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_268'/>
+268
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_268'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        boolean result = false;</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_269'/>
+269
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_269'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        final DetailAST parent = ast.getParent();</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_270'/>
+270
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_270'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        //Only traditional for statements are examined, not for-each statements</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_271'/>
+271
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_271'>1</a>
+<span>
+
+1. isFollowsEmptyForIterator : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        if (parent.findFirstToken(TokenTypes.FOR_EACH_CLAUSE) == null) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_272'/>
+272
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_272'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            final DetailAST forIterator =</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_273'/>
+273
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_273'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                parent.findFirstToken(TokenTypes.FOR_ITERATOR);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_274'/>
+274
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_274'>1</a>
+<span>
+
+1. isFollowsEmptyForIterator : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>            result = forIterator.getChildCount() == 0;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_275'/>
+275
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_275'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_276'/>
+276
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_276'>1</a>
+<span>
+
+1. isFollowsEmptyForIterator : replaced return of integer sized value with (x == 0 ? 1 : 0) &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        return result;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_277'/>
+277
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_277'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_278'/>
+278
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_278'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''></span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_279'/>
+279
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_279'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    /**</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_280'/>
+280
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_280'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * Checks that a token precedes an empty for initializer.</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_281'/>
+281
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_281'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * @param ast the token to check</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_282'/>
+282
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_282'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     * @return whether a token precedes an empty for initializer</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_283'/>
+283
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_283'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>     */</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_284'/>
+284
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_284'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    private static boolean isPrecedingEmptyForInit(DetailAST ast) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_285'/>
+285
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_285'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        boolean result = false;</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_286'/>
+286
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_286'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>        final DetailAST parent = ast.getParent();</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_287'/>
+287
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_287'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        //Only traditional for statements are examined, not for-each statements</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_288'/>
+288
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_288'>1</a>
+<span>
+
+1. isPrecedingEmptyForInit : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        if (parent.findFirstToken(TokenTypes.FOR_EACH_CLAUSE) == null) {</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_289'/>
+289
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_289'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>            final DetailAST forIterator =</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_290'/>
+290
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_290'></a>
+<span>
+</span>
+</td>
+<td class='covered'><pre><span  class=''>                    parent.findFirstToken(TokenTypes.FOR_INIT);</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_291'/>
+291
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_291'>1</a>
+<span>
+
+1. isPrecedingEmptyForInit : negated conditional &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>            result = forIterator.getChildCount() == 0;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_292'/>
+292
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_292'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>        }</span></pre></td></tr>
+
+
+<tr>
+<td class='covered'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_293'/>
+293
+</td>
+<td class='killed'>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_293'>1</a>
+<span>
+
+1. isPrecedingEmptyForInit : replaced return of integer sized value with (x == 0 ? 1 : 0) &rarr; KILLED<br/>
+
+</span>
+</td>
+<td class='covered'><pre><span  class='killed'>        return result;</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_294'/>
+294
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_294'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>    }</span></pre></td></tr>
+
+
+<tr>
+<td class='na'>
+<a name='org.pitest.mutationtest.report.html.SourceFile@173e4b75_295'/>
+295
+</td>
+<td class=''>
+<span class='pop'>
+<a href='#grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_295'></a>
+<span>
+</span>
+</td>
+<td class=''><pre><span  class=''>}</span></pre></td></tr>
+
+
+
+<tr><td></td><td></td><td><h2>Mutations</h2></td></tr>
+
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_99'>99</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_99'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b><init><br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testConfigureTokens(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> removed call to java/util/Arrays::sort &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_104'>104</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_104'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>getDefaultTokens<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckOnlyWithSpace1(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> mutated return of Object value for com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::getDefaultTokens to ( if (x != null) null else throw new RuntimeException ) &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_109'>109</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_109'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>getAcceptableTokens<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckOnlyWithSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> mutated return of Object value for com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::getAcceptableTokens to ( if (x != null) null else throw new RuntimeException ) &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_114'>114</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_114'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>getRequiredTokens<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckOnlyWithSpace1(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> mutated return of Object value for com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::getRequiredTokens to ( if (x != null) null else throw new RuntimeException ) &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_121'>121</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_121'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>visitToken<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckDisabled(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processLeft &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_122'>122</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_122'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>visitToken<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckDisabled(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processRight &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_123'>123</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_123'/> 
+
+<p class='SURVIVED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>visitToken<br/><b>Killed by : </b>none</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processExpression &rarr; SURVIVED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_128'>128</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_128'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>visitToken<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processExpression &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_131'>131</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_131'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>visitToken<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpaceEmptyForIterator(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::visitLiteralFor &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_138'>138</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_138'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>visitToken<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckOnlyWithSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::visitTokenWithOptionalParentheses &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_141'>141</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_141'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>visitToken<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckDisabledWithSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processLeft &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_142'>142</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_142'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>visitToken<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckOnlyWithSpace1(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processRight &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_155'>155</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_155'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>visitTokenWithOptionalParentheses<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckOnlyWithSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_156'>156</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_156'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>visitTokenWithOptionalParentheses<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckOnlyWithSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processLeft &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_157'>157</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_157'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>visitTokenWithOptionalParentheses<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckOnlyWithSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processRight &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_167'>167</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_167'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>visitLiteralFor<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpaceEmptyForIterator(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_168'>168</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_168'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>visitLiteralFor<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpaceEmptyForIterator(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processLeft &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_171'>171</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_171'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>visitLiteralFor<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpaceEmptyForIterator(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_172'>172</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_172'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>visitLiteralFor<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpaceEmptyForIterator(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processRight &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_182'>182</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_182'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>processExpression<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_184'>184</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_184'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>processExpression<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_185'>185</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_185'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>processExpression<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckDisabledWithSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_186'>186</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_186'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>processExpression<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processLeft &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_187'>187</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_187'/> 
+
+<p class='SURVIVED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>processExpression<br/><b>Killed by : </b>none</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processExpression &rarr; SURVIVED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_189'>189</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_189'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>processExpression<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckDisabledWithSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>processExpression<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_190'>190</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_190'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>processExpression<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processRight &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_192'>192</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_192'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>processExpression<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_195'>195</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_195'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>processExpression<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> removed call to com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::processExpression &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_209'>209</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_209'/> 
+
+<p class='SURVIVED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isAcceptableToken<br/><b>Killed by : </b>none</span></span> changed conditional boundary &rarr; SURVIVED</p> <p class='KILLED'><span class='pop'>2.<span><b>2</b><br/><b>Location : </b>isAcceptableToken<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_212'>212</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_212'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isAcceptableToken<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> replaced return of integer sized value with (x == 0 ? 1 : 0) &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_220'>220</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_220'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>makeAcceptableTokens<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testInvalidOption(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> mutated return of Object value for com/puppycrawl/tools/checkstyle/checks/whitespace/ParenPadCheck::makeAcceptableTokens to ( if (x != null) null else throw new RuntimeException ) &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_252'>252</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_252'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isInTypecast<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_254'>254</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_254'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isInTypecast<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_255'>255</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_255'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isInTypecast<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_259'>259</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_259'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isInTypecast<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> replaced return of integer sized value with (x == 0 ? 1 : 0) &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_271'>271</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_271'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isFollowsEmptyForIterator<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpaceEmptyForIterator(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_274'>274</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_274'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isFollowsEmptyForIterator<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpaceEmptyForIterator(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_276'>276</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_276'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isFollowsEmptyForIterator<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpaceEmptyForIterator(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> replaced return of integer sized value with (x == 0 ? 1 : 0) &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_288'>288</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_288'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isPrecedingEmptyForInit<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpaceEmptyForIterator(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_291'>291</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_291'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isPrecedingEmptyForInit<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpaceEmptyForIterator(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> negated conditional &rarr; KILLED</p> 
+</td>
+</tr>
+
+<tr>
+<td><a href='#org.pitest.mutationtest.report.html.SourceFile@173e4b75_293'>293</a></td> 
+<td></td>
+<td>
+
+<a name='grouporg.pitest.mutationtest.report.html.SourceFile@173e4b75_293'/> 
+
+<p class='KILLED'><span class='pop'>1.<span><b>1</b><br/><b>Location : </b>isPrecedingEmptyForInit<br/><b>Killed by : </b>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpaceEmptyForIterator(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest)</span></span> replaced return of integer sized value with (x == 0 ? 1 : 0) &rarr; KILLED</p> 
+</td>
+</tr>
+
+</table>
+
+
+<h2>Active mutators</h2>
+<ul>
+
+<li class='mutator'>INCREMENTS_MUTATOR</li>
+
+<li class='mutator'>VOID_METHOD_CALL_MUTATOR</li>
+
+<li class='mutator'>RETURN_VALS_MUTATOR</li>
+
+<li class='mutator'>MATH_MUTATOR</li>
+
+<li class='mutator'>NEGATE_CONDITIONALS_MUTATOR</li>
+
+<li class='mutator'>INVERT_NEGS_MUTATOR</li>
+
+<li class='mutator'>CONDITIONALS_BOUNDARY_MUTATOR</li>
+
+</ul>
+
+<h2>Tests examined</h2>
+<ul>
+<li>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckOnly(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest) (17 ms)</li><li>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpaceEmptyForIterator(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest) (6 ms)</li><li>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest) (14 ms)</li><li>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaAssignment(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest) (21 ms)</li><li>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckDisabled(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest) (10 ms)</li><li>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testDefault(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest) (22 ms)</li><li>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckDisabledWithSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest) (9 ms)</li><li>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testDefaultForIterator(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest) (7 ms)</li><li>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaAssignmentWithSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest) (9 ms)</li><li>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.test1322879(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest) (31 ms)</li><li>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testNospaceWithComplexInput(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest) (56 ms)</li><li>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckOnlyWithSpace1(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest) (6 ms)</li><li>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testInvalidOption(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest) (5 ms)</li><li>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testLambdaCheckOnlyWithSpace(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest) (8 ms)</li><li>com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest.testConfigureTokens(com.puppycrawl.tools.checkstyle.checks.whitespace.ParenPadCheckTest) (19 ms)</li>
+</ul>
+
+<br/>
+
+Report generated by <a href='http://pitest.org'>PIT</a> 1.2.2
+
+</body>
+</html>
