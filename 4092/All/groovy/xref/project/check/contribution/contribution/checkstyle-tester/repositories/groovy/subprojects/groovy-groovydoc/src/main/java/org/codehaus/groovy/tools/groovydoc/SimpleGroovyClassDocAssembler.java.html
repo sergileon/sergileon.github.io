@@ -1,0 +1,918 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>SimpleGroovyClassDocAssembler xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   <em class="jxr_comment"> *  Licensed to the Apache Software Foundation (ASF) under one</em>
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment"> *  or more contributor license agreements.  See the NOTICE file</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> *  distributed with this work for additional information</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> *  regarding copyright ownership.  The ASF licenses this file</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> *  to you under the Apache License, Version 2.0 (the</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> *  "License"); you may not use this file except in compliance</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> *  with the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *    <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *  Unless required by applicable law or agreed to in writing,</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> *  software distributed under the License is distributed on an</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> *  KIND, either express or implied.  See the License for the</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> *  specific language governing permissions and limitations</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> *  under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  <strong class="jxr_keyword">package</strong> org.codehaus.groovy.tools.groovydoc;
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> antlr.collections.AST;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.antlr.GroovySourceAST;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.antlr.LineColumn;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.antlr.SourceBuffer;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.antlr.parser.GroovyTokenTypes;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.antlr.treewalker.VisitorAdapter;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.control.ResolveVisitor;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.groovydoc.*;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.runtime.DefaultGroovyMethods;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> java.util.*;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> java.util.regex.Matcher;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> java.util.regex.Pattern;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> SimpleGroovyClassDocAssembler <strong class="jxr_keyword">extends</strong> VisitorAdapter <strong class="jxr_keyword">implements</strong> GroovyTokenTypes {
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String FS = <span class="jxr_string">"/"</span>;
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Pattern PREV_JAVADOC_COMMENT_PATTERN = Pattern.compile(<span class="jxr_string">"(?s)/&#92;&#92;*&#92;&#92;*(.*?)&#92;&#92;*/"</span>);
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> Stack&lt;GroovySourceAST&gt; stack;
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>      <strong class="jxr_keyword">private</strong> Map&lt;String, GroovyClassDoc&gt; classDocs;
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>      <strong class="jxr_keyword">private</strong> List&lt;String&gt; importedClassesAndPackages;
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>      <strong class="jxr_keyword">private</strong> Map&lt;String, String&gt; aliases;
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>      <strong class="jxr_keyword">private</strong> List&lt;LinkArgument&gt; links;
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>      <strong class="jxr_keyword">private</strong> Properties properties;
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>      <strong class="jxr_keyword">private</strong> SimpleGroovyFieldDoc currentFieldDoc;
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>      <strong class="jxr_keyword">private</strong> SourceBuffer sourceBuffer;
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>      <strong class="jxr_keyword">private</strong> String packagePath;
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>      <strong class="jxr_keyword">private</strong> LineColumn lastLineCol;
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> insideEnum;
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>      <strong class="jxr_keyword">private</strong> Map&lt;String, SimpleGroovyClassDoc&gt; foundClasses;
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> isGroovy;
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> deferSetup;
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>      <strong class="jxr_keyword">private</strong> String className;
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>  
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>      <strong class="jxr_keyword">public</strong> SimpleGroovyClassDocAssembler(String packagePath, String file, SourceBuffer sourceBuffer, List&lt;LinkArgument&gt; links, Properties properties, <strong class="jxr_keyword">boolean</strong> isGroovy) {
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>          <strong class="jxr_keyword">this</strong>.sourceBuffer = sourceBuffer;
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>          <strong class="jxr_keyword">this</strong>.packagePath = packagePath;
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>          <strong class="jxr_keyword">this</strong>.links = links;
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>          <strong class="jxr_keyword">this</strong>.properties = properties;
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>          <strong class="jxr_keyword">this</strong>.isGroovy = isGroovy;
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>  
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>          stack = <strong class="jxr_keyword">new</strong> Stack&lt;GroovySourceAST&gt;();
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>          classDocs = <strong class="jxr_keyword">new</strong> HashMap&lt;String, GroovyClassDoc&gt;();
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>          className = file;
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>          <strong class="jxr_keyword">if</strong> (file != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>              <em class="jxr_comment">// todo: replace this simple idea of default class name</em>
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>              <strong class="jxr_keyword">int</strong> idx = file.lastIndexOf(<span class="jxr_string">"."</span>);
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>              className = file.substring(0, idx);
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>          }
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>  
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>          deferSetup = packagePath.equals(<span class="jxr_string">"DefaultPackage"</span>);
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>          importedClassesAndPackages = <strong class="jxr_keyword">new</strong> ArrayList&lt;String&gt;();
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>          aliases = <strong class="jxr_keyword">new</strong> HashMap&lt;String, String&gt;();
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>          <strong class="jxr_keyword">if</strong> (!deferSetup) setUpImports(packagePath, links, isGroovy, className);
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>          lastLineCol = <strong class="jxr_keyword">new</strong> LineColumn(1, 1);
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>      }
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>  
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> setUpImports(String packagePath, List&lt;LinkArgument&gt; links, <strong class="jxr_keyword">boolean</strong> isGroovy, String className) {
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>          importedClassesAndPackages.add(packagePath + <span class="jxr_string">"/*"</span>);  <em class="jxr_comment">// everything in this package</em>
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>          <strong class="jxr_keyword">if</strong> (isGroovy) {
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>              <strong class="jxr_keyword">for</strong> (String pkg : ResolveVisitor.DEFAULT_IMPORTS) {
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>                  importedClassesAndPackages.add(pkg.replace('.', '/') + <span class="jxr_string">"*"</span>);
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>              }
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>          } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>              importedClassesAndPackages.add(<span class="jxr_string">"java/lang/*"</span>);
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>          }
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>          SimpleGroovyClassDoc currentClassDoc = <strong class="jxr_keyword">new</strong> SimpleGroovyClassDoc(importedClassesAndPackages, aliases, className, links);
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>          currentClassDoc.setFullPathName(packagePath + FS + className);
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>          currentClassDoc.setGroovy(isGroovy);
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>          classDocs.put(currentClassDoc.getFullPathName(), currentClassDoc);
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>      }
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>  
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>      <strong class="jxr_keyword">public</strong> Map&lt;String, GroovyClassDoc&gt; getGroovyClassDocs() {
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>          postProcessClassDocs();
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>          <strong class="jxr_keyword">return</strong> classDocs;
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>      }
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>  
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>      @Override
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitInterfaceDef(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>          visitClassDef(t, visit);
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>     }
+<a class="jxr_linenumber" name="L101" href="#L101">101</a> 
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>     @Override
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitTraitDef(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>         visitClassDef(t, visit);
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>     }
+<a class="jxr_linenumber" name="L106" href="#L106">106</a> 
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>     @Override
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitEnumDef(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>         visitClassDef(t, visit);
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>         SimpleGroovyClassDoc currentClassDoc = getCurrentOrTopLevelClassDoc(t);
+<a class="jxr_linenumber" name="L111" href="#L111">111</a>         <strong class="jxr_keyword">if</strong> (visit == CLOSING_VISIT &amp;&amp; currentClassDoc != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>             adjustForAutomaticEnumMethods(currentClassDoc);
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>         }
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>     }
+<a class="jxr_linenumber" name="L115" href="#L115">115</a> 
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>     @Override
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitAnnotationDef(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>         visitClassDef(t, visit);
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>     }
+<a class="jxr_linenumber" name="L120" href="#L120">120</a> 
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>     @Override
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitClassDef(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L123" href="#L123">123</a>         <strong class="jxr_keyword">if</strong> (visit == OPENING_VISIT) {
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>             SimpleGroovyClassDoc parent = getCurrentClassDoc();
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>             String shortName = getIdentFor(t);
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>             String className = shortName;
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>             <strong class="jxr_keyword">if</strong> (parent != <strong class="jxr_keyword">null</strong> &amp;&amp; isNested() &amp;&amp; !insideAnonymousInnerClass()) {
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>                 className = parent.name() + <span class="jxr_string">"."</span> + className;
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>             } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>                 foundClasses = <strong class="jxr_keyword">new</strong> HashMap&lt;String, SimpleGroovyClassDoc&gt;();
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>             }
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>             SimpleGroovyClassDoc current = (SimpleGroovyClassDoc) classDocs.get(packagePath + FS + className);
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>             <strong class="jxr_keyword">if</strong> (current == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>                 current = <strong class="jxr_keyword">new</strong> SimpleGroovyClassDoc(importedClassesAndPackages, aliases, className, links);
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>                 current.setGroovy(isGroovy);
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>             }
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>             current.setRawCommentText(getJavaDocCommentsBeforeNode(t));
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>             current.setFullPathName(packagePath + FS + current.name());
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>             current.setTokenType(t.getType());
+<a class="jxr_linenumber" name="L140" href="#L140">140</a>             current.setNameWithTypeArgs(getIdentPlusTypeArgsFor(t));
+<a class="jxr_linenumber" name="L141" href="#L141">141</a>             processAnnotations(t, current);
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>             processModifiers(t, current);
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>             classDocs.put(current.getFullPathName(), current);
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>             foundClasses.put(shortName, current);
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>             <strong class="jxr_keyword">if</strong> (parent != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>                 parent.addNested(current);
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>                 current.setOuter(parent);
+<a class="jxr_linenumber" name="L148" href="#L148">148</a>             }
+<a class="jxr_linenumber" name="L149" href="#L149">149</a>         }
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>     }
+<a class="jxr_linenumber" name="L151" href="#L151">151</a> 
+<a class="jxr_linenumber" name="L152" href="#L152">152</a>     @Override
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitPackageDef(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>         <strong class="jxr_keyword">if</strong> (visit == OPENING_VISIT &amp;&amp; deferSetup) {
+<a class="jxr_linenumber" name="L155" href="#L155">155</a>             String packageWithSlashes = extractImportPath(t);
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>             setUpImports(packageWithSlashes, links, isGroovy, className);
+<a class="jxr_linenumber" name="L157" href="#L157">157</a>         }
+<a class="jxr_linenumber" name="L158" href="#L158">158</a>     }
+<a class="jxr_linenumber" name="L159" href="#L159">159</a> 
+<a class="jxr_linenumber" name="L160" href="#L160">160</a>     @Override
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitImport(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>         <strong class="jxr_keyword">if</strong> (visit == OPENING_VISIT) {
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>             String importTextWithSlashesInsteadOfDots = extractImportPath(t);
+<a class="jxr_linenumber" name="L164" href="#L164">164</a> 
+<a class="jxr_linenumber" name="L165" href="#L165">165</a>             GroovySourceAST child = t.childOfType(LITERAL_as);
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>             <strong class="jxr_keyword">if</strong> (child != <strong class="jxr_keyword">null</strong>)  {
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>                 String alias = child.childOfType(DOT).getNextSibling().getText();
+<a class="jxr_linenumber" name="L168" href="#L168">168</a> 
+<a class="jxr_linenumber" name="L169" href="#L169">169</a>                 child = child.childOfType(DOT);
+<a class="jxr_linenumber" name="L170" href="#L170">170</a>                 importTextWithSlashesInsteadOfDots = recurseDownImportBranch(child);
+<a class="jxr_linenumber" name="L171" href="#L171">171</a> 
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>                 aliases.put(alias, importTextWithSlashesInsteadOfDots);
+<a class="jxr_linenumber" name="L173" href="#L173">173</a>             }
+<a class="jxr_linenumber" name="L174" href="#L174">174</a> 
+<a class="jxr_linenumber" name="L175" href="#L175">175</a>             importedClassesAndPackages.add(importTextWithSlashesInsteadOfDots);
+<a class="jxr_linenumber" name="L176" href="#L176">176</a>         }
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>     }
+<a class="jxr_linenumber" name="L178" href="#L178">178</a> 
+<a class="jxr_linenumber" name="L179" href="#L179">179</a> <em class="jxr_comment">// TODO is this needed so we can click through on default values?</em>
+<a class="jxr_linenumber" name="L180" href="#L180">180</a> <em class="jxr_comment">//    @Override</em>
+<a class="jxr_linenumber" name="L181" href="#L181">181</a> <em class="jxr_comment">//    public void visitStaticImport(GroovySourceAST t, int visit) {</em>
+<a class="jxr_linenumber" name="L182" href="#L182">182</a> <em class="jxr_comment">//        if (visit == OPENING_VISIT) {</em>
+<a class="jxr_linenumber" name="L183" href="#L183">183</a> <em class="jxr_comment">//            // TODO</em>
+<a class="jxr_linenumber" name="L184" href="#L184">184</a> <em class="jxr_comment">//            String importTextWithSlashesInsteadOfDots = extractImportPath(t);</em>
+<a class="jxr_linenumber" name="L185" href="#L185">185</a> <em class="jxr_comment">//            System.out.println(currentClassDoc.name() + " has static import: " + importTextWithSlashesInsteadOfDots);</em>
+<a class="jxr_linenumber" name="L186" href="#L186">186</a> <em class="jxr_comment">//        }</em>
+<a class="jxr_linenumber" name="L187" href="#L187">187</a> <em class="jxr_comment">//    }</em>
+<a class="jxr_linenumber" name="L188" href="#L188">188</a> 
+<a class="jxr_linenumber" name="L189" href="#L189">189</a>     @Override
+<a class="jxr_linenumber" name="L190" href="#L190">190</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitExtendsClause(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L191" href="#L191">191</a>         SimpleGroovyClassDoc currentClassDoc = getCurrentClassDoc();
+<a class="jxr_linenumber" name="L192" href="#L192">192</a>         <strong class="jxr_keyword">if</strong> (visit == OPENING_VISIT) {
+<a class="jxr_linenumber" name="L193" href="#L193">193</a>             <strong class="jxr_keyword">for</strong> (GroovySourceAST superClassNode : findTypeNames(t)) {
+<a class="jxr_linenumber" name="L194" href="#L194">194</a>                 String superClassName = extractName(superClassNode);
+<a class="jxr_linenumber" name="L195" href="#L195">195</a>                 <strong class="jxr_keyword">if</strong> (currentClassDoc.isInterface()) {
+<a class="jxr_linenumber" name="L196" href="#L196">196</a>                     currentClassDoc.addInterfaceName(superClassName);
+<a class="jxr_linenumber" name="L197" href="#L197">197</a>                 } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L198" href="#L198">198</a>                     currentClassDoc.setSuperClassName(superClassName);
+<a class="jxr_linenumber" name="L199" href="#L199">199</a>                 }
+<a class="jxr_linenumber" name="L200" href="#L200">200</a>             }
+<a class="jxr_linenumber" name="L201" href="#L201">201</a>         }
+<a class="jxr_linenumber" name="L202" href="#L202">202</a>     }
+<a class="jxr_linenumber" name="L203" href="#L203">203</a> 
+<a class="jxr_linenumber" name="L204" href="#L204">204</a>     @Override
+<a class="jxr_linenumber" name="L205" href="#L205">205</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitImplementsClause(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L206" href="#L206">206</a>         <strong class="jxr_keyword">if</strong> (visit == OPENING_VISIT) {
+<a class="jxr_linenumber" name="L207" href="#L207">207</a>             <strong class="jxr_keyword">for</strong> (GroovySourceAST classNode : findTypeNames(t)) {
+<a class="jxr_linenumber" name="L208" href="#L208">208</a>                 getCurrentClassDoc().addInterfaceName(extractName(classNode));
+<a class="jxr_linenumber" name="L209" href="#L209">209</a>             }
+<a class="jxr_linenumber" name="L210" href="#L210">210</a>         }
+<a class="jxr_linenumber" name="L211" href="#L211">211</a>     }
+<a class="jxr_linenumber" name="L212" href="#L212">212</a> 
+<a class="jxr_linenumber" name="L213" href="#L213">213</a>     <strong class="jxr_keyword">private</strong> List&lt;GroovySourceAST&gt; findTypeNames(GroovySourceAST t) {
+<a class="jxr_linenumber" name="L214" href="#L214">214</a>         List&lt;GroovySourceAST&gt; types = <strong class="jxr_keyword">new</strong> ArrayList&lt;GroovySourceAST&gt;();
+<a class="jxr_linenumber" name="L215" href="#L215">215</a>         <strong class="jxr_keyword">for</strong> (AST child = t.getFirstChild(); child != <strong class="jxr_keyword">null</strong>; child = child.getNextSibling()) {
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>             GroovySourceAST groovySourceAST = (GroovySourceAST) child;
+<a class="jxr_linenumber" name="L217" href="#L217">217</a>             <strong class="jxr_keyword">if</strong> (groovySourceAST.getType() == TYPE) {
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>                 types.add((GroovySourceAST) groovySourceAST.getFirstChild());
+<a class="jxr_linenumber" name="L219" href="#L219">219</a>             } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L220" href="#L220">220</a>                 types.add(groovySourceAST);
+<a class="jxr_linenumber" name="L221" href="#L221">221</a>             }
+<a class="jxr_linenumber" name="L222" href="#L222">222</a>         }
+<a class="jxr_linenumber" name="L223" href="#L223">223</a>         <strong class="jxr_keyword">return</strong> types;
+<a class="jxr_linenumber" name="L224" href="#L224">224</a>     }
+<a class="jxr_linenumber" name="L225" href="#L225">225</a> 
+<a class="jxr_linenumber" name="L226" href="#L226">226</a>     @Override
+<a class="jxr_linenumber" name="L227" href="#L227">227</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitCtorIdent(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L228" href="#L228">228</a>         <strong class="jxr_keyword">if</strong> (visit == OPENING_VISIT &amp;&amp; !insideEnum &amp;&amp; !insideAnonymousInnerClass()) {
+<a class="jxr_linenumber" name="L229" href="#L229">229</a>             SimpleGroovyClassDoc currentClassDoc = getCurrentClassDoc();
+<a class="jxr_linenumber" name="L230" href="#L230">230</a>             SimpleGroovyConstructorDoc currentConstructorDoc = <strong class="jxr_keyword">new</strong> SimpleGroovyConstructorDoc(currentClassDoc.name(), currentClassDoc);
+<a class="jxr_linenumber" name="L231" href="#L231">231</a>             currentConstructorDoc.setRawCommentText(getJavaDocCommentsBeforeNode(t));
+<a class="jxr_linenumber" name="L232" href="#L232">232</a>             processModifiers(t, currentConstructorDoc);
+<a class="jxr_linenumber" name="L233" href="#L233">233</a>             addParametersTo(t, currentConstructorDoc);
+<a class="jxr_linenumber" name="L234" href="#L234">234</a>             processAnnotations(t, currentConstructorDoc);
+<a class="jxr_linenumber" name="L235" href="#L235">235</a>             currentClassDoc.add(currentConstructorDoc);
+<a class="jxr_linenumber" name="L236" href="#L236">236</a>         }
+<a class="jxr_linenumber" name="L237" href="#L237">237</a>     }
+<a class="jxr_linenumber" name="L238" href="#L238">238</a> 
+<a class="jxr_linenumber" name="L239" href="#L239">239</a>     @Override
+<a class="jxr_linenumber" name="L240" href="#L240">240</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitMethodDef(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L241" href="#L241">241</a>         <strong class="jxr_keyword">if</strong> (visit == OPENING_VISIT &amp;&amp; !insideEnum &amp;&amp; !insideAnonymousInnerClass()) {
+<a class="jxr_linenumber" name="L242" href="#L242">242</a>             SimpleGroovyClassDoc currentClassDoc = getCurrentClassDoc();
+<a class="jxr_linenumber" name="L243" href="#L243">243</a>             <strong class="jxr_keyword">if</strong> (currentClassDoc == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L244" href="#L244">244</a>                 <em class="jxr_comment">// assume we have a script</em>
+<a class="jxr_linenumber" name="L245" href="#L245">245</a>                 <strong class="jxr_keyword">if</strong> (<span class="jxr_string">"true"</span>.equals(properties.getProperty(<span class="jxr_string">"processScripts"</span>, <span class="jxr_string">"true"</span>))) {
+<a class="jxr_linenumber" name="L246" href="#L246">246</a>                     currentClassDoc = <strong class="jxr_keyword">new</strong> SimpleGroovyClassDoc(importedClassesAndPackages, aliases, className, links);
+<a class="jxr_linenumber" name="L247" href="#L247">247</a>                     currentClassDoc.setFullPathName(packagePath + FS + className);
+<a class="jxr_linenumber" name="L248" href="#L248">248</a>                     currentClassDoc.setPublic(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L249" href="#L249">249</a>                     currentClassDoc.setScript(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L250" href="#L250">250</a>                     currentClassDoc.setGroovy(isGroovy);
+<a class="jxr_linenumber" name="L251" href="#L251">251</a>                     currentClassDoc.setSuperClassName(<span class="jxr_string">"groovy/lang/Script"</span>);
+<a class="jxr_linenumber" name="L252" href="#L252">252</a>                     <strong class="jxr_keyword">if</strong> (<span class="jxr_string">"true"</span>.equals(properties.getProperty(<span class="jxr_string">"includeMainForScripts"</span>, <span class="jxr_string">"true"</span>))) {
+<a class="jxr_linenumber" name="L253" href="#L253">253</a>                         currentClassDoc.add(createMainMethod(currentClassDoc));
+<a class="jxr_linenumber" name="L254" href="#L254">254</a>                     }
+<a class="jxr_linenumber" name="L255" href="#L255">255</a>                     classDocs.put(currentClassDoc.getFullPathName(), currentClassDoc);
+<a class="jxr_linenumber" name="L256" href="#L256">256</a>                     <strong class="jxr_keyword">if</strong> (foundClasses == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L257" href="#L257">257</a>                         foundClasses = <strong class="jxr_keyword">new</strong> HashMap&lt;String, SimpleGroovyClassDoc&gt;();
+<a class="jxr_linenumber" name="L258" href="#L258">258</a>                     }
+<a class="jxr_linenumber" name="L259" href="#L259">259</a>                     foundClasses.put(className, currentClassDoc);
+<a class="jxr_linenumber" name="L260" href="#L260">260</a>                 } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L261" href="#L261">261</a>                     <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L262" href="#L262">262</a>                 }
+<a class="jxr_linenumber" name="L263" href="#L263">263</a>             }
+<a class="jxr_linenumber" name="L264" href="#L264">264</a>             SimpleGroovyMethodDoc currentMethodDoc = createMethod(t, currentClassDoc);
+<a class="jxr_linenumber" name="L265" href="#L265">265</a>             currentClassDoc.add(currentMethodDoc);
+<a class="jxr_linenumber" name="L266" href="#L266">266</a>         }
+<a class="jxr_linenumber" name="L267" href="#L267">267</a>     }
+<a class="jxr_linenumber" name="L268" href="#L268">268</a> 
+<a class="jxr_linenumber" name="L269" href="#L269">269</a>     <strong class="jxr_keyword">private</strong> SimpleGroovyMethodDoc createMethod(GroovySourceAST t, SimpleGroovyClassDoc currentClassDoc) {
+<a class="jxr_linenumber" name="L270" href="#L270">270</a>         String methodName = getIdentFor(t);
+<a class="jxr_linenumber" name="L271" href="#L271">271</a>         SimpleGroovyMethodDoc currentMethodDoc = <strong class="jxr_keyword">new</strong> SimpleGroovyMethodDoc(methodName, currentClassDoc);
+<a class="jxr_linenumber" name="L272" href="#L272">272</a>         currentMethodDoc.setRawCommentText(getJavaDocCommentsBeforeNode(t));
+<a class="jxr_linenumber" name="L273" href="#L273">273</a>         processModifiers(t, currentMethodDoc);
+<a class="jxr_linenumber" name="L274" href="#L274">274</a>         currentMethodDoc.setReturnType(<strong class="jxr_keyword">new</strong> SimpleGroovyType(getTypeOrDefault(t)));
+<a class="jxr_linenumber" name="L275" href="#L275">275</a>         addParametersTo(t, currentMethodDoc);
+<a class="jxr_linenumber" name="L276" href="#L276">276</a>         processAnnotations(t, currentMethodDoc);
+<a class="jxr_linenumber" name="L277" href="#L277">277</a>         <strong class="jxr_keyword">return</strong> currentMethodDoc;
+<a class="jxr_linenumber" name="L278" href="#L278">278</a>     }
+<a class="jxr_linenumber" name="L279" href="#L279">279</a> 
+<a class="jxr_linenumber" name="L280" href="#L280">280</a>     <strong class="jxr_keyword">private</strong> GroovyMethodDoc createMainMethod(SimpleGroovyClassDoc currentClassDoc) {
+<a class="jxr_linenumber" name="L281" href="#L281">281</a>         SimpleGroovyMethodDoc mainMethod = <strong class="jxr_keyword">new</strong> SimpleGroovyMethodDoc(<span class="jxr_string">"main"</span>, currentClassDoc);
+<a class="jxr_linenumber" name="L282" href="#L282">282</a>         mainMethod.setPublic(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L283" href="#L283">283</a>         mainMethod.setStatic(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L284" href="#L284">284</a>         mainMethod.setCommentText(<span class="jxr_string">"Implicit main method for Groovy Scripts"</span>);
+<a class="jxr_linenumber" name="L285" href="#L285">285</a>         mainMethod.setFirstSentenceCommentText(mainMethod.commentText());
+<a class="jxr_linenumber" name="L286" href="#L286">286</a>         SimpleGroovyParameter args = <strong class="jxr_keyword">new</strong> SimpleGroovyParameter(<span class="jxr_string">"args"</span>);
+<a class="jxr_linenumber" name="L287" href="#L287">287</a>         GroovyType argsType = <strong class="jxr_keyword">new</strong> SimpleGroovyType(<span class="jxr_string">"java.lang.String[]"</span>);
+<a class="jxr_linenumber" name="L288" href="#L288">288</a>         args.setType(argsType);
+<a class="jxr_linenumber" name="L289" href="#L289">289</a>         mainMethod.add(args);
+<a class="jxr_linenumber" name="L290" href="#L290">290</a>         GroovyType returnType = <strong class="jxr_keyword">new</strong> SimpleGroovyType(<span class="jxr_string">"void"</span>);
+<a class="jxr_linenumber" name="L291" href="#L291">291</a>         mainMethod.setReturnType(returnType);
+<a class="jxr_linenumber" name="L292" href="#L292">292</a>         <strong class="jxr_keyword">return</strong> mainMethod;
+<a class="jxr_linenumber" name="L293" href="#L293">293</a>     }
+<a class="jxr_linenumber" name="L294" href="#L294">294</a> 
+<a class="jxr_linenumber" name="L295" href="#L295">295</a>     @Override
+<a class="jxr_linenumber" name="L296" href="#L296">296</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitAnnotationFieldDef(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L297" href="#L297">297</a>         <strong class="jxr_keyword">if</strong> (isGroovy &amp;&amp; visit == OPENING_VISIT) {
+<a class="jxr_linenumber" name="L298" href="#L298">298</a>             <em class="jxr_comment">// TODO shouldn't really be treating annotation fields as methods - remove this hack</em>
+<a class="jxr_linenumber" name="L299" href="#L299">299</a>             SimpleGroovyClassDoc currentClassDoc = getCurrentClassDoc();
+<a class="jxr_linenumber" name="L300" href="#L300">300</a>             SimpleGroovyMethodDoc currentMethodDoc = createMethod(t, currentClassDoc);
+<a class="jxr_linenumber" name="L301" href="#L301">301</a>             String defaultText = getDefaultValue(t);
+<a class="jxr_linenumber" name="L302" href="#L302">302</a>             <strong class="jxr_keyword">if</strong> (defaultText != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L303" href="#L303">303</a>                 String orig = currentMethodDoc.getRawCommentText();
+<a class="jxr_linenumber" name="L304" href="#L304">304</a>                 currentMethodDoc.setRawCommentText(orig + <span class="jxr_string">"\n* @default "</span> + defaultText);
+<a class="jxr_linenumber" name="L305" href="#L305">305</a>             }
+<a class="jxr_linenumber" name="L306" href="#L306">306</a>             currentClassDoc.add(currentMethodDoc);
+<a class="jxr_linenumber" name="L307" href="#L307">307</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (visit == OPENING_VISIT) {
+<a class="jxr_linenumber" name="L308" href="#L308">308</a> <em class="jxr_comment">//        if (visit == OPENING_VISIT) {</em>
+<a class="jxr_linenumber" name="L309" href="#L309">309</a>             visitVariableDef(t, visit);
+<a class="jxr_linenumber" name="L310" href="#L310">310</a>             String defaultText = getDefaultValue(t);
+<a class="jxr_linenumber" name="L311" href="#L311">311</a>             <strong class="jxr_keyword">if</strong> (isGroovy) {
+<a class="jxr_linenumber" name="L312" href="#L312">312</a>                 currentFieldDoc.setPublic(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L313" href="#L313">313</a>             }
+<a class="jxr_linenumber" name="L314" href="#L314">314</a>             <strong class="jxr_keyword">if</strong> (defaultText != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L315" href="#L315">315</a>                 currentFieldDoc.setConstantValueExpression(defaultText);
+<a class="jxr_linenumber" name="L316" href="#L316">316</a>                 String orig = currentFieldDoc.getRawCommentText();
+<a class="jxr_linenumber" name="L317" href="#L317">317</a>                 currentFieldDoc.setRawCommentText(orig + <span class="jxr_string">"\n* @default "</span> + defaultText);
+<a class="jxr_linenumber" name="L318" href="#L318">318</a>             }
+<a class="jxr_linenumber" name="L319" href="#L319">319</a>         }
+<a class="jxr_linenumber" name="L320" href="#L320">320</a>     }
+<a class="jxr_linenumber" name="L321" href="#L321">321</a> 
+<a class="jxr_linenumber" name="L322" href="#L322">322</a>     @Override
+<a class="jxr_linenumber" name="L323" href="#L323">323</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitEnumConstantDef(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L324" href="#L324">324</a>         <strong class="jxr_keyword">if</strong> (visit == OPENING_VISIT) {
+<a class="jxr_linenumber" name="L325" href="#L325">325</a>             SimpleGroovyClassDoc currentClassDoc = getCurrentClassDoc();
+<a class="jxr_linenumber" name="L326" href="#L326">326</a>             insideEnum = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L327" href="#L327">327</a>             String enumConstantName = getIdentFor(t);
+<a class="jxr_linenumber" name="L328" href="#L328">328</a>             SimpleGroovyFieldDoc currentEnumConstantDoc = <strong class="jxr_keyword">new</strong> SimpleGroovyFieldDoc(enumConstantName, currentClassDoc);
+<a class="jxr_linenumber" name="L329" href="#L329">329</a>             currentEnumConstantDoc.setRawCommentText(getJavaDocCommentsBeforeNode(t));
+<a class="jxr_linenumber" name="L330" href="#L330">330</a>             processModifiers(t, currentEnumConstantDoc);
+<a class="jxr_linenumber" name="L331" href="#L331">331</a>             String typeName = getTypeNodeAsText(t.childOfType(TYPE), currentClassDoc.getTypeDescription());
+<a class="jxr_linenumber" name="L332" href="#L332">332</a>             currentEnumConstantDoc.setType(<strong class="jxr_keyword">new</strong> SimpleGroovyType(typeName));
+<a class="jxr_linenumber" name="L333" href="#L333">333</a>             currentClassDoc.addEnumConstant(currentEnumConstantDoc);
+<a class="jxr_linenumber" name="L334" href="#L334">334</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (visit == CLOSING_VISIT) {
+<a class="jxr_linenumber" name="L335" href="#L335">335</a>             insideEnum = false;
+<a class="jxr_linenumber" name="L336" href="#L336">336</a>         }
+<a class="jxr_linenumber" name="L337" href="#L337">337</a>     }
+<a class="jxr_linenumber" name="L338" href="#L338">338</a> 
+<a class="jxr_linenumber" name="L339" href="#L339">339</a>     @Override
+<a class="jxr_linenumber" name="L340" href="#L340">340</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitVariableDef(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L341" href="#L341">341</a>         <strong class="jxr_keyword">if</strong> (visit == OPENING_VISIT &amp;&amp; !insideAnonymousInnerClass() &amp;&amp; isFieldDefinition()) {
+<a class="jxr_linenumber" name="L342" href="#L342">342</a>             SimpleGroovyClassDoc currentClassDoc = getCurrentClassDoc();
+<a class="jxr_linenumber" name="L343" href="#L343">343</a>             <strong class="jxr_keyword">if</strong> (currentClassDoc != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L344" href="#L344">344</a>                 String fieldName = getIdentFor(t);
+<a class="jxr_linenumber" name="L345" href="#L345">345</a>                 currentFieldDoc = <strong class="jxr_keyword">new</strong> SimpleGroovyFieldDoc(fieldName, currentClassDoc);
+<a class="jxr_linenumber" name="L346" href="#L346">346</a>                 currentFieldDoc.setRawCommentText(getJavaDocCommentsBeforeNode(t));
+<a class="jxr_linenumber" name="L347" href="#L347">347</a>                 <strong class="jxr_keyword">boolean</strong> isProp = processModifiers(t, currentFieldDoc);
+<a class="jxr_linenumber" name="L348" href="#L348">348</a>                 currentFieldDoc.setType(<strong class="jxr_keyword">new</strong> SimpleGroovyType(getTypeOrDefault(t)));
+<a class="jxr_linenumber" name="L349" href="#L349">349</a>                 processAnnotations(t, currentFieldDoc);
+<a class="jxr_linenumber" name="L350" href="#L350">350</a>                 <strong class="jxr_keyword">if</strong> (isProp) {
+<a class="jxr_linenumber" name="L351" href="#L351">351</a>                     currentClassDoc.addProperty(currentFieldDoc);
+<a class="jxr_linenumber" name="L352" href="#L352">352</a>                 } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L353" href="#L353">353</a>                     currentClassDoc.add(currentFieldDoc);
+<a class="jxr_linenumber" name="L354" href="#L354">354</a>                 }
+<a class="jxr_linenumber" name="L355" href="#L355">355</a>             }
+<a class="jxr_linenumber" name="L356" href="#L356">356</a>         }
+<a class="jxr_linenumber" name="L357" href="#L357">357</a>     }
+<a class="jxr_linenumber" name="L358" href="#L358">358</a> 
+<a class="jxr_linenumber" name="L359" href="#L359">359</a>     @Override
+<a class="jxr_linenumber" name="L360" href="#L360">360</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitAssign(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L361" href="#L361">361</a>         gobbleComments(t, visit);
+<a class="jxr_linenumber" name="L362" href="#L362">362</a>     }
+<a class="jxr_linenumber" name="L363" href="#L363">363</a> 
+<a class="jxr_linenumber" name="L364" href="#L364">364</a>     @Override
+<a class="jxr_linenumber" name="L365" href="#L365">365</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitMethodCall(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L366" href="#L366">366</a>         gobbleComments(t, visit);
+<a class="jxr_linenumber" name="L367" href="#L367">367</a>     }
+<a class="jxr_linenumber" name="L368" href="#L368">368</a> 
+<a class="jxr_linenumber" name="L369" href="#L369">369</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> gobbleComments(GroovySourceAST t, <strong class="jxr_keyword">int</strong> visit) {
+<a class="jxr_linenumber" name="L370" href="#L370">370</a>         <strong class="jxr_keyword">if</strong> (visit == OPENING_VISIT) {
+<a class="jxr_linenumber" name="L371" href="#L371">371</a>             SimpleGroovyClassDoc currentClassDoc = getCurrentClassDoc();
+<a class="jxr_linenumber" name="L372" href="#L372">372</a>             <strong class="jxr_keyword">if</strong> (currentClassDoc == <strong class="jxr_keyword">null</strong> || currentClassDoc.isScript()) {
+<a class="jxr_linenumber" name="L373" href="#L373">373</a>                 <strong class="jxr_keyword">if</strong> (t.getLine() &gt; lastLineCol.getLine() ||
+<a class="jxr_linenumber" name="L374" href="#L374">374</a>                         (t.getLine() == lastLineCol.getLine() &amp;&amp; t.getColumn() &gt; lastLineCol.getColumn())) {
+<a class="jxr_linenumber" name="L375" href="#L375">375</a>                     getJavaDocCommentsBeforeNode(t);
+<a class="jxr_linenumber" name="L376" href="#L376">376</a>                     <em class="jxr_comment">// not normally set for non-major types but appropriate for a script</em>
+<a class="jxr_linenumber" name="L377" href="#L377">377</a>                     lastLineCol = <strong class="jxr_keyword">new</strong> LineColumn(t.getLine(), t.getColumn());
+<a class="jxr_linenumber" name="L378" href="#L378">378</a>                 }
+<a class="jxr_linenumber" name="L379" href="#L379">379</a>             }
+<a class="jxr_linenumber" name="L380" href="#L380">380</a>         }
+<a class="jxr_linenumber" name="L381" href="#L381">381</a>     }
+<a class="jxr_linenumber" name="L382" href="#L382">382</a> 
+<a class="jxr_linenumber" name="L383" href="#L383">383</a>     <em class="jxr_comment">// Step through ClassDocs and tie up loose ends</em>
+<a class="jxr_linenumber" name="L384" href="#L384">384</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> postProcessClassDocs() {
+<a class="jxr_linenumber" name="L385" href="#L385">385</a>         <strong class="jxr_keyword">for</strong> (GroovyClassDoc groovyClassDoc : classDocs.values()) {
+<a class="jxr_linenumber" name="L386" href="#L386">386</a>             SimpleGroovyClassDoc classDoc = (SimpleGroovyClassDoc) groovyClassDoc;
+<a class="jxr_linenumber" name="L387" href="#L387">387</a> 
+<a class="jxr_linenumber" name="L388" href="#L388">388</a>             <em class="jxr_comment">// potentially add default constructor to class docs (but not interfaces)</em>
+<a class="jxr_linenumber" name="L389" href="#L389">389</a>             <strong class="jxr_keyword">if</strong> (classDoc.isClass()) {
+<a class="jxr_linenumber" name="L390" href="#L390">390</a>                 GroovyConstructorDoc[] constructors = classDoc.constructors();
+<a class="jxr_linenumber" name="L391" href="#L391">391</a>                 <strong class="jxr_keyword">if</strong> (constructors != <strong class="jxr_keyword">null</strong> &amp;&amp; constructors.length == 0) { <em class="jxr_comment">// add default constructor to doc</em>
+<a class="jxr_linenumber" name="L392" href="#L392">392</a>                     <em class="jxr_comment">// name of class for the constructor</em>
+<a class="jxr_linenumber" name="L393" href="#L393">393</a>                     GroovyConstructorDoc constructorDoc = <strong class="jxr_keyword">new</strong> SimpleGroovyConstructorDoc(classDoc.name(), classDoc);
+<a class="jxr_linenumber" name="L394" href="#L394">394</a>                     <em class="jxr_comment">// don't forget to tell the class about this default constructor.</em>
+<a class="jxr_linenumber" name="L395" href="#L395">395</a>                     classDoc.add(constructorDoc);
+<a class="jxr_linenumber" name="L396" href="#L396">396</a>                 }
+<a class="jxr_linenumber" name="L397" href="#L397">397</a>             }
+<a class="jxr_linenumber" name="L398" href="#L398">398</a>         }
+<a class="jxr_linenumber" name="L399" href="#L399">399</a>     }
+<a class="jxr_linenumber" name="L400" href="#L400">400</a> 
+<a class="jxr_linenumber" name="L401" href="#L401">401</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> isNested() {
+<a class="jxr_linenumber" name="L402" href="#L402">402</a>         <strong class="jxr_keyword">return</strong> getCurrentClassDoc() != <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L403" href="#L403">403</a>     }
+<a class="jxr_linenumber" name="L404" href="#L404">404</a> 
+<a class="jxr_linenumber" name="L405" href="#L405">405</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> isTopLevelConstruct(GroovySourceAST node) {
+<a class="jxr_linenumber" name="L406" href="#L406">406</a>         <strong class="jxr_keyword">if</strong> (node == <strong class="jxr_keyword">null</strong>) <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L407" href="#L407">407</a>         <strong class="jxr_keyword">int</strong> type = node.getType();
+<a class="jxr_linenumber" name="L408" href="#L408">408</a>         <strong class="jxr_keyword">return</strong> type == CLASS_DEF || type == INTERFACE_DEF || type == TRAIT_DEF || type == ANNOTATION_DEF || type == ENUM_DEF;
+<a class="jxr_linenumber" name="L409" href="#L409">409</a>     }
+<a class="jxr_linenumber" name="L410" href="#L410">410</a> 
+<a class="jxr_linenumber" name="L411" href="#L411">411</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> adjustForAutomaticEnumMethods(SimpleGroovyClassDoc currentClassDoc) {
+<a class="jxr_linenumber" name="L412" href="#L412">412</a>         SimpleGroovyMethodDoc valueOf = <strong class="jxr_keyword">new</strong> SimpleGroovyMethodDoc(<span class="jxr_string">"valueOf"</span>, currentClassDoc);
+<a class="jxr_linenumber" name="L413" href="#L413">413</a>         valueOf.setRawCommentText(<span class="jxr_string">"Returns the enum constant of this type with the specified name."</span>);
+<a class="jxr_linenumber" name="L414" href="#L414">414</a>         SimpleGroovyParameter parameter = <strong class="jxr_keyword">new</strong> SimpleGroovyParameter(<span class="jxr_string">"name"</span>);
+<a class="jxr_linenumber" name="L415" href="#L415">415</a>         parameter.setTypeName(<span class="jxr_string">"String"</span>);
+<a class="jxr_linenumber" name="L416" href="#L416">416</a>         valueOf.add(parameter);
+<a class="jxr_linenumber" name="L417" href="#L417">417</a>         valueOf.setReturnType(<strong class="jxr_keyword">new</strong> SimpleGroovyType(currentClassDoc.name()));
+<a class="jxr_linenumber" name="L418" href="#L418">418</a>         currentClassDoc.add(valueOf);
+<a class="jxr_linenumber" name="L419" href="#L419">419</a> 
+<a class="jxr_linenumber" name="L420" href="#L420">420</a>         SimpleGroovyMethodDoc values = <strong class="jxr_keyword">new</strong> SimpleGroovyMethodDoc(<span class="jxr_string">"values"</span>, currentClassDoc);
+<a class="jxr_linenumber" name="L421" href="#L421">421</a>         values.setRawCommentText(<span class="jxr_string">"Returns an array containing the constants of this enum type, in the order they are declared."</span>);
+<a class="jxr_linenumber" name="L422" href="#L422">422</a>         values.setReturnType(<strong class="jxr_keyword">new</strong> SimpleGroovyType(currentClassDoc.name() + <span class="jxr_string">"[]"</span>));
+<a class="jxr_linenumber" name="L423" href="#L423">423</a>         currentClassDoc.add(values);
+<a class="jxr_linenumber" name="L424" href="#L424">424</a>     }
+<a class="jxr_linenumber" name="L425" href="#L425">425</a> 
+<a class="jxr_linenumber" name="L426" href="#L426">426</a>     <strong class="jxr_keyword">private</strong> String extractImportPath(GroovySourceAST t) {
+<a class="jxr_linenumber" name="L427" href="#L427">427</a>         <strong class="jxr_keyword">return</strong> recurseDownImportBranch(getImportPathDotType(t));
+<a class="jxr_linenumber" name="L428" href="#L428">428</a>     }
+<a class="jxr_linenumber" name="L429" href="#L429">429</a> 
+<a class="jxr_linenumber" name="L430" href="#L430">430</a>     <strong class="jxr_keyword">private</strong> GroovySourceAST getImportPathDotType(GroovySourceAST t) {
+<a class="jxr_linenumber" name="L431" href="#L431">431</a>         GroovySourceAST child = t.childOfType(DOT);
+<a class="jxr_linenumber" name="L432" href="#L432">432</a>         <strong class="jxr_keyword">if</strong> (child == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L433" href="#L433">433</a>             child = t.childOfType(IDENT);
+<a class="jxr_linenumber" name="L434" href="#L434">434</a>         }
+<a class="jxr_linenumber" name="L435" href="#L435">435</a>         <strong class="jxr_keyword">return</strong> child;
+<a class="jxr_linenumber" name="L436" href="#L436">436</a>     }
+<a class="jxr_linenumber" name="L437" href="#L437">437</a> 
+<a class="jxr_linenumber" name="L438" href="#L438">438</a>     <strong class="jxr_keyword">private</strong> String recurseDownImportBranch(GroovySourceAST t) {
+<a class="jxr_linenumber" name="L439" href="#L439">439</a>         <strong class="jxr_keyword">if</strong> (t != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L440" href="#L440">440</a>             <strong class="jxr_keyword">if</strong> (t.getType() == DOT) {
+<a class="jxr_linenumber" name="L441" href="#L441">441</a>                 GroovySourceAST firstChild = (GroovySourceAST) t.getFirstChild();
+<a class="jxr_linenumber" name="L442" href="#L442">442</a>                 GroovySourceAST secondChild = (GroovySourceAST) firstChild.getNextSibling();
+<a class="jxr_linenumber" name="L443" href="#L443">443</a>                 <strong class="jxr_keyword">return</strong> (recurseDownImportBranch(firstChild) + <span class="jxr_string">"/"</span> + recurseDownImportBranch(secondChild));
+<a class="jxr_linenumber" name="L444" href="#L444">444</a>             }
+<a class="jxr_linenumber" name="L445" href="#L445">445</a>             <strong class="jxr_keyword">if</strong> (t.getType() == IDENT) {
+<a class="jxr_linenumber" name="L446" href="#L446">446</a>                 <strong class="jxr_keyword">return</strong> t.getText();
+<a class="jxr_linenumber" name="L447" href="#L447">447</a>             }
+<a class="jxr_linenumber" name="L448" href="#L448">448</a>             <strong class="jxr_keyword">if</strong> (t.getType() == STAR) {
+<a class="jxr_linenumber" name="L449" href="#L449">449</a>                 <strong class="jxr_keyword">return</strong> t.getText();
+<a class="jxr_linenumber" name="L450" href="#L450">450</a>             }
+<a class="jxr_linenumber" name="L451" href="#L451">451</a>         }
+<a class="jxr_linenumber" name="L452" href="#L452">452</a>         <strong class="jxr_keyword">return</strong> <span class="jxr_string">""</span>;
+<a class="jxr_linenumber" name="L453" href="#L453">453</a>     }
+<a class="jxr_linenumber" name="L454" href="#L454">454</a> 
+<a class="jxr_linenumber" name="L455" href="#L455">455</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> addAnnotationRef(SimpleGroovyProgramElementDoc node, GroovySourceAST t) {
+<a class="jxr_linenumber" name="L456" href="#L456">456</a>         GroovySourceAST classNode = t.childOfType(IDENT);
+<a class="jxr_linenumber" name="L457" href="#L457">457</a>         <strong class="jxr_keyword">if</strong> (classNode != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L458" href="#L458">458</a>             node.addAnnotationRef(<strong class="jxr_keyword">new</strong> SimpleGroovyAnnotationRef(extractName(classNode), getChildTextFromSource(t).trim()));
+<a class="jxr_linenumber" name="L459" href="#L459">459</a>         }
+<a class="jxr_linenumber" name="L460" href="#L460">460</a>     }
+<a class="jxr_linenumber" name="L461" href="#L461">461</a> 
+<a class="jxr_linenumber" name="L462" href="#L462">462</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> addAnnotationRef(SimpleGroovyParameter node, GroovySourceAST t) {
+<a class="jxr_linenumber" name="L463" href="#L463">463</a>         GroovySourceAST classNode = t.childOfType(IDENT);
+<a class="jxr_linenumber" name="L464" href="#L464">464</a>         <strong class="jxr_keyword">if</strong> (classNode != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L465" href="#L465">465</a>             node.addAnnotationRef(<strong class="jxr_keyword">new</strong> SimpleGroovyAnnotationRef(extractName(classNode), getChildTextFromSource(t).trim()));
+<a class="jxr_linenumber" name="L466" href="#L466">466</a>         }
+<a class="jxr_linenumber" name="L467" href="#L467">467</a>     }
+<a class="jxr_linenumber" name="L468" href="#L468">468</a> 
+<a class="jxr_linenumber" name="L469" href="#L469">469</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> addAnnotationRefs(SimpleGroovyProgramElementDoc node, List&lt;GroovySourceAST&gt; nodes) {
+<a class="jxr_linenumber" name="L470" href="#L470">470</a>         <strong class="jxr_keyword">for</strong> (GroovySourceAST t : nodes) {
+<a class="jxr_linenumber" name="L471" href="#L471">471</a>             addAnnotationRef(node, t);
+<a class="jxr_linenumber" name="L472" href="#L472">472</a>         }
+<a class="jxr_linenumber" name="L473" href="#L473">473</a>     }
+<a class="jxr_linenumber" name="L474" href="#L474">474</a> 
+<a class="jxr_linenumber" name="L475" href="#L475">475</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> processAnnotations(GroovySourceAST t, SimpleGroovyProgramElementDoc node) {
+<a class="jxr_linenumber" name="L476" href="#L476">476</a>         GroovySourceAST modifiers = t.childOfType(MODIFIERS);
+<a class="jxr_linenumber" name="L477" href="#L477">477</a>         <strong class="jxr_keyword">if</strong> (modifiers != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L478" href="#L478">478</a>             addAnnotationRefs(node, modifiers.childrenOfType(ANNOTATION));
+<a class="jxr_linenumber" name="L479" href="#L479">479</a>         }
+<a class="jxr_linenumber" name="L480" href="#L480">480</a>     }
+<a class="jxr_linenumber" name="L481" href="#L481">481</a> 
+<a class="jxr_linenumber" name="L482" href="#L482">482</a>     <em class="jxr_comment">// hack warning! fragile! TODO find a better way</em>
+<a class="jxr_linenumber" name="L483" href="#L483">483</a>     <strong class="jxr_keyword">private</strong> String getDefaultValue(GroovySourceAST t) {
+<a class="jxr_linenumber" name="L484" href="#L484">484</a>         GroovySourceAST child = (GroovySourceAST) t.getFirstChild();
+<a class="jxr_linenumber" name="L485" href="#L485">485</a>         <strong class="jxr_keyword">if</strong> (t.getNumberOfChildren() != 4) <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L486" href="#L486">486</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 1; i &lt; t.getNumberOfChildren(); i++) {
+<a class="jxr_linenumber" name="L487" href="#L487">487</a>             child = (GroovySourceAST) child.getNextSibling();
+<a class="jxr_linenumber" name="L488" href="#L488">488</a>         }
+<a class="jxr_linenumber" name="L489" href="#L489">489</a>         GroovySourceAST nodeToProcess = child;
+<a class="jxr_linenumber" name="L490" href="#L490">490</a>         <strong class="jxr_keyword">if</strong> (child.getType() != ANNOTATION_ARRAY_INIT &amp;&amp; child.getNumberOfChildren() &gt; 0) {
+<a class="jxr_linenumber" name="L491" href="#L491">491</a>             nodeToProcess = (GroovySourceAST) child.getFirstChild();
+<a class="jxr_linenumber" name="L492" href="#L492">492</a>         }
+<a class="jxr_linenumber" name="L493" href="#L493">493</a>         <strong class="jxr_keyword">return</strong> getChildTextFromSource(nodeToProcess, <span class="jxr_string">";"</span>);
+<a class="jxr_linenumber" name="L494" href="#L494">494</a>     }
+<a class="jxr_linenumber" name="L495" href="#L495">495</a> 
+<a class="jxr_linenumber" name="L496" href="#L496">496</a>     <strong class="jxr_keyword">private</strong> String getChildTextFromSource(GroovySourceAST child) {
+<a class="jxr_linenumber" name="L497" href="#L497">497</a>         <strong class="jxr_keyword">return</strong> sourceBuffer.getSnippet(
+<a class="jxr_linenumber" name="L498" href="#L498">498</a>                 <strong class="jxr_keyword">new</strong> LineColumn(child.getLine(), child.getColumn()),
+<a class="jxr_linenumber" name="L499" href="#L499">499</a>                 <strong class="jxr_keyword">new</strong> LineColumn(child.getLineLast(), child.getColumnLast()));
+<a class="jxr_linenumber" name="L500" href="#L500">500</a>     }
+<a class="jxr_linenumber" name="L501" href="#L501">501</a> 
+<a class="jxr_linenumber" name="L502" href="#L502">502</a>     <strong class="jxr_keyword">private</strong> String getChildTextFromSource(GroovySourceAST child, String tokens) {
+<a class="jxr_linenumber" name="L503" href="#L503">503</a>         String text = sourceBuffer.getSnippet(
+<a class="jxr_linenumber" name="L504" href="#L504">504</a>                 <strong class="jxr_keyword">new</strong> LineColumn(child.getLine(), child.getColumn()),
+<a class="jxr_linenumber" name="L505" href="#L505">505</a>                 <strong class="jxr_keyword">new</strong> LineColumn(child.getLine() + 1, 0));
+<a class="jxr_linenumber" name="L506" href="#L506">506</a>         StringTokenizer st = <strong class="jxr_keyword">new</strong> StringTokenizer(text, tokens);
+<a class="jxr_linenumber" name="L507" href="#L507">507</a>         <strong class="jxr_keyword">return</strong> st.nextToken();
+<a class="jxr_linenumber" name="L508" href="#L508">508</a>     }
+<a class="jxr_linenumber" name="L509" href="#L509">509</a> 
+<a class="jxr_linenumber" name="L510" href="#L510">510</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> isFieldDefinition() {
+<a class="jxr_linenumber" name="L511" href="#L511">511</a>         GroovySourceAST parentNode = getParentNode();
+<a class="jxr_linenumber" name="L512" href="#L512">512</a>         <strong class="jxr_keyword">return</strong> parentNode != <strong class="jxr_keyword">null</strong> &amp;&amp; parentNode.getType() == OBJBLOCK;
+<a class="jxr_linenumber" name="L513" href="#L513">513</a>     }
+<a class="jxr_linenumber" name="L514" href="#L514">514</a> 
+<a class="jxr_linenumber" name="L515" href="#L515">515</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> insideAnonymousInnerClass() {
+<a class="jxr_linenumber" name="L516" href="#L516">516</a>         GroovySourceAST grandParentNode = getGrandParentNode();
+<a class="jxr_linenumber" name="L517" href="#L517">517</a>         <strong class="jxr_keyword">return</strong> grandParentNode != <strong class="jxr_keyword">null</strong> &amp;&amp; grandParentNode.getType() == LITERAL_<strong class="jxr_keyword">new</strong>;
+<a class="jxr_linenumber" name="L518" href="#L518">518</a>     }
+<a class="jxr_linenumber" name="L519" href="#L519">519</a> 
+<a class="jxr_linenumber" name="L520" href="#L520">520</a>     <em class="jxr_comment">// return true if a property is found</em>
+<a class="jxr_linenumber" name="L521" href="#L521">521</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> processModifiers(GroovySourceAST t, SimpleGroovyAbstractableElementDoc memberOrClass) {
+<a class="jxr_linenumber" name="L522" href="#L522">522</a>         GroovySourceAST modifiers = t.childOfType(MODIFIERS);
+<a class="jxr_linenumber" name="L523" href="#L523">523</a>         <strong class="jxr_keyword">boolean</strong> hasNonPublicVisibility = false;
+<a class="jxr_linenumber" name="L524" href="#L524">524</a>         <strong class="jxr_keyword">boolean</strong> hasPublicVisibility = false;
+<a class="jxr_linenumber" name="L525" href="#L525">525</a>         <strong class="jxr_keyword">if</strong> (modifiers != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L526" href="#L526">526</a>             AST currentModifier = modifiers.getFirstChild();
+<a class="jxr_linenumber" name="L527" href="#L527">527</a>             <strong class="jxr_keyword">while</strong> (currentModifier != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L528" href="#L528">528</a>                 <strong class="jxr_keyword">int</strong> type = currentModifier.getType();
+<a class="jxr_linenumber" name="L529" href="#L529">529</a>                 <strong class="jxr_keyword">switch</strong> (type) {
+<a class="jxr_linenumber" name="L530" href="#L530">530</a>                     <strong class="jxr_keyword">case</strong> LITERAL_<strong class="jxr_keyword">public</strong>:
+<a class="jxr_linenumber" name="L531" href="#L531">531</a>                         memberOrClass.setPublic(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L532" href="#L532">532</a>                         hasPublicVisibility = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L533" href="#L533">533</a>                         <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L534" href="#L534">534</a>                     <strong class="jxr_keyword">case</strong> LITERAL_<strong class="jxr_keyword">protected</strong>:
+<a class="jxr_linenumber" name="L535" href="#L535">535</a>                         memberOrClass.setProtected(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L536" href="#L536">536</a>                         hasNonPublicVisibility = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L537" href="#L537">537</a>                         <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L538" href="#L538">538</a>                     <strong class="jxr_keyword">case</strong> LITERAL_<strong class="jxr_keyword">private</strong>:
+<a class="jxr_linenumber" name="L539" href="#L539">539</a>                         memberOrClass.setPrivate(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L540" href="#L540">540</a>                         hasNonPublicVisibility = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L541" href="#L541">541</a>                         <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L542" href="#L542">542</a>                     <strong class="jxr_keyword">case</strong> LITERAL_<strong class="jxr_keyword">static</strong>:
+<a class="jxr_linenumber" name="L543" href="#L543">543</a>                         memberOrClass.setStatic(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L544" href="#L544">544</a>                         <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L545" href="#L545">545</a>                     <strong class="jxr_keyword">case</strong> FINAL:
+<a class="jxr_linenumber" name="L546" href="#L546">546</a>                         memberOrClass.setFinal(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L547" href="#L547">547</a>                         <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L548" href="#L548">548</a>                     <strong class="jxr_keyword">case</strong> ABSTRACT:
+<a class="jxr_linenumber" name="L549" href="#L549">549</a>                         memberOrClass.setAbstract(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L550" href="#L550">550</a>                         <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L551" href="#L551">551</a>                 }
+<a class="jxr_linenumber" name="L552" href="#L552">552</a>                 currentModifier = currentModifier.getNextSibling();
+<a class="jxr_linenumber" name="L553" href="#L553">553</a>             }
+<a class="jxr_linenumber" name="L554" href="#L554">554</a>             <strong class="jxr_keyword">if</strong> (!hasNonPublicVisibility &amp;&amp; isGroovy &amp;&amp; !(memberOrClass instanceof GroovyFieldDoc)) {
+<a class="jxr_linenumber" name="L555" href="#L555">555</a>                 <em class="jxr_comment">// in groovy, methods and classes are assumed public, unless informed otherwise</em>
+<a class="jxr_linenumber" name="L556" href="#L556">556</a>                 <strong class="jxr_keyword">if</strong> (isPackageScope(modifiers)) {
+<a class="jxr_linenumber" name="L557" href="#L557">557</a>                     memberOrClass.setPackagePrivate(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L558" href="#L558">558</a>                     hasNonPublicVisibility = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L559" href="#L559">559</a>                 } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L560" href="#L560">560</a>                     memberOrClass.setPublic(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L561" href="#L561">561</a>                 }
+<a class="jxr_linenumber" name="L562" href="#L562">562</a>             } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (!hasNonPublicVisibility &amp;&amp; !hasPublicVisibility &amp;&amp; !isGroovy) {
+<a class="jxr_linenumber" name="L563" href="#L563">563</a>                 <strong class="jxr_keyword">if</strong> (insideInterface(memberOrClass) || insideAnnotationDef(memberOrClass)) {
+<a class="jxr_linenumber" name="L564" href="#L564">564</a>                     memberOrClass.setPublic(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L565" href="#L565">565</a>                 } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L566" href="#L566">566</a>                     memberOrClass.setPackagePrivate(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L567" href="#L567">567</a>                 }
+<a class="jxr_linenumber" name="L568" href="#L568">568</a>             }
+<a class="jxr_linenumber" name="L569" href="#L569">569</a>             <strong class="jxr_keyword">if</strong> (memberOrClass instanceof GroovyFieldDoc &amp;&amp; isGroovy &amp;&amp; !hasNonPublicVisibility &amp; !hasPublicVisibility) {
+<a class="jxr_linenumber" name="L570" href="#L570">570</a>                 <strong class="jxr_keyword">if</strong> (isPackageScope(modifiers)) {
+<a class="jxr_linenumber" name="L571" href="#L571">571</a>                     memberOrClass.setPackagePrivate(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L572" href="#L572">572</a>                     hasNonPublicVisibility = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L573" href="#L573">573</a>                 }
+<a class="jxr_linenumber" name="L574" href="#L574">574</a>             }
+<a class="jxr_linenumber" name="L575" href="#L575">575</a>             <strong class="jxr_keyword">if</strong> (memberOrClass instanceof GroovyFieldDoc &amp;&amp; !hasNonPublicVisibility &amp;&amp; !hasPublicVisibility &amp;&amp; isGroovy) <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L576" href="#L576">576</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (isGroovy &amp;&amp; !(memberOrClass instanceof GroovyFieldDoc)) {
+<a class="jxr_linenumber" name="L577" href="#L577">577</a>             <em class="jxr_comment">// in groovy, methods and classes are assumed public, unless informed otherwise</em>
+<a class="jxr_linenumber" name="L578" href="#L578">578</a>             memberOrClass.setPublic(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L579" href="#L579">579</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (!isGroovy) {
+<a class="jxr_linenumber" name="L580" href="#L580">580</a>             <strong class="jxr_keyword">if</strong> (insideInterface(memberOrClass) || insideAnnotationDef(memberOrClass)) {
+<a class="jxr_linenumber" name="L581" href="#L581">581</a>                 memberOrClass.setPublic(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L582" href="#L582">582</a>             } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L583" href="#L583">583</a>                 memberOrClass.setPackagePrivate(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L584" href="#L584">584</a>             }
+<a class="jxr_linenumber" name="L585" href="#L585">585</a>         }
+<a class="jxr_linenumber" name="L586" href="#L586">586</a>         <strong class="jxr_keyword">return</strong> memberOrClass instanceof GroovyFieldDoc &amp;&amp; isGroovy &amp;&amp; !hasNonPublicVisibility &amp; !hasPublicVisibility;
+<a class="jxr_linenumber" name="L587" href="#L587">587</a>     }
+<a class="jxr_linenumber" name="L588" href="#L588">588</a> 
+<a class="jxr_linenumber" name="L589" href="#L589">589</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> isPackageScope(GroovySourceAST modifiers) {
+<a class="jxr_linenumber" name="L590" href="#L590">590</a>         List&lt;String&gt; names = getAnnotationNames(modifiers);
+<a class="jxr_linenumber" name="L591" href="#L591">591</a>         <strong class="jxr_keyword">return</strong> names.contains(<span class="jxr_string">"groovy/transform/PackageScope"</span>) || names.contains(<span class="jxr_string">"PackageScope"</span>);
+<a class="jxr_linenumber" name="L592" href="#L592">592</a>     }
+<a class="jxr_linenumber" name="L593" href="#L593">593</a> 
+<a class="jxr_linenumber" name="L594" href="#L594">594</a>     <strong class="jxr_keyword">private</strong> List&lt;String&gt; getAnnotationNames(GroovySourceAST modifiers) {
+<a class="jxr_linenumber" name="L595" href="#L595">595</a>         List&lt;String&gt; annotationNames = <strong class="jxr_keyword">new</strong> ArrayList&lt;String&gt;();
+<a class="jxr_linenumber" name="L596" href="#L596">596</a>         List&lt;GroovySourceAST&gt; annotations = modifiers.childrenOfType(ANNOTATION);
+<a class="jxr_linenumber" name="L597" href="#L597">597</a>         <strong class="jxr_keyword">for</strong> (GroovySourceAST annotation : annotations) {
+<a class="jxr_linenumber" name="L598" href="#L598">598</a>             annotationNames.add(buildName((GroovySourceAST) annotation.getFirstChild()));
+<a class="jxr_linenumber" name="L599" href="#L599">599</a>         }
+<a class="jxr_linenumber" name="L600" href="#L600">600</a>         <strong class="jxr_keyword">return</strong> annotationNames;
+<a class="jxr_linenumber" name="L601" href="#L601">601</a>     }
+<a class="jxr_linenumber" name="L602" href="#L602">602</a> 
+<a class="jxr_linenumber" name="L603" href="#L603">603</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> insideInterface(SimpleGroovyAbstractableElementDoc memberOrClass) {
+<a class="jxr_linenumber" name="L604" href="#L604">604</a>         SimpleGroovyClassDoc current = getCurrentClassDoc();
+<a class="jxr_linenumber" name="L605" href="#L605">605</a>         <strong class="jxr_keyword">if</strong> (current == <strong class="jxr_keyword">null</strong> || current == memberOrClass) <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L606" href="#L606">606</a>         <strong class="jxr_keyword">return</strong> current.isInterface();
+<a class="jxr_linenumber" name="L607" href="#L607">607</a>     }
+<a class="jxr_linenumber" name="L608" href="#L608">608</a> 
+<a class="jxr_linenumber" name="L609" href="#L609">609</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> insideAnnotationDef(SimpleGroovyAbstractableElementDoc memberOrClass) {
+<a class="jxr_linenumber" name="L610" href="#L610">610</a>         SimpleGroovyClassDoc current = getCurrentClassDoc();
+<a class="jxr_linenumber" name="L611" href="#L611">611</a>         <strong class="jxr_keyword">if</strong> (current == <strong class="jxr_keyword">null</strong> || current == memberOrClass) <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L612" href="#L612">612</a>         <strong class="jxr_keyword">return</strong> current.isAnnotationType();
+<a class="jxr_linenumber" name="L613" href="#L613">613</a>     }
+<a class="jxr_linenumber" name="L614" href="#L614">614</a> 
+<a class="jxr_linenumber" name="L615" href="#L615">615</a>     <em class="jxr_comment">// todo - If no comment before node, then get comment from same node on parent class - ouch!</em>
+<a class="jxr_linenumber" name="L616" href="#L616">616</a> 
+<a class="jxr_linenumber" name="L617" href="#L617">617</a>     <strong class="jxr_keyword">private</strong> String getJavaDocCommentsBeforeNode(GroovySourceAST t) {
+<a class="jxr_linenumber" name="L618" href="#L618">618</a>         String result = <span class="jxr_string">""</span>;
+<a class="jxr_linenumber" name="L619" href="#L619">619</a>         LineColumn thisLineCol = <strong class="jxr_keyword">new</strong> LineColumn(t.getLine(), t.getColumn());
+<a class="jxr_linenumber" name="L620" href="#L620">620</a>         String text = sourceBuffer.getSnippet(lastLineCol, thisLineCol);
+<a class="jxr_linenumber" name="L621" href="#L621">621</a>         <strong class="jxr_keyword">if</strong> (text != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L622" href="#L622">622</a>             Matcher m = PREV_JAVADOC_COMMENT_PATTERN.matcher(text);
+<a class="jxr_linenumber" name="L623" href="#L623">623</a>             <strong class="jxr_keyword">if</strong> (m.find()) {
+<a class="jxr_linenumber" name="L624" href="#L624">624</a>                 result = m.group(1);
+<a class="jxr_linenumber" name="L625" href="#L625">625</a>             }
+<a class="jxr_linenumber" name="L626" href="#L626">626</a>         }
+<a class="jxr_linenumber" name="L627" href="#L627">627</a>         <strong class="jxr_keyword">if</strong> (isMajorType(t)) {
+<a class="jxr_linenumber" name="L628" href="#L628">628</a>             lastLineCol = thisLineCol;
+<a class="jxr_linenumber" name="L629" href="#L629">629</a>         }
+<a class="jxr_linenumber" name="L630" href="#L630">630</a>         <strong class="jxr_keyword">return</strong> result;
+<a class="jxr_linenumber" name="L631" href="#L631">631</a>     }
+<a class="jxr_linenumber" name="L632" href="#L632">632</a> 
+<a class="jxr_linenumber" name="L633" href="#L633">633</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> isMajorType(GroovySourceAST t) {
+<a class="jxr_linenumber" name="L634" href="#L634">634</a>         <strong class="jxr_keyword">if</strong> (t == <strong class="jxr_keyword">null</strong>) <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L635" href="#L635">635</a>         <strong class="jxr_keyword">int</strong> tt = t.getType();
+<a class="jxr_linenumber" name="L636" href="#L636">636</a>         <strong class="jxr_keyword">return</strong> tt == CLASS_DEF || tt == TRAIT_DEF || tt == INTERFACE_DEF || tt == METHOD_DEF || tt == ANNOTATION_DEF || tt == ENUM_DEF ||
+<a class="jxr_linenumber" name="L637" href="#L637">637</a>                 tt == VARIABLE_DEF || tt == ANNOTATION_FIELD_DEF || tt == ENUM_CONSTANT_DEF || tt == CTOR_IDENT;
+<a class="jxr_linenumber" name="L638" href="#L638">638</a>     }
+<a class="jxr_linenumber" name="L639" href="#L639">639</a> 
+<a class="jxr_linenumber" name="L640" href="#L640">640</a>     <strong class="jxr_keyword">private</strong> String getText(GroovySourceAST node) {
+<a class="jxr_linenumber" name="L641" href="#L641">641</a>         String returnValue = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L642" href="#L642">642</a>         <strong class="jxr_keyword">if</strong> (node != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L643" href="#L643">643</a>             returnValue = node.getText();
+<a class="jxr_linenumber" name="L644" href="#L644">644</a>         }
+<a class="jxr_linenumber" name="L645" href="#L645">645</a>         <strong class="jxr_keyword">return</strong> returnValue;
+<a class="jxr_linenumber" name="L646" href="#L646">646</a>     }
+<a class="jxr_linenumber" name="L647" href="#L647">647</a> 
+<a class="jxr_linenumber" name="L648" href="#L648">648</a>     <em class="jxr_comment">// preempt resolve as info is partially available here (star imports won't match here)</em>
+<a class="jxr_linenumber" name="L649" href="#L649">649</a>     <strong class="jxr_keyword">private</strong> String extractName(GroovySourceAST typeNode) {
+<a class="jxr_linenumber" name="L650" href="#L650">650</a>         String typeName = buildName(typeNode);
+<a class="jxr_linenumber" name="L651" href="#L651">651</a>         <strong class="jxr_keyword">if</strong> (!typeName.contains(<span class="jxr_string">"/"</span>)) {
+<a class="jxr_linenumber" name="L652" href="#L652">652</a>             String slashName = <span class="jxr_string">"/"</span> + typeName;
+<a class="jxr_linenumber" name="L653" href="#L653">653</a>             <em class="jxr_comment">// Groovy currently resolves this to last found so traverse in reverse order</em>
+<a class="jxr_linenumber" name="L654" href="#L654">654</a>             <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = importedClassesAndPackages.size() - 1; i &gt;= 0; i--) {
+<a class="jxr_linenumber" name="L655" href="#L655">655</a>                 String name = importedClassesAndPackages.get(i);
+<a class="jxr_linenumber" name="L656" href="#L656">656</a>                 <strong class="jxr_keyword">if</strong> (name.endsWith(slashName)) {
+<a class="jxr_linenumber" name="L657" href="#L657">657</a>                     typeName = name;
+<a class="jxr_linenumber" name="L658" href="#L658">658</a>                     <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L659" href="#L659">659</a>                 }
+<a class="jxr_linenumber" name="L660" href="#L660">660</a>             }
+<a class="jxr_linenumber" name="L661" href="#L661">661</a>         }
+<a class="jxr_linenumber" name="L662" href="#L662">662</a>         <strong class="jxr_keyword">return</strong> typeName;
+<a class="jxr_linenumber" name="L663" href="#L663">663</a>     }
+<a class="jxr_linenumber" name="L664" href="#L664">664</a> 
+<a class="jxr_linenumber" name="L665" href="#L665">665</a>     <strong class="jxr_keyword">private</strong> String buildName(GroovySourceAST t) {
+<a class="jxr_linenumber" name="L666" href="#L666">666</a>         <strong class="jxr_keyword">if</strong> (t != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L667" href="#L667">667</a>             <strong class="jxr_keyword">if</strong> (t.getType() == DOT) {
+<a class="jxr_linenumber" name="L668" href="#L668">668</a>                 GroovySourceAST firstChild = (GroovySourceAST) t.getFirstChild();
+<a class="jxr_linenumber" name="L669" href="#L669">669</a>                 GroovySourceAST secondChild = (GroovySourceAST) firstChild.getNextSibling();
+<a class="jxr_linenumber" name="L670" href="#L670">670</a>                 <strong class="jxr_keyword">return</strong> (buildName(firstChild) + <span class="jxr_string">"/"</span> + buildName(secondChild));
+<a class="jxr_linenumber" name="L671" href="#L671">671</a>             }
+<a class="jxr_linenumber" name="L672" href="#L672">672</a>             <strong class="jxr_keyword">if</strong> (t.getType() == IDENT) {
+<a class="jxr_linenumber" name="L673" href="#L673">673</a>                 <strong class="jxr_keyword">return</strong> t.getText();
+<a class="jxr_linenumber" name="L674" href="#L674">674</a>             }
+<a class="jxr_linenumber" name="L675" href="#L675">675</a>         }
+<a class="jxr_linenumber" name="L676" href="#L676">676</a>         <strong class="jxr_keyword">return</strong> <span class="jxr_string">""</span>;
+<a class="jxr_linenumber" name="L677" href="#L677">677</a>     }
+<a class="jxr_linenumber" name="L678" href="#L678">678</a> 
+<a class="jxr_linenumber" name="L679" href="#L679">679</a>     <strong class="jxr_keyword">private</strong> String getTypeOrDefault(GroovySourceAST t) {
+<a class="jxr_linenumber" name="L680" href="#L680">680</a>         GroovySourceAST typeNode = t.childOfType(TYPE);
+<a class="jxr_linenumber" name="L681" href="#L681">681</a>         <strong class="jxr_keyword">return</strong> getTypeNodeAsText(typeNode, <span class="jxr_string">"def"</span>);
+<a class="jxr_linenumber" name="L682" href="#L682">682</a>     }
+<a class="jxr_linenumber" name="L683" href="#L683">683</a> 
+<a class="jxr_linenumber" name="L684" href="#L684">684</a>     <strong class="jxr_keyword">private</strong> String getTypeNodeAsText(GroovySourceAST typeNode, String defaultText) {
+<a class="jxr_linenumber" name="L685" href="#L685">685</a>         <em class="jxr_comment">// TODO refactor to retain richer type information rather than converting to String</em>
+<a class="jxr_linenumber" name="L686" href="#L686">686</a>         <strong class="jxr_keyword">if</strong> (typeNode == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L687" href="#L687">687</a>             <strong class="jxr_keyword">return</strong> defaultText;
+<a class="jxr_linenumber" name="L688" href="#L688">688</a>         }
+<a class="jxr_linenumber" name="L689" href="#L689">689</a>         <strong class="jxr_keyword">if</strong> (typeNode.getType() == TYPE) {
+<a class="jxr_linenumber" name="L690" href="#L690">690</a>             <strong class="jxr_keyword">return</strong> getAsText(typeNode, defaultText);
+<a class="jxr_linenumber" name="L691" href="#L691">691</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (typeNode.getType() == TYPE_ARGUMENT) {
+<a class="jxr_linenumber" name="L692" href="#L692">692</a>             <strong class="jxr_keyword">return</strong> getTypeNodeAsText((GroovySourceAST) typeNode.getFirstChild(), defaultText);
+<a class="jxr_linenumber" name="L693" href="#L693">693</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (typeNode.getType() == WILDCARD_TYPE) {
+<a class="jxr_linenumber" name="L694" href="#L694">694</a>             AST next = typeNode.getNextSibling();
+<a class="jxr_linenumber" name="L695" href="#L695">695</a>             <strong class="jxr_keyword">if</strong> (next == <strong class="jxr_keyword">null</strong> &amp;&amp; typeNode.getFirstChild() != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L696" href="#L696">696</a>                 <em class="jxr_comment">// Java2Groovy produces a slightly different tree structure (TODO fix converter or java.g instead?)</em>
+<a class="jxr_linenumber" name="L697" href="#L697">697</a>                 next = typeNode.getFirstChild();
+<a class="jxr_linenumber" name="L698" href="#L698">698</a>             }
+<a class="jxr_linenumber" name="L699" href="#L699">699</a>             <strong class="jxr_keyword">if</strong> (next == <strong class="jxr_keyword">null</strong>) <strong class="jxr_keyword">return</strong> <span class="jxr_string">"?"</span>;
+<a class="jxr_linenumber" name="L700" href="#L700">700</a>             String boundType = getTypeNodeAsText((GroovySourceAST) next.getFirstChild(), defaultText);
+<a class="jxr_linenumber" name="L701" href="#L701">701</a>             <strong class="jxr_keyword">if</strong> (next.getType() == TYPE_UPPER_BOUNDS) <strong class="jxr_keyword">return</strong> <span class="jxr_string">"? extends "</span> + boundType;
+<a class="jxr_linenumber" name="L702" href="#L702">702</a>             <strong class="jxr_keyword">if</strong> (next.getType() == TYPE_LOWER_BOUNDS) <strong class="jxr_keyword">return</strong> <span class="jxr_string">"? super "</span> + boundType;
+<a class="jxr_linenumber" name="L703" href="#L703">703</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (typeNode.getType() == IDENT) {
+<a class="jxr_linenumber" name="L704" href="#L704">704</a>             <strong class="jxr_keyword">return</strong> getAsTextCurrent(typeNode, defaultText);
+<a class="jxr_linenumber" name="L705" href="#L705">705</a>         }
+<a class="jxr_linenumber" name="L706" href="#L706">706</a>         <strong class="jxr_keyword">return</strong> defaultText;
+<a class="jxr_linenumber" name="L707" href="#L707">707</a>     }
+<a class="jxr_linenumber" name="L708" href="#L708">708</a> 
+<a class="jxr_linenumber" name="L709" href="#L709">709</a>     <strong class="jxr_keyword">private</strong> String getAsText(GroovySourceAST typeNode, String defaultText) {
+<a class="jxr_linenumber" name="L710" href="#L710">710</a>         GroovySourceAST child = (GroovySourceAST) typeNode.getFirstChild();
+<a class="jxr_linenumber" name="L711" href="#L711">711</a>         <strong class="jxr_keyword">return</strong> getAsTextCurrent(child, defaultText);
+<a class="jxr_linenumber" name="L712" href="#L712">712</a>     }
+<a class="jxr_linenumber" name="L713" href="#L713">713</a> 
+<a class="jxr_linenumber" name="L714" href="#L714">714</a>     <strong class="jxr_keyword">private</strong> String getAsTextCurrent(GroovySourceAST node, String defaultText) {
+<a class="jxr_linenumber" name="L715" href="#L715">715</a>         <strong class="jxr_keyword">if</strong> (node == <strong class="jxr_keyword">null</strong>) <strong class="jxr_keyword">return</strong> defaultText;
+<a class="jxr_linenumber" name="L716" href="#L716">716</a>         <strong class="jxr_keyword">switch</strong> (node.getType()) {
+<a class="jxr_linenumber" name="L717" href="#L717">717</a>             <em class="jxr_comment">// literals</em>
+<a class="jxr_linenumber" name="L718" href="#L718">718</a>             <strong class="jxr_keyword">case</strong> LITERAL_<strong class="jxr_keyword">boolean</strong>:
+<a class="jxr_linenumber" name="L719" href="#L719">719</a>                 <strong class="jxr_keyword">return</strong> <span class="jxr_string">"boolean"</span>;
+<a class="jxr_linenumber" name="L720" href="#L720">720</a>             <strong class="jxr_keyword">case</strong> LITERAL_byte:
+<a class="jxr_linenumber" name="L721" href="#L721">721</a>                 <strong class="jxr_keyword">return</strong> <span class="jxr_string">"byte"</span>;
+<a class="jxr_linenumber" name="L722" href="#L722">722</a>             <strong class="jxr_keyword">case</strong> LITERAL_<strong class="jxr_keyword">char</strong>:
+<a class="jxr_linenumber" name="L723" href="#L723">723</a>                 <strong class="jxr_keyword">return</strong> <span class="jxr_string">"char"</span>;
+<a class="jxr_linenumber" name="L724" href="#L724">724</a>             <em class="jxr_comment">// note: LITERAL_def never created</em>
+<a class="jxr_linenumber" name="L725" href="#L725">725</a>             <strong class="jxr_keyword">case</strong> LITERAL_<strong class="jxr_keyword">double</strong>:
+<a class="jxr_linenumber" name="L726" href="#L726">726</a>                 <strong class="jxr_keyword">return</strong> <span class="jxr_string">"double"</span>;
+<a class="jxr_linenumber" name="L727" href="#L727">727</a>             <strong class="jxr_keyword">case</strong> LITERAL_<strong class="jxr_keyword">float</strong>:
+<a class="jxr_linenumber" name="L728" href="#L728">728</a>                 <strong class="jxr_keyword">return</strong> <span class="jxr_string">"float"</span>;
+<a class="jxr_linenumber" name="L729" href="#L729">729</a>             <strong class="jxr_keyword">case</strong> LITERAL_<strong class="jxr_keyword">int</strong>:
+<a class="jxr_linenumber" name="L730" href="#L730">730</a>                 <strong class="jxr_keyword">return</strong> <span class="jxr_string">"int"</span>;
+<a class="jxr_linenumber" name="L731" href="#L731">731</a>             <strong class="jxr_keyword">case</strong> LITERAL_<strong class="jxr_keyword">long</strong>:
+<a class="jxr_linenumber" name="L732" href="#L732">732</a>                 <strong class="jxr_keyword">return</strong> <span class="jxr_string">"long"</span>;
+<a class="jxr_linenumber" name="L733" href="#L733">733</a>             <strong class="jxr_keyword">case</strong> LITERAL_<strong class="jxr_keyword">short</strong>:
+<a class="jxr_linenumber" name="L734" href="#L734">734</a>                 <strong class="jxr_keyword">return</strong> <span class="jxr_string">"short"</span>;
+<a class="jxr_linenumber" name="L735" href="#L735">735</a>             <strong class="jxr_keyword">case</strong> LITERAL_<strong class="jxr_keyword">void</strong>:
+<a class="jxr_linenumber" name="L736" href="#L736">736</a>                 <strong class="jxr_keyword">return</strong> <span class="jxr_string">"void"</span>;
+<a class="jxr_linenumber" name="L737" href="#L737">737</a>             <strong class="jxr_keyword">case</strong> ARRAY_DECLARATOR:
+<a class="jxr_linenumber" name="L738" href="#L738">738</a>                 String componentType = getAsText(node, defaultText);
+<a class="jxr_linenumber" name="L739" href="#L739">739</a>                 <strong class="jxr_keyword">if</strong> (!componentType.equals(<span class="jxr_string">"def"</span>)) <strong class="jxr_keyword">return</strong> componentType + <span class="jxr_string">"[]"</span>;
+<a class="jxr_linenumber" name="L740" href="#L740">740</a>                 <strong class="jxr_keyword">return</strong> <span class="jxr_string">"java/lang/Object[]"</span>;
+<a class="jxr_linenumber" name="L741" href="#L741">741</a>             <em class="jxr_comment">// identifiers</em>
+<a class="jxr_linenumber" name="L742" href="#L742">742</a>             <strong class="jxr_keyword">case</strong> IDENT:
+<a class="jxr_linenumber" name="L743" href="#L743">743</a>                 StringBuilder ident = <strong class="jxr_keyword">new</strong> StringBuilder();
+<a class="jxr_linenumber" name="L744" href="#L744">744</a>                 ident.append(node.getText());
+<a class="jxr_linenumber" name="L745" href="#L745">745</a>                 GroovySourceAST identChild = (GroovySourceAST) node.getFirstChild();
+<a class="jxr_linenumber" name="L746" href="#L746">746</a>                 getTypeArguments(identChild, ident, defaultText);
+<a class="jxr_linenumber" name="L747" href="#L747">747</a>                 <strong class="jxr_keyword">return</strong> ident.toString();
+<a class="jxr_linenumber" name="L748" href="#L748">748</a>             <strong class="jxr_keyword">case</strong> DOT:
+<a class="jxr_linenumber" name="L749" href="#L749">749</a>                 StringBuilder dot = <strong class="jxr_keyword">new</strong> StringBuilder();
+<a class="jxr_linenumber" name="L750" href="#L750">750</a>                 GroovySourceAST dotChild = (GroovySourceAST) node.getFirstChild();
+<a class="jxr_linenumber" name="L751" href="#L751">751</a>                 <strong class="jxr_keyword">while</strong> (dotChild != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L752" href="#L752">752</a>                     <strong class="jxr_keyword">if</strong> (dotChild.getType() == IDENT) {
+<a class="jxr_linenumber" name="L753" href="#L753">753</a>                         <strong class="jxr_keyword">if</strong> (dot.length() &gt; 0) dot.append(<span class="jxr_string">"/"</span>);
+<a class="jxr_linenumber" name="L754" href="#L754">754</a>                         dot.append(getAsTextCurrent(dotChild, defaultText));
+<a class="jxr_linenumber" name="L755" href="#L755">755</a>                     } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (dotChild.getType() == DOT) {
+<a class="jxr_linenumber" name="L756" href="#L756">756</a>                         <strong class="jxr_keyword">if</strong> (dot.length() &gt; 0) dot.append(<span class="jxr_string">"/"</span>);
+<a class="jxr_linenumber" name="L757" href="#L757">757</a>                         dot.append(getAsTextCurrent(dotChild, defaultText));
+<a class="jxr_linenumber" name="L758" href="#L758">758</a>                     } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (dotChild.getType() == TYPE_ARGUMENTS) {
+<a class="jxr_linenumber" name="L759" href="#L759">759</a>                         getTypeArguments(dotChild, dot, defaultText);
+<a class="jxr_linenumber" name="L760" href="#L760">760</a>                     }
+<a class="jxr_linenumber" name="L761" href="#L761">761</a>                     dotChild = (GroovySourceAST) dotChild.getNextSibling();
+<a class="jxr_linenumber" name="L762" href="#L762">762</a>                 }
+<a class="jxr_linenumber" name="L763" href="#L763">763</a>                 <strong class="jxr_keyword">return</strong> dot.toString();
+<a class="jxr_linenumber" name="L764" href="#L764">764</a>         }
+<a class="jxr_linenumber" name="L765" href="#L765">765</a>         <strong class="jxr_keyword">return</strong> defaultText;
+<a class="jxr_linenumber" name="L766" href="#L766">766</a>     }
+<a class="jxr_linenumber" name="L767" href="#L767">767</a> 
+<a class="jxr_linenumber" name="L768" href="#L768">768</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> getTypeArguments(GroovySourceAST child, StringBuilder result, String defaultText) {
+<a class="jxr_linenumber" name="L769" href="#L769">769</a>         <strong class="jxr_keyword">if</strong> (child != <strong class="jxr_keyword">null</strong> &amp;&amp; child.getType() == TYPE_ARGUMENTS &amp;&amp; child.getNumberOfChildren() &gt; 0) {
+<a class="jxr_linenumber" name="L770" href="#L770">770</a>             result.append(<span class="jxr_string">"&lt;"</span>);
+<a class="jxr_linenumber" name="L771" href="#L771">771</a>             GroovySourceAST typeArgumentsNext = (GroovySourceAST) child.getFirstChild();
+<a class="jxr_linenumber" name="L772" href="#L772">772</a>             List&lt;String&gt; typeArgumentParts = <strong class="jxr_keyword">new</strong> ArrayList&lt;String&gt;();
+<a class="jxr_linenumber" name="L773" href="#L773">773</a>             <strong class="jxr_keyword">while</strong> (typeArgumentsNext != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L774" href="#L774">774</a>                 <strong class="jxr_keyword">if</strong> (typeArgumentsNext.getType() == TYPE_ARGUMENT &amp;&amp; typeArgumentsNext.getNumberOfChildren() &gt; 0) {
+<a class="jxr_linenumber" name="L775" href="#L775">775</a>                     typeArgumentParts.add(getTypeNodeAsText((GroovySourceAST) typeArgumentsNext.getFirstChild(), defaultText));
+<a class="jxr_linenumber" name="L776" href="#L776">776</a>                 }
+<a class="jxr_linenumber" name="L777" href="#L777">777</a>                 typeArgumentsNext = (GroovySourceAST) typeArgumentsNext.getNextSibling();
+<a class="jxr_linenumber" name="L778" href="#L778">778</a>             }
+<a class="jxr_linenumber" name="L779" href="#L779">779</a>             result.append(DefaultGroovyMethods.join(typeArgumentParts, <span class="jxr_string">", "</span>));
+<a class="jxr_linenumber" name="L780" href="#L780">780</a>             result.append(<span class="jxr_string">"&gt;"</span>);
+<a class="jxr_linenumber" name="L781" href="#L781">781</a>         }
+<a class="jxr_linenumber" name="L782" href="#L782">782</a>     }
+<a class="jxr_linenumber" name="L783" href="#L783">783</a> 
+<a class="jxr_linenumber" name="L784" href="#L784">784</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> getTypeParameters(GroovySourceAST child, StringBuilder result, String defaultText) {
+<a class="jxr_linenumber" name="L785" href="#L785">785</a>         <strong class="jxr_keyword">if</strong> (child != <strong class="jxr_keyword">null</strong> &amp;&amp; child.getType() == TYPE_PARAMETERS &amp;&amp; child.getNumberOfChildren() &gt; 0) {
+<a class="jxr_linenumber" name="L786" href="#L786">786</a>             result.append(<span class="jxr_string">"&lt;"</span>);
+<a class="jxr_linenumber" name="L787" href="#L787">787</a>             GroovySourceAST typeParametersNext = (GroovySourceAST) child.getFirstChild();
+<a class="jxr_linenumber" name="L788" href="#L788">788</a>             List&lt;String&gt; typeParameterParts = <strong class="jxr_keyword">new</strong> ArrayList&lt;String&gt;();
+<a class="jxr_linenumber" name="L789" href="#L789">789</a>             <strong class="jxr_keyword">while</strong> (typeParametersNext != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L790" href="#L790">790</a>                 <strong class="jxr_keyword">if</strong> (typeParametersNext.getType() == TYPE_PARAMETER &amp;&amp; typeParametersNext.getNumberOfChildren() &gt; 0) {
+<a class="jxr_linenumber" name="L791" href="#L791">791</a>                     typeParameterParts.add(getTypeNodeAsText((GroovySourceAST) typeParametersNext.getFirstChild(), defaultText));
+<a class="jxr_linenumber" name="L792" href="#L792">792</a>                 }
+<a class="jxr_linenumber" name="L793" href="#L793">793</a>                 typeParametersNext = (GroovySourceAST) typeParametersNext.getNextSibling();
+<a class="jxr_linenumber" name="L794" href="#L794">794</a>             }
+<a class="jxr_linenumber" name="L795" href="#L795">795</a>             result.append(DefaultGroovyMethods.join(typeParameterParts, <span class="jxr_string">", "</span>));
+<a class="jxr_linenumber" name="L796" href="#L796">796</a>             result.append(<span class="jxr_string">"&gt;"</span>);
+<a class="jxr_linenumber" name="L797" href="#L797">797</a>         }
+<a class="jxr_linenumber" name="L798" href="#L798">798</a>     }
+<a class="jxr_linenumber" name="L799" href="#L799">799</a> 
+<a class="jxr_linenumber" name="L800" href="#L800">800</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> addParametersTo(GroovySourceAST t, SimpleGroovyExecutableMemberDoc executableMemberDoc) {
+<a class="jxr_linenumber" name="L801" href="#L801">801</a>         <em class="jxr_comment">// parameters</em>
+<a class="jxr_linenumber" name="L802" href="#L802">802</a>         GroovySourceAST parametersNode = t.childOfType(PARAMETERS);
+<a class="jxr_linenumber" name="L803" href="#L803">803</a>         <strong class="jxr_keyword">if</strong> (parametersNode != <strong class="jxr_keyword">null</strong> &amp;&amp; parametersNode.getNumberOfChildren() &gt; 0) {
+<a class="jxr_linenumber" name="L804" href="#L804">804</a>             GroovySourceAST currentNode = (GroovySourceAST) parametersNode.getFirstChild();
+<a class="jxr_linenumber" name="L805" href="#L805">805</a>             <strong class="jxr_keyword">while</strong> (currentNode != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L806" href="#L806">806</a>                 String parameterTypeName = getTypeOrDefault(currentNode);
+<a class="jxr_linenumber" name="L807" href="#L807">807</a>                 String parameterName = getText(currentNode.childOfType(IDENT));
+<a class="jxr_linenumber" name="L808" href="#L808">808</a>                 SimpleGroovyParameter parameter = <strong class="jxr_keyword">new</strong> SimpleGroovyParameter(parameterName);
+<a class="jxr_linenumber" name="L809" href="#L809">809</a>                 parameter.setVararg(currentNode.getType() == VARIABLE_PARAMETER_DEF);
+<a class="jxr_linenumber" name="L810" href="#L810">810</a>                 parameter.setTypeName(parameterTypeName);
+<a class="jxr_linenumber" name="L811" href="#L811">811</a>                 GroovySourceAST modifiers = currentNode.childOfType(MODIFIERS);
+<a class="jxr_linenumber" name="L812" href="#L812">812</a>                 <strong class="jxr_keyword">if</strong> (modifiers != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L813" href="#L813">813</a>                     List&lt;GroovySourceAST&gt; annotations = modifiers.childrenOfType(ANNOTATION);
+<a class="jxr_linenumber" name="L814" href="#L814">814</a>                     <strong class="jxr_keyword">for</strong> (GroovySourceAST a : annotations) {
+<a class="jxr_linenumber" name="L815" href="#L815">815</a>                         addAnnotationRef(parameter, a);
+<a class="jxr_linenumber" name="L816" href="#L816">816</a>                     }
+<a class="jxr_linenumber" name="L817" href="#L817">817</a>                 }
+<a class="jxr_linenumber" name="L818" href="#L818">818</a>                 executableMemberDoc.add(parameter);
+<a class="jxr_linenumber" name="L819" href="#L819">819</a>                 <strong class="jxr_keyword">if</strong> (currentNode.getNumberOfChildren() == 4) {
+<a class="jxr_linenumber" name="L820" href="#L820">820</a>                     handleDefaultValue(currentNode, parameter);
+<a class="jxr_linenumber" name="L821" href="#L821">821</a>                 }
+<a class="jxr_linenumber" name="L822" href="#L822">822</a>                 currentNode = (GroovySourceAST) currentNode.getNextSibling();
+<a class="jxr_linenumber" name="L823" href="#L823">823</a>             }
+<a class="jxr_linenumber" name="L824" href="#L824">824</a>         }
+<a class="jxr_linenumber" name="L825" href="#L825">825</a>     }
+<a class="jxr_linenumber" name="L826" href="#L826">826</a> 
+<a class="jxr_linenumber" name="L827" href="#L827">827</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> handleDefaultValue(GroovySourceAST currentNode, SimpleGroovyParameter parameter) {
+<a class="jxr_linenumber" name="L828" href="#L828">828</a>         GroovySourceAST paramPart = (GroovySourceAST) currentNode.getFirstChild();
+<a class="jxr_linenumber" name="L829" href="#L829">829</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 1; i &lt; currentNode.getNumberOfChildren(); i++) {
+<a class="jxr_linenumber" name="L830" href="#L830">830</a>             paramPart = (GroovySourceAST) paramPart.getNextSibling();
+<a class="jxr_linenumber" name="L831" href="#L831">831</a>         }
+<a class="jxr_linenumber" name="L832" href="#L832">832</a>         GroovySourceAST nodeToProcess = paramPart;
+<a class="jxr_linenumber" name="L833" href="#L833">833</a>         <strong class="jxr_keyword">if</strong> (paramPart.getNumberOfChildren() &gt; 0) {
+<a class="jxr_linenumber" name="L834" href="#L834">834</a>             nodeToProcess = (GroovySourceAST) paramPart.getFirstChild();
+<a class="jxr_linenumber" name="L835" href="#L835">835</a>         }
+<a class="jxr_linenumber" name="L836" href="#L836">836</a>         <em class="jxr_comment">// hack warning!</em>
+<a class="jxr_linenumber" name="L837" href="#L837">837</a>         <em class="jxr_comment">// TODO handle , and ) when they occur within Strings</em>
+<a class="jxr_linenumber" name="L838" href="#L838">838</a>         parameter.setDefaultValue(getChildTextFromSource(nodeToProcess, <span class="jxr_string">",)"</span>));
+<a class="jxr_linenumber" name="L839" href="#L839">839</a>     }
+<a class="jxr_linenumber" name="L840" href="#L840">840</a> 
+<a class="jxr_linenumber" name="L841" href="#L841">841</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> push(GroovySourceAST t) {
+<a class="jxr_linenumber" name="L842" href="#L842">842</a>         stack.push(t);
+<a class="jxr_linenumber" name="L843" href="#L843">843</a>     }
+<a class="jxr_linenumber" name="L844" href="#L844">844</a> 
+<a class="jxr_linenumber" name="L845" href="#L845">845</a>     <strong class="jxr_keyword">public</strong> GroovySourceAST pop() {
+<a class="jxr_linenumber" name="L846" href="#L846">846</a>         <strong class="jxr_keyword">if</strong> (!stack.empty()) {
+<a class="jxr_linenumber" name="L847" href="#L847">847</a>             <strong class="jxr_keyword">return</strong> stack.pop();
+<a class="jxr_linenumber" name="L848" href="#L848">848</a>         }
+<a class="jxr_linenumber" name="L849" href="#L849">849</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L850" href="#L850">850</a>     }
+<a class="jxr_linenumber" name="L851" href="#L851">851</a> 
+<a class="jxr_linenumber" name="L852" href="#L852">852</a>     <strong class="jxr_keyword">private</strong> GroovySourceAST getParentNode() {
+<a class="jxr_linenumber" name="L853" href="#L853">853</a>         GroovySourceAST parentNode = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L854" href="#L854">854</a>         GroovySourceAST currentNode = stack.pop();
+<a class="jxr_linenumber" name="L855" href="#L855">855</a>         <strong class="jxr_keyword">if</strong> (!stack.empty()) {
+<a class="jxr_linenumber" name="L856" href="#L856">856</a>             parentNode = stack.peek();
+<a class="jxr_linenumber" name="L857" href="#L857">857</a>         }
+<a class="jxr_linenumber" name="L858" href="#L858">858</a>         stack.push(currentNode);
+<a class="jxr_linenumber" name="L859" href="#L859">859</a>         <strong class="jxr_keyword">return</strong> parentNode;
+<a class="jxr_linenumber" name="L860" href="#L860">860</a>     }
+<a class="jxr_linenumber" name="L861" href="#L861">861</a> 
+<a class="jxr_linenumber" name="L862" href="#L862">862</a>     <strong class="jxr_keyword">private</strong> GroovySourceAST getGrandParentNode() {
+<a class="jxr_linenumber" name="L863" href="#L863">863</a>         GroovySourceAST grandParentNode = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L864" href="#L864">864</a>         GroovySourceAST parentNode;
+<a class="jxr_linenumber" name="L865" href="#L865">865</a>         GroovySourceAST currentNode = stack.pop();
+<a class="jxr_linenumber" name="L866" href="#L866">866</a>         <strong class="jxr_keyword">if</strong> (!stack.empty()) {
+<a class="jxr_linenumber" name="L867" href="#L867">867</a>             parentNode = stack.pop();
+<a class="jxr_linenumber" name="L868" href="#L868">868</a>             <strong class="jxr_keyword">if</strong> (!stack.empty()) {
+<a class="jxr_linenumber" name="L869" href="#L869">869</a>                 grandParentNode = stack.peek();
+<a class="jxr_linenumber" name="L870" href="#L870">870</a>             }
+<a class="jxr_linenumber" name="L871" href="#L871">871</a>             stack.push(parentNode);
+<a class="jxr_linenumber" name="L872" href="#L872">872</a>         }
+<a class="jxr_linenumber" name="L873" href="#L873">873</a>         stack.push(currentNode);
+<a class="jxr_linenumber" name="L874" href="#L874">874</a>         <strong class="jxr_keyword">return</strong> grandParentNode;
+<a class="jxr_linenumber" name="L875" href="#L875">875</a>     }
+<a class="jxr_linenumber" name="L876" href="#L876">876</a> 
+<a class="jxr_linenumber" name="L877" href="#L877">877</a>     <strong class="jxr_keyword">private</strong> SimpleGroovyClassDoc getCurrentOrTopLevelClassDoc(GroovySourceAST node) {
+<a class="jxr_linenumber" name="L878" href="#L878">878</a>         SimpleGroovyClassDoc current = getCurrentClassDoc();
+<a class="jxr_linenumber" name="L879" href="#L879">879</a>         <strong class="jxr_keyword">if</strong> (current != <strong class="jxr_keyword">null</strong>) <strong class="jxr_keyword">return</strong> current;
+<a class="jxr_linenumber" name="L880" href="#L880">880</a>         <strong class="jxr_keyword">return</strong> foundClasses.get(getIdentFor(node));
+<a class="jxr_linenumber" name="L881" href="#L881">881</a>     }
+<a class="jxr_linenumber" name="L882" href="#L882">882</a> 
+<a class="jxr_linenumber" name="L883" href="#L883">883</a>     <strong class="jxr_keyword">private</strong> SimpleGroovyClassDoc getCurrentClassDoc() {
+<a class="jxr_linenumber" name="L884" href="#L884">884</a>         <strong class="jxr_keyword">if</strong> (stack.isEmpty()) <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L885" href="#L885">885</a>         GroovySourceAST node = getParentNode();
+<a class="jxr_linenumber" name="L886" href="#L886">886</a>         <strong class="jxr_keyword">if</strong> (isTopLevelConstruct(node)) <strong class="jxr_keyword">return</strong> foundClasses.get(getIdentFor(node));
+<a class="jxr_linenumber" name="L887" href="#L887">887</a>         GroovySourceAST saved = stack.pop();
+<a class="jxr_linenumber" name="L888" href="#L888">888</a>         SimpleGroovyClassDoc result = getCurrentClassDoc();
+<a class="jxr_linenumber" name="L889" href="#L889">889</a>         stack.push(saved);
+<a class="jxr_linenumber" name="L890" href="#L890">890</a>         <strong class="jxr_keyword">return</strong> result;
+<a class="jxr_linenumber" name="L891" href="#L891">891</a>     }
+<a class="jxr_linenumber" name="L892" href="#L892">892</a> 
+<a class="jxr_linenumber" name="L893" href="#L893">893</a>     <strong class="jxr_keyword">private</strong> String getIdentFor(GroovySourceAST gpn) {
+<a class="jxr_linenumber" name="L894" href="#L894">894</a>         <strong class="jxr_keyword">return</strong> gpn.childOfType(IDENT).getText();
+<a class="jxr_linenumber" name="L895" href="#L895">895</a>     }
+<a class="jxr_linenumber" name="L896" href="#L896">896</a> 
+<a class="jxr_linenumber" name="L897" href="#L897">897</a>     <strong class="jxr_keyword">private</strong> String getIdentPlusTypeArgsFor(GroovySourceAST gpn) {
+<a class="jxr_linenumber" name="L898" href="#L898">898</a>         GroovySourceAST groovySourceAST = gpn.childOfType(IDENT);
+<a class="jxr_linenumber" name="L899" href="#L899">899</a>         StringBuilder ident = <strong class="jxr_keyword">new</strong> StringBuilder();
+<a class="jxr_linenumber" name="L900" href="#L900">900</a>         ident.append(groovySourceAST.getText());
+<a class="jxr_linenumber" name="L901" href="#L901">901</a>         GroovySourceAST typeParams = (GroovySourceAST) groovySourceAST.getNextSibling();
+<a class="jxr_linenumber" name="L902" href="#L902">902</a>         getTypeParameters(typeParams, ident, <span class="jxr_string">"def"</span>);
+<a class="jxr_linenumber" name="L903" href="#L903">903</a>         <strong class="jxr_keyword">return</strong> ident.toString();
+<a class="jxr_linenumber" name="L904" href="#L904">904</a>     }
+<a class="jxr_linenumber" name="L905" href="#L905">905</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

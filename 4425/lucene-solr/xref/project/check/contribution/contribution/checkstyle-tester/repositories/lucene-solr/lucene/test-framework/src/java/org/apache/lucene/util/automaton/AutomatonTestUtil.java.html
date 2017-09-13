@@ -1,0 +1,532 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>AutomatonTestUtil xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.lucene.util.automaton;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> java.util.ArrayList;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> java.util.HashMap;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> java.util.HashSet;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> java.util.LinkedList;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> java.util.List;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> java.util.Map;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> java.util.Random;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> java.util.Set;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.ArrayUtil;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.IntsRef;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.IntsRefBuilder;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.TestUtil;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.UnicodeUtil;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <em class="jxr_javadoccomment"> * Utilities for testing automata.</em>
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <em class="jxr_javadoccomment"> * &lt;p&gt;</em>
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <em class="jxr_javadoccomment"> * Capable of generating random regular expressions,</em>
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <em class="jxr_javadoccomment"> * and automata, and also provides a number of very</em>
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <em class="jxr_javadoccomment"> * basic unoptimized implementations (*slow) for testing.</em>
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> AutomatonTestUtil {
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>    <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>  <em class="jxr_javadoccomment">   * Default maximum number of states that {@link Operations#determinize} should create.</em>
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>  <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> DEFAULT_MAX_DETERMINIZED_STATES = 1000000;
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>  
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>    <em class="jxr_javadoccomment">/** Returns random string, including full unicode range. */</em>
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> String randomRegexp(Random r) {
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>      <strong class="jxr_keyword">while</strong> (<strong class="jxr_keyword">true</strong>) {
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>        String regexp = randomRegexpString(r);
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>        <em class="jxr_comment">// we will also generate some undefined unicode queries</em>
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>        <strong class="jxr_keyword">if</strong> (!UnicodeUtil.validUTF16String(regexp))
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>          <strong class="jxr_keyword">continue</strong>;
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>        <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>          <strong class="jxr_keyword">new</strong> RegExp(regexp, RegExp.NONE);
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>          <strong class="jxr_keyword">return</strong> regexp;
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>        } <strong class="jxr_keyword">catch</strong> (Exception e) {}
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>      }
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>    }
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>  
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> String randomRegexpString(Random r) {
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>      <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> end = r.nextInt(20);
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>      <strong class="jxr_keyword">if</strong> (end == 0) {
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>        <em class="jxr_comment">// allow 0 length</em>
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>        <strong class="jxr_keyword">return</strong> <span class="jxr_string">""</span>;
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>      }
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>      <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">char</strong>[] buffer = <strong class="jxr_keyword">new</strong> <strong class="jxr_keyword">char</strong>[end];
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>      <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; end; i++) {
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>        <strong class="jxr_keyword">int</strong> t = r.nextInt(15);
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>        <strong class="jxr_keyword">if</strong> (0 == t &amp;&amp; i &lt; end - 1) {
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>          <em class="jxr_comment">// Make a surrogate pair</em>
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>          <em class="jxr_comment">// High surrogate</em>
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>          buffer[i++] = (<strong class="jxr_keyword">char</strong>) TestUtil.nextInt(r, 0xd800, 0xdbff);
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>          <em class="jxr_comment">// Low surrogate</em>
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>          buffer[i] = (<strong class="jxr_keyword">char</strong>) TestUtil.nextInt(r, 0xdc00, 0xdfff);
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>        }
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>        <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (t &lt;= 1) buffer[i] = (<strong class="jxr_keyword">char</strong>) r.nextInt(0x80);
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>        <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (2 == t) buffer[i] = (<strong class="jxr_keyword">char</strong>) TestUtil.nextInt(r, 0x80, 0x800);
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>        <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (3 == t) buffer[i] = (<strong class="jxr_keyword">char</strong>) TestUtil.nextInt(r, 0x800, 0xd7ff);
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>        <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (4 == t) buffer[i] = (<strong class="jxr_keyword">char</strong>) TestUtil.nextInt(r, 0xe000, 0xffff);
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>        <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (5 == t) buffer[i] = '.';
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>        <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (6 == t) buffer[i] = '?';
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>        <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (7 == t) buffer[i] = '*';
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>        <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (8 == t) buffer[i] = '+';
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>        <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (9 == t) buffer[i] = '(';
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>        <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (10 == t) buffer[i] = ')';
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>        <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (11 == t) buffer[i] = '-';
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>        <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (12 == t) buffer[i] = '[';
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>        <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (13 == t) buffer[i] = ']';
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>        <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (14 == t) buffer[i] = '|';
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>      }
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>      <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> String(buffer, 0, end);
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>    }
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>    
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>    <em class="jxr_javadoccomment">/** picks a random int code point, avoiding surrogates;</em>
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>  <em class="jxr_javadoccomment">   * throws IllegalArgumentException if this transition only</em>
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>  <em class="jxr_javadoccomment">   * accepts surrogates */</em>
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">int</strong> getRandomCodePoint(<strong class="jxr_keyword">final</strong> Random r, <strong class="jxr_keyword">int</strong> min, <strong class="jxr_keyword">int</strong> max) {
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>     <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> code;
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>     <strong class="jxr_keyword">if</strong> (max &lt; UnicodeUtil.UNI_SUR_HIGH_START ||
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>         min &gt; UnicodeUtil.UNI_SUR_HIGH_END) {
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>       <em class="jxr_comment">// easy: entire range is before or after surrogates</em>
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>       code = min+r.nextInt(max-min+1);
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>     } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (min &gt;= UnicodeUtil.UNI_SUR_HIGH_START) {
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>       <strong class="jxr_keyword">if</strong> (max &gt; UnicodeUtil.UNI_SUR_LOW_END) {
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>         <em class="jxr_comment">// after surrogates</em>
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>         code = 1+UnicodeUtil.UNI_SUR_LOW_END+r.nextInt(max-UnicodeUtil.UNI_SUR_LOW_END);
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>       } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>         <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> IllegalArgumentException(<span class="jxr_string">"transition accepts only surrogates: min="</span> + min + <span class="jxr_string">" max="</span> + max);
+<a class="jxr_linenumber" name="L111" href="#L111">111</a>       }
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>     } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (max &lt;= UnicodeUtil.UNI_SUR_LOW_END) {
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>       <strong class="jxr_keyword">if</strong> (min &lt; UnicodeUtil.UNI_SUR_HIGH_START) {
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>         <em class="jxr_comment">// before surrogates</em>
+<a class="jxr_linenumber" name="L115" href="#L115">115</a>         code = min + r.nextInt(UnicodeUtil.UNI_SUR_HIGH_START - min);
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>       } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>         <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> IllegalArgumentException(<span class="jxr_string">"transition accepts only surrogates: min="</span> + min + <span class="jxr_string">" max="</span> + max);
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>       }
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>     } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>       <em class="jxr_comment">// range includes all surrogates</em>
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>       <strong class="jxr_keyword">int</strong> gap1 = UnicodeUtil.UNI_SUR_HIGH_START - min;
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>       <strong class="jxr_keyword">int</strong> gap2 = max - UnicodeUtil.UNI_SUR_LOW_END;
+<a class="jxr_linenumber" name="L123" href="#L123">123</a>       <strong class="jxr_keyword">int</strong> c = r.nextInt(gap1+gap2);
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>       <strong class="jxr_keyword">if</strong> (c &lt; gap1) {
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>         code = min + c;
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>       } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>         code = UnicodeUtil.UNI_SUR_LOW_END + c - gap1 + 1;
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>       }
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>     }
+<a class="jxr_linenumber" name="L130" href="#L130">130</a> 
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>     assert code &gt;= min &amp;&amp; code &lt;= max &amp;&amp; (code &lt; UnicodeUtil.UNI_SUR_HIGH_START || code &gt; UnicodeUtil.UNI_SUR_LOW_END):
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>       <span class="jxr_string">"code="</span> + code + <span class="jxr_string">" min="</span> + min + <span class="jxr_string">" max="</span> + max;
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>     <strong class="jxr_keyword">return</strong> code;
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>   }
+<a class="jxr_linenumber" name="L135" href="#L135">135</a> 
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L137" href="#L137">137</a> <em class="jxr_javadoccomment">   * Lets you retrieve random strings accepted</em>
+<a class="jxr_linenumber" name="L138" href="#L138">138</a> <em class="jxr_javadoccomment">   * by an Automaton.</em>
+<a class="jxr_linenumber" name="L139" href="#L139">139</a> <em class="jxr_javadoccomment">   * &lt;p&gt;</em>
+<a class="jxr_linenumber" name="L140" href="#L140">140</a> <em class="jxr_javadoccomment">   * Once created, call {@link #getRandomAcceptedString(Random)}</em>
+<a class="jxr_linenumber" name="L141" href="#L141">141</a> <em class="jxr_javadoccomment">   * to get a new string (in UTF-32 codepoints).</em>
+<a class="jxr_linenumber" name="L142" href="#L142">142</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">class</strong> RandomAcceptedStrings {
+<a class="jxr_linenumber" name="L144" href="#L144">144</a> 
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> Map&lt;Transition,Boolean&gt; leadsToAccept;
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> Automaton a;
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> Transition[][] transitions;
+<a class="jxr_linenumber" name="L148" href="#L148">148</a> 
+<a class="jxr_linenumber" name="L149" href="#L149">149</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">class</strong> ArrivingTransition {
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>       <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> from;
+<a class="jxr_linenumber" name="L151" href="#L151">151</a>       <strong class="jxr_keyword">final</strong> Transition t;
+<a class="jxr_linenumber" name="L152" href="#L152">152</a> 
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>       <strong class="jxr_keyword">public</strong> ArrivingTransition(<strong class="jxr_keyword">int</strong> from, Transition t) {
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>         <strong class="jxr_keyword">this</strong>.from = from;
+<a class="jxr_linenumber" name="L155" href="#L155">155</a>         <strong class="jxr_keyword">this</strong>.t = t;
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>       }
+<a class="jxr_linenumber" name="L157" href="#L157">157</a>     }
+<a class="jxr_linenumber" name="L158" href="#L158">158</a> 
+<a class="jxr_linenumber" name="L159" href="#L159">159</a>     <strong class="jxr_keyword">public</strong> RandomAcceptedStrings(Automaton a) {
+<a class="jxr_linenumber" name="L160" href="#L160">160</a>       <strong class="jxr_keyword">this</strong>.a = a;
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>       <strong class="jxr_keyword">if</strong> (a.getNumStates() == 0) {
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>         <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> IllegalArgumentException(<span class="jxr_string">"this automaton accepts nothing"</span>);
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>       }
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>       <strong class="jxr_keyword">this</strong>.transitions = a.getSortedTransitions();
+<a class="jxr_linenumber" name="L165" href="#L165">165</a> 
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>       leadsToAccept = <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;();
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>       <strong class="jxr_keyword">final</strong> Map&lt;Integer,List&lt;ArrivingTransition&gt;&gt; allArriving = <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;();
+<a class="jxr_linenumber" name="L168" href="#L168">168</a> 
+<a class="jxr_linenumber" name="L169" href="#L169">169</a>       <strong class="jxr_keyword">final</strong> LinkedList&lt;Integer&gt; q = <strong class="jxr_keyword">new</strong> LinkedList&lt;&gt;();
+<a class="jxr_linenumber" name="L170" href="#L170">170</a>       <strong class="jxr_keyword">final</strong> Set&lt;Integer&gt; seen = <strong class="jxr_keyword">new</strong> HashSet&lt;&gt;();
+<a class="jxr_linenumber" name="L171" href="#L171">171</a> 
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>       <em class="jxr_comment">// reverse map the transitions, so we can quickly look</em>
+<a class="jxr_linenumber" name="L173" href="#L173">173</a>       <em class="jxr_comment">// up all arriving transitions to a given state</em>
+<a class="jxr_linenumber" name="L174" href="#L174">174</a>       <strong class="jxr_keyword">int</strong> numStates = a.getNumStates();
+<a class="jxr_linenumber" name="L175" href="#L175">175</a>       <strong class="jxr_keyword">for</strong>(<strong class="jxr_keyword">int</strong> s=0;s&lt;numStates;s++) {
+<a class="jxr_linenumber" name="L176" href="#L176">176</a>         <strong class="jxr_keyword">for</strong>(Transition t : transitions[s]) {
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>           List&lt;ArrivingTransition&gt; tl = allArriving.get(t.dest);
+<a class="jxr_linenumber" name="L178" href="#L178">178</a>           <strong class="jxr_keyword">if</strong> (tl == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>             tl = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L180" href="#L180">180</a>             allArriving.put(t.dest, tl);
+<a class="jxr_linenumber" name="L181" href="#L181">181</a>           }
+<a class="jxr_linenumber" name="L182" href="#L182">182</a>           tl.add(<strong class="jxr_keyword">new</strong> ArrivingTransition(s, t));
+<a class="jxr_linenumber" name="L183" href="#L183">183</a>         }
+<a class="jxr_linenumber" name="L184" href="#L184">184</a>         <strong class="jxr_keyword">if</strong> (a.isAccept(s)) {
+<a class="jxr_linenumber" name="L185" href="#L185">185</a>           q.add(s);
+<a class="jxr_linenumber" name="L186" href="#L186">186</a>           seen.add(s);
+<a class="jxr_linenumber" name="L187" href="#L187">187</a>         }
+<a class="jxr_linenumber" name="L188" href="#L188">188</a>       }
+<a class="jxr_linenumber" name="L189" href="#L189">189</a> 
+<a class="jxr_linenumber" name="L190" href="#L190">190</a>       <em class="jxr_comment">// Breadth-first search, from accept states,</em>
+<a class="jxr_linenumber" name="L191" href="#L191">191</a>       <em class="jxr_comment">// backwards:</em>
+<a class="jxr_linenumber" name="L192" href="#L192">192</a>       <strong class="jxr_keyword">while</strong> (q.isEmpty() == false) {
+<a class="jxr_linenumber" name="L193" href="#L193">193</a>         <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> s = q.removeFirst();
+<a class="jxr_linenumber" name="L194" href="#L194">194</a>         List&lt;ArrivingTransition&gt; arriving = allArriving.get(s);
+<a class="jxr_linenumber" name="L195" href="#L195">195</a>         <strong class="jxr_keyword">if</strong> (arriving != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L196" href="#L196">196</a>           <strong class="jxr_keyword">for</strong>(ArrivingTransition at : arriving) {
+<a class="jxr_linenumber" name="L197" href="#L197">197</a>             <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> from = at.from;
+<a class="jxr_linenumber" name="L198" href="#L198">198</a>             <strong class="jxr_keyword">if</strong> (!seen.contains(from)) {
+<a class="jxr_linenumber" name="L199" href="#L199">199</a>               q.add(from);
+<a class="jxr_linenumber" name="L200" href="#L200">200</a>               seen.add(from);
+<a class="jxr_linenumber" name="L201" href="#L201">201</a>               leadsToAccept.put(at.t, Boolean.TRUE);
+<a class="jxr_linenumber" name="L202" href="#L202">202</a>             }
+<a class="jxr_linenumber" name="L203" href="#L203">203</a>           }
+<a class="jxr_linenumber" name="L204" href="#L204">204</a>         }
+<a class="jxr_linenumber" name="L205" href="#L205">205</a>       }
+<a class="jxr_linenumber" name="L206" href="#L206">206</a>     }
+<a class="jxr_linenumber" name="L207" href="#L207">207</a> 
+<a class="jxr_linenumber" name="L208" href="#L208">208</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">int</strong>[] getRandomAcceptedString(Random r) {
+<a class="jxr_linenumber" name="L209" href="#L209">209</a> 
+<a class="jxr_linenumber" name="L210" href="#L210">210</a>       <strong class="jxr_keyword">final</strong> List&lt;Integer&gt; soFar = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L211" href="#L211">211</a> 
+<a class="jxr_linenumber" name="L212" href="#L212">212</a>       <strong class="jxr_keyword">int</strong> s = 0;
+<a class="jxr_linenumber" name="L213" href="#L213">213</a> 
+<a class="jxr_linenumber" name="L214" href="#L214">214</a>       <strong class="jxr_keyword">while</strong>(<strong class="jxr_keyword">true</strong>) {
+<a class="jxr_linenumber" name="L215" href="#L215">215</a>       
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>         <strong class="jxr_keyword">if</strong> (a.isAccept(s)) {
+<a class="jxr_linenumber" name="L217" href="#L217">217</a>           <strong class="jxr_keyword">if</strong> (a.getNumTransitions(s) == 0) {
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>             <em class="jxr_comment">// stop now</em>
+<a class="jxr_linenumber" name="L219" href="#L219">219</a>             <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L220" href="#L220">220</a>           } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L221" href="#L221">221</a>             <strong class="jxr_keyword">if</strong> (r.nextBoolean()) {
+<a class="jxr_linenumber" name="L222" href="#L222">222</a>               <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L223" href="#L223">223</a>             }
+<a class="jxr_linenumber" name="L224" href="#L224">224</a>           }
+<a class="jxr_linenumber" name="L225" href="#L225">225</a>         }
+<a class="jxr_linenumber" name="L226" href="#L226">226</a> 
+<a class="jxr_linenumber" name="L227" href="#L227">227</a>         <strong class="jxr_keyword">if</strong> (a.getNumTransitions(s) == 0) {
+<a class="jxr_linenumber" name="L228" href="#L228">228</a>           <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> RuntimeException(<span class="jxr_string">"this automaton has dead states"</span>);
+<a class="jxr_linenumber" name="L229" href="#L229">229</a>         }
+<a class="jxr_linenumber" name="L230" href="#L230">230</a> 
+<a class="jxr_linenumber" name="L231" href="#L231">231</a>         <strong class="jxr_keyword">boolean</strong> cheat = r.nextBoolean();
+<a class="jxr_linenumber" name="L232" href="#L232">232</a> 
+<a class="jxr_linenumber" name="L233" href="#L233">233</a>         <strong class="jxr_keyword">final</strong> Transition t;
+<a class="jxr_linenumber" name="L234" href="#L234">234</a>         <strong class="jxr_keyword">if</strong> (cheat) {
+<a class="jxr_linenumber" name="L235" href="#L235">235</a>           <em class="jxr_comment">// pick a transition that we know is the fastest</em>
+<a class="jxr_linenumber" name="L236" href="#L236">236</a>           <em class="jxr_comment">// path to an accept state</em>
+<a class="jxr_linenumber" name="L237" href="#L237">237</a>           List&lt;Transition&gt; toAccept = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L238" href="#L238">238</a>           <strong class="jxr_keyword">for</strong>(Transition t0 : transitions[s]) {
+<a class="jxr_linenumber" name="L239" href="#L239">239</a>             <strong class="jxr_keyword">if</strong> (leadsToAccept.containsKey(t0)) {
+<a class="jxr_linenumber" name="L240" href="#L240">240</a>               toAccept.add(t0);
+<a class="jxr_linenumber" name="L241" href="#L241">241</a>             }
+<a class="jxr_linenumber" name="L242" href="#L242">242</a>           }
+<a class="jxr_linenumber" name="L243" href="#L243">243</a>           <strong class="jxr_keyword">if</strong> (toAccept.size() == 0) {
+<a class="jxr_linenumber" name="L244" href="#L244">244</a>             <em class="jxr_comment">// this is OK -- it means we jumped into a cycle</em>
+<a class="jxr_linenumber" name="L245" href="#L245">245</a>             t = transitions[s][r.nextInt(transitions[s].length)];
+<a class="jxr_linenumber" name="L246" href="#L246">246</a>           } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L247" href="#L247">247</a>             t = toAccept.get(r.nextInt(toAccept.size()));
+<a class="jxr_linenumber" name="L248" href="#L248">248</a>           }
+<a class="jxr_linenumber" name="L249" href="#L249">249</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L250" href="#L250">250</a>           t = transitions[s][r.nextInt(transitions[s].length)];
+<a class="jxr_linenumber" name="L251" href="#L251">251</a>         }
+<a class="jxr_linenumber" name="L252" href="#L252">252</a>         soFar.add(getRandomCodePoint(r, t.min, t.max));
+<a class="jxr_linenumber" name="L253" href="#L253">253</a>         s = t.dest;
+<a class="jxr_linenumber" name="L254" href="#L254">254</a>       }
+<a class="jxr_linenumber" name="L255" href="#L255">255</a> 
+<a class="jxr_linenumber" name="L256" href="#L256">256</a>       <strong class="jxr_keyword">return</strong> ArrayUtil.toIntArray(soFar);
+<a class="jxr_linenumber" name="L257" href="#L257">257</a>     }
+<a class="jxr_linenumber" name="L258" href="#L258">258</a>   }
+<a class="jxr_linenumber" name="L259" href="#L259">259</a> 
+<a class="jxr_linenumber" name="L260" href="#L260">260</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> Automaton randomSingleAutomaton(Random random) {
+<a class="jxr_linenumber" name="L261" href="#L261">261</a>     <strong class="jxr_keyword">while</strong> (<strong class="jxr_keyword">true</strong>) {
+<a class="jxr_linenumber" name="L262" href="#L262">262</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L263" href="#L263">263</a>         Automaton a1 = <strong class="jxr_keyword">new</strong> RegExp(AutomatonTestUtil.randomRegexp(random), RegExp.NONE).toAutomaton();
+<a class="jxr_linenumber" name="L264" href="#L264">264</a>         <strong class="jxr_keyword">if</strong> (random.nextBoolean()) {
+<a class="jxr_linenumber" name="L265" href="#L265">265</a>           a1 = Operations.complement(a1, DEFAULT_MAX_DETERMINIZED_STATES);
+<a class="jxr_linenumber" name="L266" href="#L266">266</a>         }
+<a class="jxr_linenumber" name="L267" href="#L267">267</a>         <strong class="jxr_keyword">return</strong> a1;
+<a class="jxr_linenumber" name="L268" href="#L268">268</a>       } <strong class="jxr_keyword">catch</strong> (TooComplexToDeterminizeException tctde) {
+<a class="jxr_linenumber" name="L269" href="#L269">269</a>         <em class="jxr_comment">// This can (rarely) happen if the random regexp is too hard; just try again...</em>
+<a class="jxr_linenumber" name="L270" href="#L270">270</a>       }
+<a class="jxr_linenumber" name="L271" href="#L271">271</a>     }
+<a class="jxr_linenumber" name="L272" href="#L272">272</a>   }
+<a class="jxr_linenumber" name="L273" href="#L273">273</a>   
+<a class="jxr_linenumber" name="L274" href="#L274">274</a>   <em class="jxr_javadoccomment">/** return a random NFA/DFA for testing */</em>
+<a class="jxr_linenumber" name="L275" href="#L275">275</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> Automaton randomAutomaton(Random random) {
+<a class="jxr_linenumber" name="L276" href="#L276">276</a>     <em class="jxr_comment">// get two random Automata from regexps</em>
+<a class="jxr_linenumber" name="L277" href="#L277">277</a>     Automaton a1 = randomSingleAutomaton(random);
+<a class="jxr_linenumber" name="L278" href="#L278">278</a>     Automaton a2 = randomSingleAutomaton(random);
+<a class="jxr_linenumber" name="L279" href="#L279">279</a> 
+<a class="jxr_linenumber" name="L280" href="#L280">280</a>     <em class="jxr_comment">// combine them in random ways</em>
+<a class="jxr_linenumber" name="L281" href="#L281">281</a>     <strong class="jxr_keyword">switch</strong> (random.nextInt(4)) {
+<a class="jxr_linenumber" name="L282" href="#L282">282</a>       <strong class="jxr_keyword">case</strong> 0: <strong class="jxr_keyword">return</strong> Operations.concatenate(a1, a2);
+<a class="jxr_linenumber" name="L283" href="#L283">283</a>       <strong class="jxr_keyword">case</strong> 1: <strong class="jxr_keyword">return</strong> Operations.union(a1, a2);
+<a class="jxr_linenumber" name="L284" href="#L284">284</a>       <strong class="jxr_keyword">case</strong> 2: <strong class="jxr_keyword">return</strong> Operations.intersection(a1, a2);
+<a class="jxr_linenumber" name="L285" href="#L285">285</a>       <strong class="jxr_keyword">default</strong>: <strong class="jxr_keyword">return</strong> Operations.minus(a1, a2, DEFAULT_MAX_DETERMINIZED_STATES);
+<a class="jxr_linenumber" name="L286" href="#L286">286</a>     }
+<a class="jxr_linenumber" name="L287" href="#L287">287</a>   }
+<a class="jxr_linenumber" name="L288" href="#L288">288</a>   
+<a class="jxr_linenumber" name="L289" href="#L289">289</a>   <em class="jxr_javadoccomment">/** </em>
+<a class="jxr_linenumber" name="L290" href="#L290">290</a> <em class="jxr_javadoccomment">   * below are original, unoptimized implementations of DFA operations for testing.</em>
+<a class="jxr_linenumber" name="L291" href="#L291">291</a> <em class="jxr_javadoccomment">   * These are from brics automaton, full license (BSD) below:</em>
+<a class="jxr_linenumber" name="L292" href="#L292">292</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L293" href="#L293">293</a>   
+<a class="jxr_linenumber" name="L294" href="#L294">294</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L295" href="#L295">295</a> <em class="jxr_comment">   * dk.brics.automaton</em>
+<a class="jxr_linenumber" name="L296" href="#L296">296</a> <em class="jxr_comment">   * </em>
+<a class="jxr_linenumber" name="L297" href="#L297">297</a> <em class="jxr_comment">   * Copyright (c) 2001-2009 Anders Moeller</em>
+<a class="jxr_linenumber" name="L298" href="#L298">298</a> <em class="jxr_comment">   * All rights reserved.</em>
+<a class="jxr_linenumber" name="L299" href="#L299">299</a> <em class="jxr_comment">   * </em>
+<a class="jxr_linenumber" name="L300" href="#L300">300</a> <em class="jxr_comment">   * Redistribution and use in source and binary forms, with or without</em>
+<a class="jxr_linenumber" name="L301" href="#L301">301</a> <em class="jxr_comment">   * modification, are permitted provided that the following conditions</em>
+<a class="jxr_linenumber" name="L302" href="#L302">302</a> <em class="jxr_comment">   * are met:</em>
+<a class="jxr_linenumber" name="L303" href="#L303">303</a> <em class="jxr_comment">   * 1. Redistributions of source code must retain the above copyright</em>
+<a class="jxr_linenumber" name="L304" href="#L304">304</a> <em class="jxr_comment">   *    notice, this list of conditions and the following disclaimer.</em>
+<a class="jxr_linenumber" name="L305" href="#L305">305</a> <em class="jxr_comment">   * 2. Redistributions in binary form must reproduce the above copyright</em>
+<a class="jxr_linenumber" name="L306" href="#L306">306</a> <em class="jxr_comment">   *    notice, this list of conditions and the following disclaimer in the</em>
+<a class="jxr_linenumber" name="L307" href="#L307">307</a> <em class="jxr_comment">   *    documentation and/or other materials provided with the distribution.</em>
+<a class="jxr_linenumber" name="L308" href="#L308">308</a> <em class="jxr_comment">   * 3. The name of the author may not be used to endorse or promote products</em>
+<a class="jxr_linenumber" name="L309" href="#L309">309</a> <em class="jxr_comment">   *    derived from this software without specific prior written permission.</em>
+<a class="jxr_linenumber" name="L310" href="#L310">310</a> <em class="jxr_comment">   * </em>
+<a class="jxr_linenumber" name="L311" href="#L311">311</a> <em class="jxr_comment">   * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR</em>
+<a class="jxr_linenumber" name="L312" href="#L312">312</a> <em class="jxr_comment">   * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES</em>
+<a class="jxr_linenumber" name="L313" href="#L313">313</a> <em class="jxr_comment">   * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.</em>
+<a class="jxr_linenumber" name="L314" href="#L314">314</a> <em class="jxr_comment">   * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,</em>
+<a class="jxr_linenumber" name="L315" href="#L315">315</a> <em class="jxr_comment">   * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT</em>
+<a class="jxr_linenumber" name="L316" href="#L316">316</a> <em class="jxr_comment">   * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,</em>
+<a class="jxr_linenumber" name="L317" href="#L317">317</a> <em class="jxr_comment">   * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY</em>
+<a class="jxr_linenumber" name="L318" href="#L318">318</a> <em class="jxr_comment">   * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT</em>
+<a class="jxr_linenumber" name="L319" href="#L319">319</a> <em class="jxr_comment">   * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF</em>
+<a class="jxr_linenumber" name="L320" href="#L320">320</a> <em class="jxr_comment">   * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</em>
+<a class="jxr_linenumber" name="L321" href="#L321">321</a> <em class="jxr_comment">   */</em>
+<a class="jxr_linenumber" name="L322" href="#L322">322</a> 
+<a class="jxr_linenumber" name="L323" href="#L323">323</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L324" href="#L324">324</a> <em class="jxr_javadoccomment">   * Simple, original brics implementation of Brzozowski minimize()</em>
+<a class="jxr_linenumber" name="L325" href="#L325">325</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L326" href="#L326">326</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> Automaton minimizeSimple(Automaton a) {
+<a class="jxr_linenumber" name="L327" href="#L327">327</a>     Set&lt;Integer&gt; initialSet = <strong class="jxr_keyword">new</strong> HashSet&lt;Integer&gt;();
+<a class="jxr_linenumber" name="L328" href="#L328">328</a>     a = determinizeSimple(Operations.reverse(a, initialSet), initialSet);
+<a class="jxr_linenumber" name="L329" href="#L329">329</a>     initialSet.clear();
+<a class="jxr_linenumber" name="L330" href="#L330">330</a>     a = determinizeSimple(Operations.reverse(a, initialSet), initialSet);
+<a class="jxr_linenumber" name="L331" href="#L331">331</a>     <strong class="jxr_keyword">return</strong> a;
+<a class="jxr_linenumber" name="L332" href="#L332">332</a>   }
+<a class="jxr_linenumber" name="L333" href="#L333">333</a>   
+<a class="jxr_linenumber" name="L334" href="#L334">334</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L335" href="#L335">335</a> <em class="jxr_javadoccomment">   * Simple, original brics implementation of determinize()</em>
+<a class="jxr_linenumber" name="L336" href="#L336">336</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L337" href="#L337">337</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> Automaton determinizeSimple(Automaton a) {
+<a class="jxr_linenumber" name="L338" href="#L338">338</a>     Set&lt;Integer&gt; initialset = <strong class="jxr_keyword">new</strong> HashSet&lt;&gt;();
+<a class="jxr_linenumber" name="L339" href="#L339">339</a>     initialset.add(0);
+<a class="jxr_linenumber" name="L340" href="#L340">340</a>     <strong class="jxr_keyword">return</strong> determinizeSimple(a, initialset);
+<a class="jxr_linenumber" name="L341" href="#L341">341</a>   }
+<a class="jxr_linenumber" name="L342" href="#L342">342</a> 
+<a class="jxr_linenumber" name="L343" href="#L343">343</a>   <em class="jxr_javadoccomment">/** </em>
+<a class="jxr_linenumber" name="L344" href="#L344">344</a> <em class="jxr_javadoccomment">   * Simple, original brics implementation of determinize()</em>
+<a class="jxr_linenumber" name="L345" href="#L345">345</a> <em class="jxr_javadoccomment">   * Determinizes the given automaton using the given set of initial states. </em>
+<a class="jxr_linenumber" name="L346" href="#L346">346</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L347" href="#L347">347</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> Automaton determinizeSimple(Automaton a, Set&lt;Integer&gt; initialset) {
+<a class="jxr_linenumber" name="L348" href="#L348">348</a>     <strong class="jxr_keyword">if</strong> (a.getNumStates() == 0) {
+<a class="jxr_linenumber" name="L349" href="#L349">349</a>       <strong class="jxr_keyword">return</strong> a;
+<a class="jxr_linenumber" name="L350" href="#L350">350</a>     }
+<a class="jxr_linenumber" name="L351" href="#L351">351</a>     <strong class="jxr_keyword">int</strong>[] points = a.getStartPoints();
+<a class="jxr_linenumber" name="L352" href="#L352">352</a>     <em class="jxr_comment">// subset construction</em>
+<a class="jxr_linenumber" name="L353" href="#L353">353</a>     Map&lt;Set&lt;Integer&gt;, Set&lt;Integer&gt;&gt; sets = <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;();
+<a class="jxr_linenumber" name="L354" href="#L354">354</a>     LinkedList&lt;Set&lt;Integer&gt;&gt; worklist = <strong class="jxr_keyword">new</strong> LinkedList&lt;&gt;();
+<a class="jxr_linenumber" name="L355" href="#L355">355</a>     Map&lt;Set&lt;Integer&gt;, Integer&gt; newstate = <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;();
+<a class="jxr_linenumber" name="L356" href="#L356">356</a>     sets.put(initialset, initialset);
+<a class="jxr_linenumber" name="L357" href="#L357">357</a>     worklist.add(initialset);
+<a class="jxr_linenumber" name="L358" href="#L358">358</a>     Automaton.Builder result = <strong class="jxr_keyword">new</strong> Automaton.Builder();
+<a class="jxr_linenumber" name="L359" href="#L359">359</a>     result.createState();
+<a class="jxr_linenumber" name="L360" href="#L360">360</a>     newstate.put(initialset, 0);
+<a class="jxr_linenumber" name="L361" href="#L361">361</a>     Transition t = <strong class="jxr_keyword">new</strong> Transition();
+<a class="jxr_linenumber" name="L362" href="#L362">362</a>     <strong class="jxr_keyword">while</strong> (worklist.size() &gt; 0) {
+<a class="jxr_linenumber" name="L363" href="#L363">363</a>       Set&lt;Integer&gt; s = worklist.removeFirst();
+<a class="jxr_linenumber" name="L364" href="#L364">364</a>       <strong class="jxr_keyword">int</strong> r = newstate.get(s);
+<a class="jxr_linenumber" name="L365" href="#L365">365</a>       <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> q : s) {
+<a class="jxr_linenumber" name="L366" href="#L366">366</a>         <strong class="jxr_keyword">if</strong> (a.isAccept(q)) {
+<a class="jxr_linenumber" name="L367" href="#L367">367</a>           result.setAccept(r, <strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L368" href="#L368">368</a>           <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L369" href="#L369">369</a>         }
+<a class="jxr_linenumber" name="L370" href="#L370">370</a>       }
+<a class="jxr_linenumber" name="L371" href="#L371">371</a>       <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> n = 0; n &lt; points.length; n++) {
+<a class="jxr_linenumber" name="L372" href="#L372">372</a>         Set&lt;Integer&gt; p = <strong class="jxr_keyword">new</strong> HashSet&lt;&gt;();
+<a class="jxr_linenumber" name="L373" href="#L373">373</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> q : s) {
+<a class="jxr_linenumber" name="L374" href="#L374">374</a>           <strong class="jxr_keyword">int</strong> count = a.initTransition(q, t);
+<a class="jxr_linenumber" name="L375" href="#L375">375</a>           <strong class="jxr_keyword">for</strong>(<strong class="jxr_keyword">int</strong> i=0;i&lt;count;i++) {
+<a class="jxr_linenumber" name="L376" href="#L376">376</a>             a.getNextTransition(t);
+<a class="jxr_linenumber" name="L377" href="#L377">377</a>             <strong class="jxr_keyword">if</strong> (t.min &lt;= points[n] &amp;&amp; points[n] &lt;= t.max) {
+<a class="jxr_linenumber" name="L378" href="#L378">378</a>               p.add(t.dest);
+<a class="jxr_linenumber" name="L379" href="#L379">379</a>             }
+<a class="jxr_linenumber" name="L380" href="#L380">380</a>           }
+<a class="jxr_linenumber" name="L381" href="#L381">381</a>         }
+<a class="jxr_linenumber" name="L382" href="#L382">382</a> 
+<a class="jxr_linenumber" name="L383" href="#L383">383</a>         <strong class="jxr_keyword">if</strong> (!sets.containsKey(p)) {
+<a class="jxr_linenumber" name="L384" href="#L384">384</a>           sets.put(p, p);
+<a class="jxr_linenumber" name="L385" href="#L385">385</a>           worklist.add(p);
+<a class="jxr_linenumber" name="L386" href="#L386">386</a>           newstate.put(p, result.createState());
+<a class="jxr_linenumber" name="L387" href="#L387">387</a>         }
+<a class="jxr_linenumber" name="L388" href="#L388">388</a>         <strong class="jxr_keyword">int</strong> q = newstate.get(p);
+<a class="jxr_linenumber" name="L389" href="#L389">389</a>         <strong class="jxr_keyword">int</strong> min = points[n];
+<a class="jxr_linenumber" name="L390" href="#L390">390</a>         <strong class="jxr_keyword">int</strong> max;
+<a class="jxr_linenumber" name="L391" href="#L391">391</a>         <strong class="jxr_keyword">if</strong> (n + 1 &lt; points.length) {
+<a class="jxr_linenumber" name="L392" href="#L392">392</a>           max = points[n + 1] - 1;
+<a class="jxr_linenumber" name="L393" href="#L393">393</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L394" href="#L394">394</a>           max = Character.MAX_CODE_POINT;
+<a class="jxr_linenumber" name="L395" href="#L395">395</a>         }
+<a class="jxr_linenumber" name="L396" href="#L396">396</a>         result.addTransition(r, q, min, max);
+<a class="jxr_linenumber" name="L397" href="#L397">397</a>       }
+<a class="jxr_linenumber" name="L398" href="#L398">398</a>     }
+<a class="jxr_linenumber" name="L399" href="#L399">399</a> 
+<a class="jxr_linenumber" name="L400" href="#L400">400</a>     <strong class="jxr_keyword">return</strong> Operations.removeDeadStates(result.finish());
+<a class="jxr_linenumber" name="L401" href="#L401">401</a>   }
+<a class="jxr_linenumber" name="L402" href="#L402">402</a> 
+<a class="jxr_linenumber" name="L403" href="#L403">403</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L404" href="#L404">404</a> <em class="jxr_javadoccomment">   * Simple, original implementation of getFiniteStrings.</em>
+<a class="jxr_linenumber" name="L405" href="#L405">405</a> <em class="jxr_javadoccomment">   *</em>
+<a class="jxr_linenumber" name="L406" href="#L406">406</a> <em class="jxr_javadoccomment">   * &lt;p&gt;Returns the set of accepted strings, assuming that at most</em>
+<a class="jxr_linenumber" name="L407" href="#L407">407</a> <em class="jxr_javadoccomment">   * &lt;code&gt;limit&lt;/code&gt; strings are accepted. If more than &lt;code&gt;limit&lt;/code&gt; </em>
+<a class="jxr_linenumber" name="L408" href="#L408">408</a> <em class="jxr_javadoccomment">   * strings are accepted, the first limit strings found are returned. If &lt;code&gt;limit&lt;/code&gt;&amp;lt;0, then </em>
+<a class="jxr_linenumber" name="L409" href="#L409">409</a> <em class="jxr_javadoccomment">   * the limit is infinite.</em>
+<a class="jxr_linenumber" name="L410" href="#L410">410</a> <em class="jxr_javadoccomment">   *</em>
+<a class="jxr_linenumber" name="L411" href="#L411">411</a> <em class="jxr_javadoccomment">   * &lt;p&gt;This implementation is recursive: it uses one stack</em>
+<a class="jxr_linenumber" name="L412" href="#L412">412</a> <em class="jxr_javadoccomment">   * frame for each digit in the returned strings (ie, max</em>
+<a class="jxr_linenumber" name="L413" href="#L413">413</a> <em class="jxr_javadoccomment">   * is the max length returned string).</em>
+<a class="jxr_linenumber" name="L414" href="#L414">414</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L415" href="#L415">415</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> Set&lt;IntsRef&gt; getFiniteStringsRecursive(Automaton a, <strong class="jxr_keyword">int</strong> limit) {
+<a class="jxr_linenumber" name="L416" href="#L416">416</a>     HashSet&lt;IntsRef&gt; strings = <strong class="jxr_keyword">new</strong> HashSet&lt;&gt;();
+<a class="jxr_linenumber" name="L417" href="#L417">417</a>     <strong class="jxr_keyword">if</strong> (!getFiniteStrings(a, 0, <strong class="jxr_keyword">new</strong> HashSet&lt;Integer&gt;(), strings, <strong class="jxr_keyword">new</strong> IntsRefBuilder(), limit)) {
+<a class="jxr_linenumber" name="L418" href="#L418">418</a>       <strong class="jxr_keyword">return</strong> strings;
+<a class="jxr_linenumber" name="L419" href="#L419">419</a>     }
+<a class="jxr_linenumber" name="L420" href="#L420">420</a>     <strong class="jxr_keyword">return</strong> strings;
+<a class="jxr_linenumber" name="L421" href="#L421">421</a>   }
+<a class="jxr_linenumber" name="L422" href="#L422">422</a> 
+<a class="jxr_linenumber" name="L423" href="#L423">423</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L424" href="#L424">424</a> <em class="jxr_javadoccomment">   * Returns the strings that can be produced from the given state, or</em>
+<a class="jxr_linenumber" name="L425" href="#L425">425</a> <em class="jxr_javadoccomment">   * false if more than &lt;code&gt;limit&lt;/code&gt; strings are found. </em>
+<a class="jxr_linenumber" name="L426" href="#L426">426</a> <em class="jxr_javadoccomment">   * &lt;code&gt;limit&lt;/code&gt;&amp;lt;0 means "infinite".</em>
+<a class="jxr_linenumber" name="L427" href="#L427">427</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L428" href="#L428">428</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">boolean</strong> getFiniteStrings(Automaton a, <strong class="jxr_keyword">int</strong> s, HashSet&lt;Integer&gt; pathstates, 
+<a class="jxr_linenumber" name="L429" href="#L429">429</a>       HashSet&lt;IntsRef&gt; strings, IntsRefBuilder path, <strong class="jxr_keyword">int</strong> limit) {
+<a class="jxr_linenumber" name="L430" href="#L430">430</a>     pathstates.add(s);
+<a class="jxr_linenumber" name="L431" href="#L431">431</a>     Transition t = <strong class="jxr_keyword">new</strong> Transition();
+<a class="jxr_linenumber" name="L432" href="#L432">432</a>     <strong class="jxr_keyword">int</strong> count = a.initTransition(s, t);
+<a class="jxr_linenumber" name="L433" href="#L433">433</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i=0;i&lt;count;i++) {
+<a class="jxr_linenumber" name="L434" href="#L434">434</a>       a.getNextTransition(t);
+<a class="jxr_linenumber" name="L435" href="#L435">435</a>       <strong class="jxr_keyword">if</strong> (pathstates.contains(t.dest)) {
+<a class="jxr_linenumber" name="L436" href="#L436">436</a>         <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L437" href="#L437">437</a>       }
+<a class="jxr_linenumber" name="L438" href="#L438">438</a>       <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> n = t.min; n &lt;= t.max; n++) {
+<a class="jxr_linenumber" name="L439" href="#L439">439</a>         path.append(n);
+<a class="jxr_linenumber" name="L440" href="#L440">440</a>         <strong class="jxr_keyword">if</strong> (a.isAccept(t.dest)) {
+<a class="jxr_linenumber" name="L441" href="#L441">441</a>           strings.add(path.toIntsRef());
+<a class="jxr_linenumber" name="L442" href="#L442">442</a>           <strong class="jxr_keyword">if</strong> (limit &gt;= 0 &amp;&amp; strings.size() &gt; limit) {
+<a class="jxr_linenumber" name="L443" href="#L443">443</a>             <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L444" href="#L444">444</a>           }
+<a class="jxr_linenumber" name="L445" href="#L445">445</a>         }
+<a class="jxr_linenumber" name="L446" href="#L446">446</a>         <strong class="jxr_keyword">if</strong> (!getFiniteStrings(a, t.dest, pathstates, strings, path, limit)) {
+<a class="jxr_linenumber" name="L447" href="#L447">447</a>           <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L448" href="#L448">448</a>         }
+<a class="jxr_linenumber" name="L449" href="#L449">449</a>         path.setLength(path.length() - 1);
+<a class="jxr_linenumber" name="L450" href="#L450">450</a>       }
+<a class="jxr_linenumber" name="L451" href="#L451">451</a>     }
+<a class="jxr_linenumber" name="L452" href="#L452">452</a>     pathstates.remove(s);
+<a class="jxr_linenumber" name="L453" href="#L453">453</a>     <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L454" href="#L454">454</a>   }
+<a class="jxr_linenumber" name="L455" href="#L455">455</a> 
+<a class="jxr_linenumber" name="L456" href="#L456">456</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L457" href="#L457">457</a> <em class="jxr_javadoccomment">   * Returns true if the language of this automaton is finite.</em>
+<a class="jxr_linenumber" name="L458" href="#L458">458</a> <em class="jxr_javadoccomment">   * &lt;p&gt;</em>
+<a class="jxr_linenumber" name="L459" href="#L459">459</a> <em class="jxr_javadoccomment">   * WARNING: this method is slow, it will blow up if the automaton is large.</em>
+<a class="jxr_linenumber" name="L460" href="#L460">460</a> <em class="jxr_javadoccomment">   * this is only used to test the correctness of our faster implementation.</em>
+<a class="jxr_linenumber" name="L461" href="#L461">461</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L462" href="#L462">462</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">boolean</strong> isFiniteSlow(Automaton a) {
+<a class="jxr_linenumber" name="L463" href="#L463">463</a>     <strong class="jxr_keyword">if</strong> (a.getNumStates() == 0) {
+<a class="jxr_linenumber" name="L464" href="#L464">464</a>       <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L465" href="#L465">465</a>     }
+<a class="jxr_linenumber" name="L466" href="#L466">466</a>     <strong class="jxr_keyword">return</strong> isFiniteSlow(a, 0, <strong class="jxr_keyword">new</strong> HashSet&lt;Integer&gt;());
+<a class="jxr_linenumber" name="L467" href="#L467">467</a>   }
+<a class="jxr_linenumber" name="L468" href="#L468">468</a>   
+<a class="jxr_linenumber" name="L469" href="#L469">469</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L470" href="#L470">470</a> <em class="jxr_javadoccomment">   * Checks whether there is a loop containing s. (This is sufficient since</em>
+<a class="jxr_linenumber" name="L471" href="#L471">471</a> <em class="jxr_javadoccomment">   * there are never transitions to dead states.)</em>
+<a class="jxr_linenumber" name="L472" href="#L472">472</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L473" href="#L473">473</a>   <em class="jxr_comment">// TODO: not great that this is recursive... in theory a</em>
+<a class="jxr_linenumber" name="L474" href="#L474">474</a>   <em class="jxr_comment">// large automata could exceed java's stack</em>
+<a class="jxr_linenumber" name="L475" href="#L475">475</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">boolean</strong> isFiniteSlow(Automaton a, <strong class="jxr_keyword">int</strong> s, HashSet&lt;Integer&gt; path) {
+<a class="jxr_linenumber" name="L476" href="#L476">476</a>     path.add(s);
+<a class="jxr_linenumber" name="L477" href="#L477">477</a>     Transition t = <strong class="jxr_keyword">new</strong> Transition();
+<a class="jxr_linenumber" name="L478" href="#L478">478</a>     <strong class="jxr_keyword">int</strong> count = a.initTransition(s, t);
+<a class="jxr_linenumber" name="L479" href="#L479">479</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i=0;i&lt;count;i++) {
+<a class="jxr_linenumber" name="L480" href="#L480">480</a>       a.getNextTransition(t);
+<a class="jxr_linenumber" name="L481" href="#L481">481</a>       <strong class="jxr_keyword">if</strong> (path.contains(t.dest) || !isFiniteSlow(a, t.dest, path)) {
+<a class="jxr_linenumber" name="L482" href="#L482">482</a>         <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L483" href="#L483">483</a>       }
+<a class="jxr_linenumber" name="L484" href="#L484">484</a>     }
+<a class="jxr_linenumber" name="L485" href="#L485">485</a>     path.remove(s);
+<a class="jxr_linenumber" name="L486" href="#L486">486</a>     <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L487" href="#L487">487</a>   }
+<a class="jxr_linenumber" name="L488" href="#L488">488</a>   
+<a class="jxr_linenumber" name="L489" href="#L489">489</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L490" href="#L490">490</a> <em class="jxr_javadoccomment">   * Checks that an automaton has no detached states that are unreachable</em>
+<a class="jxr_linenumber" name="L491" href="#L491">491</a> <em class="jxr_javadoccomment">   * from the initial state.</em>
+<a class="jxr_linenumber" name="L492" href="#L492">492</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L493" href="#L493">493</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> assertNoDetachedStates(Automaton a) {
+<a class="jxr_linenumber" name="L494" href="#L494">494</a>     Automaton a2 = Operations.removeDeadStates(a);
+<a class="jxr_linenumber" name="L495" href="#L495">495</a>     assert a.getNumStates() == a2.getNumStates() : <span class="jxr_string">"automaton has "</span> + (a.getNumStates() - a2.getNumStates()) + <span class="jxr_string">" detached states"</span>;
+<a class="jxr_linenumber" name="L496" href="#L496">496</a>   }
+<a class="jxr_linenumber" name="L497" href="#L497">497</a> 
+<a class="jxr_linenumber" name="L498" href="#L498">498</a>   <em class="jxr_javadoccomment">/** Returns true if the automaton is deterministic. */</em>
+<a class="jxr_linenumber" name="L499" href="#L499">499</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">boolean</strong> isDeterministicSlow(Automaton a) {
+<a class="jxr_linenumber" name="L500" href="#L500">500</a>     Transition t = <strong class="jxr_keyword">new</strong> Transition();
+<a class="jxr_linenumber" name="L501" href="#L501">501</a>     <strong class="jxr_keyword">int</strong> numStates = a.getNumStates();
+<a class="jxr_linenumber" name="L502" href="#L502">502</a>     <strong class="jxr_keyword">for</strong>(<strong class="jxr_keyword">int</strong> s=0;s&lt;numStates;s++) {
+<a class="jxr_linenumber" name="L503" href="#L503">503</a>       <strong class="jxr_keyword">int</strong> count = a.initTransition(s, t);
+<a class="jxr_linenumber" name="L504" href="#L504">504</a>       <strong class="jxr_keyword">int</strong> lastMax = -1;
+<a class="jxr_linenumber" name="L505" href="#L505">505</a>       <strong class="jxr_keyword">for</strong>(<strong class="jxr_keyword">int</strong> i=0;i&lt;count;i++) {
+<a class="jxr_linenumber" name="L506" href="#L506">506</a>         a.getNextTransition(t);
+<a class="jxr_linenumber" name="L507" href="#L507">507</a>         <strong class="jxr_keyword">if</strong> (t.min &lt;= lastMax) {
+<a class="jxr_linenumber" name="L508" href="#L508">508</a>           assert a.isDeterministic() == false;
+<a class="jxr_linenumber" name="L509" href="#L509">509</a>           <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L510" href="#L510">510</a>         }
+<a class="jxr_linenumber" name="L511" href="#L511">511</a>         lastMax = t.max;
+<a class="jxr_linenumber" name="L512" href="#L512">512</a>       }
+<a class="jxr_linenumber" name="L513" href="#L513">513</a>     }
+<a class="jxr_linenumber" name="L514" href="#L514">514</a> 
+<a class="jxr_linenumber" name="L515" href="#L515">515</a>     assert a.isDeterministic() == <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L516" href="#L516">516</a>     <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L517" href="#L517">517</a>   }
+<a class="jxr_linenumber" name="L518" href="#L518">518</a>   
+<a class="jxr_linenumber" name="L519" href="#L519">519</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

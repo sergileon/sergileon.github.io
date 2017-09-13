@@ -1,0 +1,455 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>StaticCompilationVisitor xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   <em class="jxr_comment"> *  Licensed to the Apache Software Foundation (ASF) under one</em>
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment"> *  or more contributor license agreements.  See the NOTICE file</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> *  distributed with this work for additional information</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> *  regarding copyright ownership.  The ASF licenses this file</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> *  to you under the Apache License, Version 2.0 (the</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> *  "License"); you may not use this file except in compliance</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> *  with the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *    <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *  Unless required by applicable law or agreed to in writing,</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> *  software distributed under the License is distributed on an</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> *  KIND, either express or implied.  See the License for the</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> *  specific language governing permissions and limitations</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> *  under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  <strong class="jxr_keyword">package</strong> org.codehaus.groovy.transform.sc;
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> groovy.lang.Reference;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> groovy.transform.CompileStatic;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> groovy.transform.TypeChecked;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.*;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.expr.*;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.stmt.EmptyStatement;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.stmt.ExpressionStatement;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.stmt.ForStatement;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.stmt.Statement;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.classgen.asm.*;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.classgen.asm.sc.StaticCompilationMopWriter;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.classgen.asm.sc.StaticTypesTypeChooser;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.control.SourceUnit;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.transform.stc.StaticTypeCheckingSupport;
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.transform.stc.StaticTypeCheckingVisitor;
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.transform.stc.StaticTypesMarker;
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <strong class="jxr_keyword">import</strong> org.objectweb.asm.Opcodes;
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <strong class="jxr_keyword">import</strong> java.util.*;
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.codehaus.groovy.ast.tools.GenericsUtils.*;
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.codehaus.groovy.transform.sc.StaticCompilationMetadataKeys.*;
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.codehaus.groovy.transform.stc.StaticTypesMarker.DIRECT_METHOD_CALL_TARGET;
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.objectweb.asm.Opcodes.ACC_PUBLIC;
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>  
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>  <em class="jxr_javadoccomment"> * This visitor is responsible for amending the AST with static compilation metadata or transform the AST so that</em>
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>  <em class="jxr_javadoccomment"> * a class or a method can be statically compiled. It may also throw errors specific to static compilation which</em>
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>  <em class="jxr_javadoccomment"> * are not considered as an error at the type check pass. For example, usage of spread operator is not allowed</em>
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>  <em class="jxr_javadoccomment"> * in statically compiled portions of code, while it may be statically checked.</em>
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>  <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>  <em class="jxr_javadoccomment"> * Static compilation relies on static type checking, which explains why this visitor extends the type checker</em>
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>  <em class="jxr_javadoccomment"> * visitor.</em>
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>  <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>  <em class="jxr_javadoccomment"> * @author Cedric Champeau</em>
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> StaticCompilationVisitor <strong class="jxr_keyword">extends</strong> StaticTypeCheckingVisitor {
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> ClassNode TYPECHECKED_CLASSNODE = ClassHelper.make(TypeChecked.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> ClassNode COMPILESTATIC_CLASSNODE = ClassHelper.make(CompileStatic.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> ClassNode[] TYPECHECKED_ANNOTATIONS = {TYPECHECKED_CLASSNODE, COMPILESTATIC_CLASSNODE};
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>  
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> ClassNode ARRAYLIST_CLASSNODE = ClassHelper.make(ArrayList.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> MethodNode ARRAYLIST_CONSTRUCTOR;
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> MethodNode ARRAYLIST_ADD_METHOD = ARRAYLIST_CLASSNODE.getMethod(<span class="jxr_string">"add"</span>, <strong class="jxr_keyword">new</strong> Parameter[]{<strong class="jxr_keyword">new</strong> Parameter(ClassHelper.OBJECT_TYPE, <span class="jxr_string">"o"</span>)});
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>  
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>      <strong class="jxr_keyword">static</strong> {
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>          ARRAYLIST_CONSTRUCTOR = <strong class="jxr_keyword">new</strong> ConstructorNode(ACC_PUBLIC, Parameter.EMPTY_ARRAY, ClassNode.EMPTY_ARRAY, EmptyStatement.INSTANCE);
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>          ARRAYLIST_CONSTRUCTOR.setDeclaringClass(StaticCompilationVisitor.ARRAYLIST_CLASSNODE);
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>      }
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>  
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> TypeChooser typeChooser = <strong class="jxr_keyword">new</strong> StaticTypesTypeChooser();
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>  
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>      <strong class="jxr_keyword">private</strong> ClassNode classNode;
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>  
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>      <strong class="jxr_keyword">public</strong> StaticCompilationVisitor(<strong class="jxr_keyword">final</strong> SourceUnit unit, <strong class="jxr_keyword">final</strong> ClassNode node) {
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>          <strong class="jxr_keyword">super</strong>(unit, node);
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>      }
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>  
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>      @Override
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>      <strong class="jxr_keyword">protected</strong> ClassNode[] getTypeCheckingAnnotations() {
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>          <strong class="jxr_keyword">return</strong> TYPECHECKED_ANNOTATIONS;
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>      }
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>  
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">boolean</strong> isStaticallyCompiled(AnnotatedNode node) {
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>          <strong class="jxr_keyword">if</strong> (node.getNodeMetaData(STATIC_COMPILE_NODE)!=<strong class="jxr_keyword">null</strong>) <strong class="jxr_keyword">return</strong> (Boolean)node.getNodeMetaData(STATIC_COMPILE_NODE);
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>          <strong class="jxr_keyword">if</strong> (node instanceof MethodNode) {
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>              <strong class="jxr_keyword">return</strong> isStaticallyCompiled(node.getDeclaringClass());
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>          }
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>          <strong class="jxr_keyword">if</strong> (node instanceof InnerClassNode) {
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>              <strong class="jxr_keyword">return</strong> isStaticallyCompiled(((InnerClassNode)node).getOuterClass());
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>          }
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>          <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>      }
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>  
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> addPrivateFieldAndMethodAccessors(ClassNode node) {
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>          addPrivateBridgeMethods(node);
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>          addPrivateFieldsAccessors(node);
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>          Iterator&lt;InnerClassNode&gt; it = node.getInnerClasses();
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>          <strong class="jxr_keyword">while</strong> (it.hasNext()) {
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>             addPrivateFieldAndMethodAccessors(it.next());
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>         }
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>     }
+<a class="jxr_linenumber" name="L103" href="#L103">103</a> 
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>     @Override
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitClass(<strong class="jxr_keyword">final</strong> ClassNode node) {
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>         <strong class="jxr_keyword">boolean</strong> skip = shouldSkipClassNode(node);
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>         <strong class="jxr_keyword">if</strong> (!skip &amp;&amp; !anyMethodSkip(node)) {
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>             node.putNodeMetaData(MopWriter.Factory.<strong class="jxr_keyword">class</strong>, StaticCompilationMopWriter.FACTORY);
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>         }
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>         ClassNode oldCN = classNode;
+<a class="jxr_linenumber" name="L111" href="#L111">111</a>         classNode = node;
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>         Iterator&lt;InnerClassNode&gt; innerClasses = classNode.getInnerClasses();
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>         <strong class="jxr_keyword">while</strong> (innerClasses.hasNext()) {
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>             InnerClassNode innerClassNode = innerClasses.next();
+<a class="jxr_linenumber" name="L115" href="#L115">115</a>             <strong class="jxr_keyword">boolean</strong> innerStaticCompile = !(skip || isSkippedInnerClass(innerClassNode));
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>             innerClassNode.putNodeMetaData(STATIC_COMPILE_NODE, innerStaticCompile);
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>             innerClassNode.putNodeMetaData(WriterControllerFactory.<strong class="jxr_keyword">class</strong>, node.getNodeMetaData(WriterControllerFactory.<strong class="jxr_keyword">class</strong>));
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>             <strong class="jxr_keyword">if</strong> (innerStaticCompile &amp;&amp; !anyMethodSkip(innerClassNode)) {
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>                 innerClassNode.putNodeMetaData(MopWriter.Factory.<strong class="jxr_keyword">class</strong>, StaticCompilationMopWriter.FACTORY);
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>             }
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>         }
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>         <strong class="jxr_keyword">super</strong>.visitClass(node);
+<a class="jxr_linenumber" name="L123" href="#L123">123</a>         addPrivateFieldAndMethodAccessors(node);
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>         classNode = oldCN;
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>     }
+<a class="jxr_linenumber" name="L126" href="#L126">126</a> 
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> anyMethodSkip(<strong class="jxr_keyword">final</strong> ClassNode node) {
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>         <strong class="jxr_keyword">for</strong> (MethodNode methodNode : node.getMethods()) {
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>             <strong class="jxr_keyword">if</strong> (isSkipMode(methodNode)) <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>         }
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>         <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>     }
+<a class="jxr_linenumber" name="L133" href="#L133">133</a> 
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L135" href="#L135">135</a> <em class="jxr_javadoccomment">     * If we are in a constructor, that is static compiled, but in a class, that</em>
+<a class="jxr_linenumber" name="L136" href="#L136">136</a> <em class="jxr_javadoccomment">     * is not, it may happen that init code from object initializers, fields</em>
+<a class="jxr_linenumber" name="L137" href="#L137">137</a> <em class="jxr_javadoccomment">     * or properties is added into the constructor code. The backend assumes</em>
+<a class="jxr_linenumber" name="L138" href="#L138">138</a> <em class="jxr_javadoccomment">     * a purely static contructor, so it may fail if it encounters dynamic</em>
+<a class="jxr_linenumber" name="L139" href="#L139">139</a> <em class="jxr_javadoccomment">     * code here. Thus we make this kind of code fail</em>
+<a class="jxr_linenumber" name="L140" href="#L140">140</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L141" href="#L141">141</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> checkForConstructorWithCSButClassWithout(MethodNode node) {
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>         <strong class="jxr_keyword">if</strong> (!(node instanceof ConstructorNode)) <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>         Object meta = node.getNodeMetaData(STATIC_COMPILE_NODE);
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>         <strong class="jxr_keyword">if</strong> (!Boolean.TRUE.equals(meta)) <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>         ClassNode clz = typeCheckingContext.getEnclosingClassNode();
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>         meta = clz.getNodeMetaData(STATIC_COMPILE_NODE);
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>         <strong class="jxr_keyword">if</strong> (Boolean.TRUE.equals(meta)) <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L148" href="#L148">148</a>         <strong class="jxr_keyword">if</strong> (    clz.getObjectInitializerStatements().isEmpty() &amp;&amp;
+<a class="jxr_linenumber" name="L149" href="#L149">149</a>                 clz.getFields().isEmpty() &amp;&amp;
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>                 clz.getProperties().isEmpty())
+<a class="jxr_linenumber" name="L151" href="#L151">151</a>         {
+<a class="jxr_linenumber" name="L152" href="#L152">152</a>             <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>         }
+<a class="jxr_linenumber" name="L154" href="#L154">154</a> 
+<a class="jxr_linenumber" name="L155" href="#L155">155</a>         addStaticTypeError(<span class="jxr_string">"Cannot statically compile constructor implicitly including non static elements from object initializers, properties or fields."</span>,node);
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>     }
+<a class="jxr_linenumber" name="L157" href="#L157">157</a> 
+<a class="jxr_linenumber" name="L158" href="#L158">158</a>     @Override
+<a class="jxr_linenumber" name="L159" href="#L159">159</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitMethod(<strong class="jxr_keyword">final</strong> MethodNode node) {
+<a class="jxr_linenumber" name="L160" href="#L160">160</a>         <strong class="jxr_keyword">if</strong> (isSkipMode(node)) {
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>             node.putNodeMetaData(STATIC_COMPILE_NODE, false);
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>         }
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>         <strong class="jxr_keyword">super</strong>.visitMethod(node);
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>         checkForConstructorWithCSButClassWithout(node);
+<a class="jxr_linenumber" name="L165" href="#L165">165</a>     }
+<a class="jxr_linenumber" name="L166" href="#L166">166</a> 
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L168" href="#L168">168</a> <em class="jxr_javadoccomment">     * Adds special accessors for private constants so that inner classes can retrieve them.</em>
+<a class="jxr_linenumber" name="L169" href="#L169">169</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L170" href="#L170">170</a>     @SuppressWarnings(<span class="jxr_string">"unchecked"</span>)
+<a class="jxr_linenumber" name="L171" href="#L171">171</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> addPrivateFieldsAccessors(ClassNode node) {
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>         Set&lt;ASTNode&gt; accessedFields = (Set&lt;ASTNode&gt;) node.getNodeMetaData(StaticTypesMarker.PV_FIELDS_ACCESS);
+<a class="jxr_linenumber" name="L173" href="#L173">173</a>         <strong class="jxr_keyword">if</strong> (accessedFields==<strong class="jxr_keyword">null</strong>) <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L174" href="#L174">174</a>         Map&lt;String, MethodNode&gt; privateConstantAccessors = (Map&lt;String, MethodNode&gt;) node.getNodeMetaData(PRIVATE_FIELDS_ACCESSORS);
+<a class="jxr_linenumber" name="L175" href="#L175">175</a>         <strong class="jxr_keyword">if</strong> (privateConstantAccessors!=<strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L176" href="#L176">176</a>             <em class="jxr_comment">// already added</em>
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>             <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L178" href="#L178">178</a>         }
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>         <strong class="jxr_keyword">int</strong> acc = -1;
+<a class="jxr_linenumber" name="L180" href="#L180">180</a>         privateConstantAccessors = <strong class="jxr_keyword">new</strong> HashMap&lt;String, MethodNode&gt;();
+<a class="jxr_linenumber" name="L181" href="#L181">181</a>         <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> access = Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_SYNTHETIC;
+<a class="jxr_linenumber" name="L182" href="#L182">182</a>         <strong class="jxr_keyword">for</strong> (FieldNode fieldNode : node.getFields()) {
+<a class="jxr_linenumber" name="L183" href="#L183">183</a>             <strong class="jxr_keyword">if</strong> (accessedFields.contains(fieldNode)) {
+<a class="jxr_linenumber" name="L184" href="#L184">184</a> 
+<a class="jxr_linenumber" name="L185" href="#L185">185</a>                 acc++;
+<a class="jxr_linenumber" name="L186" href="#L186">186</a>                 Parameter param = <strong class="jxr_keyword">new</strong> Parameter(node.getPlainNodeReference(), <span class="jxr_string">"$that"</span>);
+<a class="jxr_linenumber" name="L187" href="#L187">187</a>                 Expression receiver = fieldNode.isStatic()?<strong class="jxr_keyword">new</strong> ClassExpression(node):<strong class="jxr_keyword">new</strong> VariableExpression(param);
+<a class="jxr_linenumber" name="L188" href="#L188">188</a>                 Statement stmt = <strong class="jxr_keyword">new</strong> ExpressionStatement(<strong class="jxr_keyword">new</strong> PropertyExpression(
+<a class="jxr_linenumber" name="L189" href="#L189">189</a>                         receiver,
+<a class="jxr_linenumber" name="L190" href="#L190">190</a>                         fieldNode.getName()
+<a class="jxr_linenumber" name="L191" href="#L191">191</a>                 ));
+<a class="jxr_linenumber" name="L192" href="#L192">192</a>                 MethodNode accessor = node.addMethod(<span class="jxr_string">"pfaccess$"</span>+acc, access, fieldNode.getOriginType(), <strong class="jxr_keyword">new</strong> Parameter[]{param}, ClassNode.EMPTY_ARRAY, stmt);
+<a class="jxr_linenumber" name="L193" href="#L193">193</a>                 privateConstantAccessors.put(fieldNode.getName(), accessor);
+<a class="jxr_linenumber" name="L194" href="#L194">194</a>             }
+<a class="jxr_linenumber" name="L195" href="#L195">195</a>         }
+<a class="jxr_linenumber" name="L196" href="#L196">196</a>         node.setNodeMetaData(PRIVATE_FIELDS_ACCESSORS, privateConstantAccessors);
+<a class="jxr_linenumber" name="L197" href="#L197">197</a>     }
+<a class="jxr_linenumber" name="L198" href="#L198">198</a> 
+<a class="jxr_linenumber" name="L199" href="#L199">199</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L200" href="#L200">200</a> <em class="jxr_javadoccomment">     * This method is used to add "bridge" methods for private methods of an inner/outer</em>
+<a class="jxr_linenumber" name="L201" href="#L201">201</a> <em class="jxr_javadoccomment">     * class, so that the outer class is capable of calling them. It does basically</em>
+<a class="jxr_linenumber" name="L202" href="#L202">202</a> <em class="jxr_javadoccomment">     * the same job as access$000 like methods in Java.</em>
+<a class="jxr_linenumber" name="L203" href="#L203">203</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="L204" href="#L204">204</a> <em class="jxr_javadoccomment">     * @param node an inner/outer class node for which to generate bridge methods</em>
+<a class="jxr_linenumber" name="L205" href="#L205">205</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L206" href="#L206">206</a>     @SuppressWarnings(<span class="jxr_string">"unchecked"</span>)
+<a class="jxr_linenumber" name="L207" href="#L207">207</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> addPrivateBridgeMethods(<strong class="jxr_keyword">final</strong> ClassNode node) {
+<a class="jxr_linenumber" name="L208" href="#L208">208</a>         Set&lt;ASTNode&gt; accessedMethods = (Set&lt;ASTNode&gt;) node.getNodeMetaData(StaticTypesMarker.PV_METHODS_ACCESS);
+<a class="jxr_linenumber" name="L209" href="#L209">209</a>         <strong class="jxr_keyword">if</strong> (accessedMethods==<strong class="jxr_keyword">null</strong>) <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L210" href="#L210">210</a>         List&lt;MethodNode&gt; methods = <strong class="jxr_keyword">new</strong> ArrayList&lt;MethodNode&gt;(node.getAllDeclaredMethods());
+<a class="jxr_linenumber" name="L211" href="#L211">211</a>         Map&lt;MethodNode, MethodNode&gt; privateBridgeMethods = (Map&lt;MethodNode, MethodNode&gt;) node.getNodeMetaData(PRIVATE_BRIDGE_METHODS);
+<a class="jxr_linenumber" name="L212" href="#L212">212</a>         <strong class="jxr_keyword">if</strong> (privateBridgeMethods!=<strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L213" href="#L213">213</a>             <em class="jxr_comment">// private bridge methods already added</em>
+<a class="jxr_linenumber" name="L214" href="#L214">214</a>             <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L215" href="#L215">215</a>         }
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>         privateBridgeMethods = <strong class="jxr_keyword">new</strong> HashMap&lt;MethodNode, MethodNode&gt;();
+<a class="jxr_linenumber" name="L217" href="#L217">217</a>         <strong class="jxr_keyword">int</strong> i=-1;
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>         <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> access = Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_SYNTHETIC;
+<a class="jxr_linenumber" name="L219" href="#L219">219</a>         <strong class="jxr_keyword">for</strong> (MethodNode method : methods) {
+<a class="jxr_linenumber" name="L220" href="#L220">220</a>             <strong class="jxr_keyword">if</strong> (accessedMethods.contains(method)) {
+<a class="jxr_linenumber" name="L221" href="#L221">221</a>                 List&lt;String&gt; methodSpecificGenerics = methodSpecificGenerics(method);
+<a class="jxr_linenumber" name="L222" href="#L222">222</a>                 i++;
+<a class="jxr_linenumber" name="L223" href="#L223">223</a>                 ClassNode declaringClass = method.getDeclaringClass();
+<a class="jxr_linenumber" name="L224" href="#L224">224</a>                 Map&lt;String,ClassNode&gt; genericsSpec = createGenericsSpec(node);
+<a class="jxr_linenumber" name="L225" href="#L225">225</a>                 genericsSpec = addMethodGenerics(method, genericsSpec);
+<a class="jxr_linenumber" name="L226" href="#L226">226</a>                 extractSuperClassGenerics(node, declaringClass, genericsSpec);
+<a class="jxr_linenumber" name="L227" href="#L227">227</a>                 Parameter[] methodParameters = method.getParameters();
+<a class="jxr_linenumber" name="L228" href="#L228">228</a>                 Parameter[] newParams = <strong class="jxr_keyword">new</strong> Parameter[methodParameters.length+1];
+<a class="jxr_linenumber" name="L229" href="#L229">229</a>                 <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> j = 1; j &lt; newParams.length; j++) {
+<a class="jxr_linenumber" name="L230" href="#L230">230</a>                     Parameter orig = methodParameters[j-1];
+<a class="jxr_linenumber" name="L231" href="#L231">231</a>                     newParams[j] = <strong class="jxr_keyword">new</strong> Parameter(
+<a class="jxr_linenumber" name="L232" href="#L232">232</a>                             correctToGenericsSpecRecurse(genericsSpec, orig.getOriginType(), methodSpecificGenerics),
+<a class="jxr_linenumber" name="L233" href="#L233">233</a>                             orig.getName()
+<a class="jxr_linenumber" name="L234" href="#L234">234</a>                     );
+<a class="jxr_linenumber" name="L235" href="#L235">235</a>                 }
+<a class="jxr_linenumber" name="L236" href="#L236">236</a>                 newParams[0] = <strong class="jxr_keyword">new</strong> Parameter(node.getPlainNodeReference(), <span class="jxr_string">"$that"</span>);
+<a class="jxr_linenumber" name="L237" href="#L237">237</a>                 Expression arguments;
+<a class="jxr_linenumber" name="L238" href="#L238">238</a>                 <strong class="jxr_keyword">if</strong> (method.getParameters()==<strong class="jxr_keyword">null</strong> || method.getParameters().length==0) {
+<a class="jxr_linenumber" name="L239" href="#L239">239</a>                     arguments = ArgumentListExpression.EMPTY_ARGUMENTS;
+<a class="jxr_linenumber" name="L240" href="#L240">240</a>                 } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L241" href="#L241">241</a>                     List&lt;Expression&gt; args = <strong class="jxr_keyword">new</strong> LinkedList&lt;Expression&gt;();
+<a class="jxr_linenumber" name="L242" href="#L242">242</a>                     <strong class="jxr_keyword">for</strong> (Parameter parameter : methodParameters) {
+<a class="jxr_linenumber" name="L243" href="#L243">243</a>                         args.add(<strong class="jxr_keyword">new</strong> VariableExpression(parameter));
+<a class="jxr_linenumber" name="L244" href="#L244">244</a>                     }
+<a class="jxr_linenumber" name="L245" href="#L245">245</a>                     arguments = <strong class="jxr_keyword">new</strong> ArgumentListExpression(args);
+<a class="jxr_linenumber" name="L246" href="#L246">246</a>                 }
+<a class="jxr_linenumber" name="L247" href="#L247">247</a>                 Expression receiver = method.isStatic()?<strong class="jxr_keyword">new</strong> ClassExpression(node):<strong class="jxr_keyword">new</strong> VariableExpression(newParams[0]);
+<a class="jxr_linenumber" name="L248" href="#L248">248</a>                 MethodCallExpression mce = <strong class="jxr_keyword">new</strong> MethodCallExpression(receiver, method.getName(), arguments);
+<a class="jxr_linenumber" name="L249" href="#L249">249</a>                 mce.setMethodTarget(method);
+<a class="jxr_linenumber" name="L250" href="#L250">250</a> 
+<a class="jxr_linenumber" name="L251" href="#L251">251</a>                 ExpressionStatement returnStatement = <strong class="jxr_keyword">new</strong> ExpressionStatement(mce);
+<a class="jxr_linenumber" name="L252" href="#L252">252</a>                 MethodNode bridge = node.addMethod(
+<a class="jxr_linenumber" name="L253" href="#L253">253</a>                         <span class="jxr_string">"access$"</span>+i, access,
+<a class="jxr_linenumber" name="L254" href="#L254">254</a>                         correctToGenericsSpecRecurse(genericsSpec, method.getReturnType(), methodSpecificGenerics),
+<a class="jxr_linenumber" name="L255" href="#L255">255</a>                         newParams,
+<a class="jxr_linenumber" name="L256" href="#L256">256</a>                         method.getExceptions(),
+<a class="jxr_linenumber" name="L257" href="#L257">257</a>                         returnStatement);
+<a class="jxr_linenumber" name="L258" href="#L258">258</a>                 GenericsType[] origGenericsTypes = method.getGenericsTypes();
+<a class="jxr_linenumber" name="L259" href="#L259">259</a>                 <strong class="jxr_keyword">if</strong> (origGenericsTypes !=<strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L260" href="#L260">260</a>                     bridge.setGenericsTypes(applyGenericsContextToPlaceHolders(genericsSpec,origGenericsTypes));
+<a class="jxr_linenumber" name="L261" href="#L261">261</a>                 }
+<a class="jxr_linenumber" name="L262" href="#L262">262</a>                 privateBridgeMethods.put(method, bridge);
+<a class="jxr_linenumber" name="L263" href="#L263">263</a>                 bridge.addAnnotation(<strong class="jxr_keyword">new</strong> AnnotationNode(COMPILESTATIC_CLASSNODE));
+<a class="jxr_linenumber" name="L264" href="#L264">264</a>             }
+<a class="jxr_linenumber" name="L265" href="#L265">265</a>         }
+<a class="jxr_linenumber" name="L266" href="#L266">266</a>         <strong class="jxr_keyword">if</strong> (!privateBridgeMethods.isEmpty()) {
+<a class="jxr_linenumber" name="L267" href="#L267">267</a>             node.setNodeMetaData(PRIVATE_BRIDGE_METHODS, privateBridgeMethods);
+<a class="jxr_linenumber" name="L268" href="#L268">268</a>         }
+<a class="jxr_linenumber" name="L269" href="#L269">269</a>     }
+<a class="jxr_linenumber" name="L270" href="#L270">270</a> 
+<a class="jxr_linenumber" name="L271" href="#L271">271</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> List&lt;String&gt; methodSpecificGenerics(<strong class="jxr_keyword">final</strong> MethodNode method) {
+<a class="jxr_linenumber" name="L272" href="#L272">272</a>         List&lt;String&gt; genericTypeTokens = <strong class="jxr_keyword">new</strong> ArrayList&lt;String&gt;();
+<a class="jxr_linenumber" name="L273" href="#L273">273</a>         GenericsType[] candidateGenericsTypes = method.getGenericsTypes();
+<a class="jxr_linenumber" name="L274" href="#L274">274</a>         <strong class="jxr_keyword">if</strong> (candidateGenericsTypes != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L275" href="#L275">275</a>             <strong class="jxr_keyword">for</strong> (GenericsType gt : candidateGenericsTypes) {
+<a class="jxr_linenumber" name="L276" href="#L276">276</a>                 genericTypeTokens.add(gt.getName());
+<a class="jxr_linenumber" name="L277" href="#L277">277</a>             }
+<a class="jxr_linenumber" name="L278" href="#L278">278</a>         }
+<a class="jxr_linenumber" name="L279" href="#L279">279</a>         <strong class="jxr_keyword">return</strong> genericTypeTokens;
+<a class="jxr_linenumber" name="L280" href="#L280">280</a>     }
+<a class="jxr_linenumber" name="L281" href="#L281">281</a> 
+<a class="jxr_linenumber" name="L282" href="#L282">282</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> memorizeInitialExpressions(<strong class="jxr_keyword">final</strong> MethodNode node) {
+<a class="jxr_linenumber" name="L283" href="#L283">283</a>         <em class="jxr_comment">// add node metadata for default parameters because they are erased by the Verifier</em>
+<a class="jxr_linenumber" name="L284" href="#L284">284</a>         <strong class="jxr_keyword">if</strong> (node.getParameters()!=<strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L285" href="#L285">285</a>             <strong class="jxr_keyword">for</strong> (Parameter parameter : node.getParameters()) {
+<a class="jxr_linenumber" name="L286" href="#L286">286</a>                 parameter.putNodeMetaData(StaticTypesMarker.INITIAL_EXPRESSION, parameter.getInitialExpression());
+<a class="jxr_linenumber" name="L287" href="#L287">287</a>             }
+<a class="jxr_linenumber" name="L288" href="#L288">288</a>         }
+<a class="jxr_linenumber" name="L289" href="#L289">289</a>     }
+<a class="jxr_linenumber" name="L290" href="#L290">290</a> 
+<a class="jxr_linenumber" name="L291" href="#L291">291</a>     @Override
+<a class="jxr_linenumber" name="L292" href="#L292">292</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitSpreadExpression(<strong class="jxr_keyword">final</strong> SpreadExpression expression) {
+<a class="jxr_linenumber" name="L293" href="#L293">293</a>     }
+<a class="jxr_linenumber" name="L294" href="#L294">294</a> 
+<a class="jxr_linenumber" name="L295" href="#L295">295</a>     @Override
+<a class="jxr_linenumber" name="L296" href="#L296">296</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitMethodCallExpression(<strong class="jxr_keyword">final</strong> MethodCallExpression call) {
+<a class="jxr_linenumber" name="L297" href="#L297">297</a>         <strong class="jxr_keyword">super</strong>.visitMethodCallExpression(call);
+<a class="jxr_linenumber" name="L298" href="#L298">298</a> 
+<a class="jxr_linenumber" name="L299" href="#L299">299</a>         MethodNode target = (MethodNode) call.getNodeMetaData(DIRECT_METHOD_CALL_TARGET);
+<a class="jxr_linenumber" name="L300" href="#L300">300</a>         <strong class="jxr_keyword">if</strong> (target!=<strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L301" href="#L301">301</a>             call.setMethodTarget(target);
+<a class="jxr_linenumber" name="L302" href="#L302">302</a>             memorizeInitialExpressions(target);
+<a class="jxr_linenumber" name="L303" href="#L303">303</a>         }
+<a class="jxr_linenumber" name="L304" href="#L304">304</a> 
+<a class="jxr_linenumber" name="L305" href="#L305">305</a>         <strong class="jxr_keyword">if</strong> (call.getMethodTarget()==<strong class="jxr_keyword">null</strong> &amp;&amp; call.getLineNumber()&gt;0) {
+<a class="jxr_linenumber" name="L306" href="#L306">306</a>             addError(<span class="jxr_string">"Target method for method call expression hasn't been set"</span>, call);
+<a class="jxr_linenumber" name="L307" href="#L307">307</a>         }
+<a class="jxr_linenumber" name="L308" href="#L308">308</a> 
+<a class="jxr_linenumber" name="L309" href="#L309">309</a>     }
+<a class="jxr_linenumber" name="L310" href="#L310">310</a> 
+<a class="jxr_linenumber" name="L311" href="#L311">311</a>     @Override
+<a class="jxr_linenumber" name="L312" href="#L312">312</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitConstructorCallExpression(<strong class="jxr_keyword">final</strong> ConstructorCallExpression call) {
+<a class="jxr_linenumber" name="L313" href="#L313">313</a>         <strong class="jxr_keyword">super</strong>.visitConstructorCallExpression(call);
+<a class="jxr_linenumber" name="L314" href="#L314">314</a> 
+<a class="jxr_linenumber" name="L315" href="#L315">315</a>         MethodNode target = (MethodNode) call.getNodeMetaData(DIRECT_METHOD_CALL_TARGET);
+<a class="jxr_linenumber" name="L316" href="#L316">316</a>         <strong class="jxr_keyword">if</strong> (target==<strong class="jxr_keyword">null</strong> &amp;&amp; call.getLineNumber()&gt;0) {
+<a class="jxr_linenumber" name="L317" href="#L317">317</a>             addError(<span class="jxr_string">"Target constructor for constructor call expression hasn't been set"</span>, call);
+<a class="jxr_linenumber" name="L318" href="#L318">318</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L319" href="#L319">319</a>             <strong class="jxr_keyword">if</strong> (target==<strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L320" href="#L320">320</a>                 <em class="jxr_comment">// try to find a target</em>
+<a class="jxr_linenumber" name="L321" href="#L321">321</a>                 ArgumentListExpression argumentListExpression = InvocationWriter.makeArgumentList(call.getArguments());
+<a class="jxr_linenumber" name="L322" href="#L322">322</a>                 List&lt;Expression&gt; expressions = argumentListExpression.getExpressions();
+<a class="jxr_linenumber" name="L323" href="#L323">323</a>                 ClassNode[] args = <strong class="jxr_keyword">new</strong> ClassNode[expressions.size()];
+<a class="jxr_linenumber" name="L324" href="#L324">324</a>                 <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; args.length; i++) {
+<a class="jxr_linenumber" name="L325" href="#L325">325</a>                     args[i] = typeChooser.resolveType(expressions.get(i), classNode);
+<a class="jxr_linenumber" name="L326" href="#L326">326</a>                 }
+<a class="jxr_linenumber" name="L327" href="#L327">327</a>                 MethodNode constructor = findMethodOrFail(call, call.isSuperCall() ? classNode.getSuperClass() : classNode, <span class="jxr_string">"&lt;init&gt;"</span>, args);
+<a class="jxr_linenumber" name="L328" href="#L328">328</a>                 call.putNodeMetaData(DIRECT_METHOD_CALL_TARGET, constructor);
+<a class="jxr_linenumber" name="L329" href="#L329">329</a>                 target = constructor;
+<a class="jxr_linenumber" name="L330" href="#L330">330</a>             }
+<a class="jxr_linenumber" name="L331" href="#L331">331</a>         }
+<a class="jxr_linenumber" name="L332" href="#L332">332</a>         <strong class="jxr_keyword">if</strong> (target!=<strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L333" href="#L333">333</a>             memorizeInitialExpressions(target);
+<a class="jxr_linenumber" name="L334" href="#L334">334</a>         }
+<a class="jxr_linenumber" name="L335" href="#L335">335</a>     }
+<a class="jxr_linenumber" name="L336" href="#L336">336</a> 
+<a class="jxr_linenumber" name="L337" href="#L337">337</a>     @Override
+<a class="jxr_linenumber" name="L338" href="#L338">338</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitForLoop(<strong class="jxr_keyword">final</strong> ForStatement forLoop) {
+<a class="jxr_linenumber" name="L339" href="#L339">339</a>         <strong class="jxr_keyword">super</strong>.visitForLoop(forLoop);
+<a class="jxr_linenumber" name="L340" href="#L340">340</a>         Expression collectionExpression = forLoop.getCollectionExpression();
+<a class="jxr_linenumber" name="L341" href="#L341">341</a>         <strong class="jxr_keyword">if</strong> (!(collectionExpression instanceof ClosureListExpression)) {
+<a class="jxr_linenumber" name="L342" href="#L342">342</a>             <strong class="jxr_keyword">final</strong> ClassNode collectionType = getType(forLoop.getCollectionExpression());
+<a class="jxr_linenumber" name="L343" href="#L343">343</a>             ClassNode componentType = inferLoopElementType(collectionType);
+<a class="jxr_linenumber" name="L344" href="#L344">344</a>             forLoop.getVariable().setType(componentType);
+<a class="jxr_linenumber" name="L345" href="#L345">345</a>             forLoop.getVariable().setOriginType(componentType);
+<a class="jxr_linenumber" name="L346" href="#L346">346</a>         }
+<a class="jxr_linenumber" name="L347" href="#L347">347</a>     }
+<a class="jxr_linenumber" name="L348" href="#L348">348</a> 
+<a class="jxr_linenumber" name="L349" href="#L349">349</a>     @Override
+<a class="jxr_linenumber" name="L350" href="#L350">350</a>     <strong class="jxr_keyword">protected</strong> MethodNode findMethodOrFail(<strong class="jxr_keyword">final</strong> Expression expr, <strong class="jxr_keyword">final</strong> ClassNode receiver, <strong class="jxr_keyword">final</strong> String name, <strong class="jxr_keyword">final</strong> ClassNode... args) {
+<a class="jxr_linenumber" name="L351" href="#L351">351</a>         MethodNode methodNode = <strong class="jxr_keyword">super</strong>.findMethodOrFail(expr, receiver, name, args);
+<a class="jxr_linenumber" name="L352" href="#L352">352</a>         <strong class="jxr_keyword">if</strong> (expr instanceof BinaryExpression &amp;&amp; methodNode!=<strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L353" href="#L353">353</a>             expr.putNodeMetaData(BINARY_EXP_TARGET, <strong class="jxr_keyword">new</strong> Object[] {methodNode, name});
+<a class="jxr_linenumber" name="L354" href="#L354">354</a>         }
+<a class="jxr_linenumber" name="L355" href="#L355">355</a>         <strong class="jxr_keyword">return</strong> methodNode;
+<a class="jxr_linenumber" name="L356" href="#L356">356</a>     }
+<a class="jxr_linenumber" name="L357" href="#L357">357</a> 
+<a class="jxr_linenumber" name="L358" href="#L358">358</a>     @Override
+<a class="jxr_linenumber" name="L359" href="#L359">359</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">boolean</strong> existsProperty(<strong class="jxr_keyword">final</strong> PropertyExpression pexp, <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">boolean</strong> checkForReadOnly, <strong class="jxr_keyword">final</strong> ClassCodeVisitorSupport visitor) {
+<a class="jxr_linenumber" name="L360" href="#L360">360</a>         Expression objectExpression = pexp.getObjectExpression();
+<a class="jxr_linenumber" name="L361" href="#L361">361</a>         ClassNode objectExpressionType = getType(objectExpression);
+<a class="jxr_linenumber" name="L362" href="#L362">362</a>         <strong class="jxr_keyword">final</strong> Reference&lt;ClassNode&gt; rType = <strong class="jxr_keyword">new</strong> Reference&lt;ClassNode&gt;(objectExpressionType);
+<a class="jxr_linenumber" name="L363" href="#L363">363</a>         ClassCodeVisitorSupport receiverMemoizer = <strong class="jxr_keyword">new</strong> ClassCodeVisitorSupport() {
+<a class="jxr_linenumber" name="L364" href="#L364">364</a>             @Override
+<a class="jxr_linenumber" name="L365" href="#L365">365</a>             <strong class="jxr_keyword">protected</strong> SourceUnit getSourceUnit() {
+<a class="jxr_linenumber" name="L366" href="#L366">366</a>                 <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L367" href="#L367">367</a>             }
+<a class="jxr_linenumber" name="L368" href="#L368">368</a> 
+<a class="jxr_linenumber" name="L369" href="#L369">369</a>             <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitField(<strong class="jxr_keyword">final</strong> FieldNode node) {
+<a class="jxr_linenumber" name="L370" href="#L370">370</a>                 <strong class="jxr_keyword">if</strong> (visitor!=<strong class="jxr_keyword">null</strong>) visitor.visitField(node);
+<a class="jxr_linenumber" name="L371" href="#L371">371</a>                 ClassNode declaringClass = node.getDeclaringClass();
+<a class="jxr_linenumber" name="L372" href="#L372">372</a>                 <strong class="jxr_keyword">if</strong> (declaringClass!=<strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L373" href="#L373">373</a>                     <strong class="jxr_keyword">if</strong> (StaticTypeCheckingSupport.implementsInterfaceOrIsSubclassOf(declaringClass, ClassHelper.LIST_TYPE)) {
+<a class="jxr_linenumber" name="L374" href="#L374">374</a>                         <strong class="jxr_keyword">boolean</strong> spread = declaringClass.getDeclaredField(node.getName()) != node;
+<a class="jxr_linenumber" name="L375" href="#L375">375</a>                         pexp.setSpreadSafe(spread);
+<a class="jxr_linenumber" name="L376" href="#L376">376</a>                     }
+<a class="jxr_linenumber" name="L377" href="#L377">377</a>                     rType.set(declaringClass);
+<a class="jxr_linenumber" name="L378" href="#L378">378</a>                 }
+<a class="jxr_linenumber" name="L379" href="#L379">379</a>             }
+<a class="jxr_linenumber" name="L380" href="#L380">380</a> 
+<a class="jxr_linenumber" name="L381" href="#L381">381</a>             <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitMethod(<strong class="jxr_keyword">final</strong> MethodNode node) {
+<a class="jxr_linenumber" name="L382" href="#L382">382</a>                 <strong class="jxr_keyword">if</strong> (visitor!=<strong class="jxr_keyword">null</strong>) visitor.visitMethod(node);
+<a class="jxr_linenumber" name="L383" href="#L383">383</a>                 ClassNode declaringClass = node.getDeclaringClass();
+<a class="jxr_linenumber" name="L384" href="#L384">384</a>                 <strong class="jxr_keyword">if</strong> (declaringClass!=<strong class="jxr_keyword">null</strong>){
+<a class="jxr_linenumber" name="L385" href="#L385">385</a>                     <strong class="jxr_keyword">if</strong> (StaticTypeCheckingSupport.implementsInterfaceOrIsSubclassOf(declaringClass, ClassHelper.LIST_TYPE)) {
+<a class="jxr_linenumber" name="L386" href="#L386">386</a>                         List&lt;MethodNode&gt; properties = declaringClass.getDeclaredMethods(node.getName());
+<a class="jxr_linenumber" name="L387" href="#L387">387</a>                         <strong class="jxr_keyword">boolean</strong> spread = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L388" href="#L388">388</a>                         <strong class="jxr_keyword">for</strong> (MethodNode mn : properties) {
+<a class="jxr_linenumber" name="L389" href="#L389">389</a>                             <strong class="jxr_keyword">if</strong> (node==mn) {
+<a class="jxr_linenumber" name="L390" href="#L390">390</a>                                 spread = false;
+<a class="jxr_linenumber" name="L391" href="#L391">391</a>                                 <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L392" href="#L392">392</a>                             }
+<a class="jxr_linenumber" name="L393" href="#L393">393</a>                         }
+<a class="jxr_linenumber" name="L394" href="#L394">394</a>                         <em class="jxr_comment">// it's no real property but a property of the component</em>
+<a class="jxr_linenumber" name="L395" href="#L395">395</a>                         pexp.setSpreadSafe(spread);
+<a class="jxr_linenumber" name="L396" href="#L396">396</a>                     }
+<a class="jxr_linenumber" name="L397" href="#L397">397</a>                     rType.set(declaringClass);
+<a class="jxr_linenumber" name="L398" href="#L398">398</a>                 }
+<a class="jxr_linenumber" name="L399" href="#L399">399</a>             }
+<a class="jxr_linenumber" name="L400" href="#L400">400</a> 
+<a class="jxr_linenumber" name="L401" href="#L401">401</a>             @Override
+<a class="jxr_linenumber" name="L402" href="#L402">402</a>             <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitProperty(<strong class="jxr_keyword">final</strong> PropertyNode node) {
+<a class="jxr_linenumber" name="L403" href="#L403">403</a>                 <strong class="jxr_keyword">if</strong> (visitor!=<strong class="jxr_keyword">null</strong>) visitor.visitProperty(node);
+<a class="jxr_linenumber" name="L404" href="#L404">404</a>                 ClassNode declaringClass = node.getDeclaringClass();
+<a class="jxr_linenumber" name="L405" href="#L405">405</a>                 <strong class="jxr_keyword">if</strong> (declaringClass!=<strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L406" href="#L406">406</a>                     <strong class="jxr_keyword">if</strong> (StaticTypeCheckingSupport.implementsInterfaceOrIsSubclassOf(declaringClass, ClassHelper.LIST_TYPE)) {
+<a class="jxr_linenumber" name="L407" href="#L407">407</a>                         List&lt;PropertyNode&gt; properties = declaringClass.getProperties();
+<a class="jxr_linenumber" name="L408" href="#L408">408</a>                         <strong class="jxr_keyword">boolean</strong> spread = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L409" href="#L409">409</a>                         <strong class="jxr_keyword">for</strong> (PropertyNode propertyNode : properties) {
+<a class="jxr_linenumber" name="L410" href="#L410">410</a>                             <strong class="jxr_keyword">if</strong> (propertyNode==node) {
+<a class="jxr_linenumber" name="L411" href="#L411">411</a>                                 spread = false;
+<a class="jxr_linenumber" name="L412" href="#L412">412</a>                                 <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L413" href="#L413">413</a>                             }
+<a class="jxr_linenumber" name="L414" href="#L414">414</a>                         }
+<a class="jxr_linenumber" name="L415" href="#L415">415</a>                         <em class="jxr_comment">// it's no real property but a property of the component</em>
+<a class="jxr_linenumber" name="L416" href="#L416">416</a>                         pexp.setSpreadSafe(spread);
+<a class="jxr_linenumber" name="L417" href="#L417">417</a>                     }
+<a class="jxr_linenumber" name="L418" href="#L418">418</a>                     rType.set(declaringClass);
+<a class="jxr_linenumber" name="L419" href="#L419">419</a>                 }
+<a class="jxr_linenumber" name="L420" href="#L420">420</a>             }
+<a class="jxr_linenumber" name="L421" href="#L421">421</a>         };
+<a class="jxr_linenumber" name="L422" href="#L422">422</a>         <strong class="jxr_keyword">boolean</strong> exists = <strong class="jxr_keyword">super</strong>.existsProperty(pexp, checkForReadOnly, receiverMemoizer);
+<a class="jxr_linenumber" name="L423" href="#L423">423</a>         <strong class="jxr_keyword">if</strong> (exists) {
+<a class="jxr_linenumber" name="L424" href="#L424">424</a>             <strong class="jxr_keyword">if</strong> (objectExpression.getNodeMetaData(StaticCompilationMetadataKeys.PROPERTY_OWNER)==<strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L425" href="#L425">425</a>                 objectExpression.putNodeMetaData(StaticCompilationMetadataKeys.PROPERTY_OWNER, rType.get());
+<a class="jxr_linenumber" name="L426" href="#L426">426</a>             }
+<a class="jxr_linenumber" name="L427" href="#L427">427</a>             <strong class="jxr_keyword">if</strong> (StaticTypeCheckingSupport.implementsInterfaceOrIsSubclassOf(objectExpressionType, ClassHelper.LIST_TYPE)) {
+<a class="jxr_linenumber" name="L428" href="#L428">428</a>                 objectExpression.putNodeMetaData(COMPONENT_TYPE, inferComponentType(objectExpressionType, ClassHelper.<strong class="jxr_keyword">int</strong>_TYPE));
+<a class="jxr_linenumber" name="L429" href="#L429">429</a>             }
+<a class="jxr_linenumber" name="L430" href="#L430">430</a>         }
+<a class="jxr_linenumber" name="L431" href="#L431">431</a>         <strong class="jxr_keyword">return</strong> exists;
+<a class="jxr_linenumber" name="L432" href="#L432">432</a>     }
+<a class="jxr_linenumber" name="L433" href="#L433">433</a> 
+<a class="jxr_linenumber" name="L434" href="#L434">434</a>     @Override
+<a class="jxr_linenumber" name="L435" href="#L435">435</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visitPropertyExpression(<strong class="jxr_keyword">final</strong> PropertyExpression pexp) {
+<a class="jxr_linenumber" name="L436" href="#L436">436</a>         <strong class="jxr_keyword">super</strong>.visitPropertyExpression(pexp);
+<a class="jxr_linenumber" name="L437" href="#L437">437</a>         Object dynamic = pexp.getNodeMetaData(StaticTypesMarker.DYNAMIC_RESOLUTION);
+<a class="jxr_linenumber" name="L438" href="#L438">438</a>         <strong class="jxr_keyword">if</strong> (dynamic !=<strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L439" href="#L439">439</a>             pexp.getObjectExpression().putNodeMetaData(StaticCompilationMetadataKeys.RECEIVER_OF_DYNAMIC_PROPERTY, dynamic);
+<a class="jxr_linenumber" name="L440" href="#L440">440</a>         }
+<a class="jxr_linenumber" name="L441" href="#L441">441</a>     }
+<a class="jxr_linenumber" name="L442" href="#L442">442</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>EnwikiQueryMaker xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.lucene.benchmark.byTask.feeds;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> java.util.ArrayList;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> java.util.Arrays;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> java.util.List;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.Analyzer;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.standard.StandardAnalyzer;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.Term;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.queryparser.classic.QueryParser;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.MultiTermQuery;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.Query;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.WildcardQuery;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.spans.SpanFirstQuery;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.spans.SpanNearQuery;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.spans.SpanQuery;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.spans.SpanTermQuery;
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.benchmark.byTask.tasks.NewAnalyzerTask;
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <em class="jxr_javadoccomment"> * A QueryMaker that uses common and uncommon actual Wikipedia queries for</em>
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <em class="jxr_javadoccomment"> * searching the English Wikipedia collection. 90 queries total.</em>
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> EnwikiQueryMaker <strong class="jxr_keyword">extends</strong> AbstractQueryMaker <strong class="jxr_keyword">implements</strong>
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>      QueryMaker {
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>  
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>    <em class="jxr_comment">// common and a few uncommon queries from wikipedia search logs</em>
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> String[] STANDARD_QUERIES = { <span class="jxr_string">"Images catbox gif"</span>,
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>        <span class="jxr_string">"Imunisasi haram"</span>, <span class="jxr_string">"Favicon ico"</span>, <span class="jxr_string">"Michael jackson"</span>, <span class="jxr_string">"Unknown artist"</span>,
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>        <span class="jxr_string">"Lily Thai"</span>, <span class="jxr_string">"Neda"</span>, <span class="jxr_string">"The Last Song"</span>, <span class="jxr_string">"Metallica"</span>, <span class="jxr_string">"Nicola Tesla"</span>,
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>        <span class="jxr_string">"Max B"</span>, <span class="jxr_string">"Skil Corporation"</span>, <span class="jxr_string">"\&quot;The 100 Greatest Artists of All Time\&quot;"</span>,
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>        <span class="jxr_string">"\&quot;Top 100 Global Universities\&quot;"</span>, <span class="jxr_string">"Pink floyd"</span>, <span class="jxr_string">"Bolton Sullivan"</span>,
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>        <span class="jxr_string">"Frank Lucas Jr"</span>, <span class="jxr_string">"Drake Woods"</span>, <span class="jxr_string">"Radiohead"</span>, <span class="jxr_string">"George Freeman"</span>,
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>        <span class="jxr_string">"Oksana Grigorieva"</span>, <span class="jxr_string">"The Elder Scrolls V"</span>, <span class="jxr_string">"Deadpool"</span>, <span class="jxr_string">"Green day"</span>,
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>        <span class="jxr_string">"\&quot;Red hot chili peppers\&quot;"</span>, <span class="jxr_string">"Jennifer Bini Taylor"</span>,
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>        <span class="jxr_string">"The Paradiso Girls"</span>, <span class="jxr_string">"Queen"</span>, <span class="jxr_string">"3Me4Ph"</span>, <span class="jxr_string">"Paloma Jimenez"</span>, <span class="jxr_string">"AUDI A4"</span>,
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>        <span class="jxr_string">"Edith Bouvier Beale: A Life In Pictures"</span>, <span class="jxr_string">"\&quot;Skylar James Deleon\&quot;"</span>,
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>        <span class="jxr_string">"Simple Explanation"</span>, <span class="jxr_string">"Juxtaposition"</span>, <span class="jxr_string">"The Woody Show"</span>, <span class="jxr_string">"London WITHER"</span>,
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>        <span class="jxr_string">"In A Dark Place"</span>, <span class="jxr_string">"George Freeman"</span>, <span class="jxr_string">"LuAnn de Lesseps"</span>, <span class="jxr_string">"Muhammad."</span>,
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>        <span class="jxr_string">"U2"</span>, <span class="jxr_string">"List of countries by GDP"</span>, <span class="jxr_string">"Dean Martin Discography"</span>, <span class="jxr_string">"Web 3.0"</span>,
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>        <span class="jxr_string">"List of American actors"</span>, <span class="jxr_string">"The Expendables"</span>,
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>        <span class="jxr_string">"\&quot;100 Greatest Guitarists of All Time\&quot;"</span>, <span class="jxr_string">"Vince Offer."</span>,
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>        <span class="jxr_string">"\&quot;List of ZIP Codes in the United States\&quot;"</span>, <span class="jxr_string">"Blood type diet"</span>,
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>        <span class="jxr_string">"Jennifer Gimenez"</span>, <span class="jxr_string">"List of hobbies"</span>, <span class="jxr_string">"The beatles"</span>, <span class="jxr_string">"Acdc"</span>,
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>        <span class="jxr_string">"Nightwish"</span>, <span class="jxr_string">"Iron maiden"</span>, <span class="jxr_string">"Murder Was the Case"</span>, <span class="jxr_string">"Pelvic hernia"</span>,
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>        <span class="jxr_string">"Naruto Shippuuden"</span>, <span class="jxr_string">"campaign"</span>, <span class="jxr_string">"Enthesopathy of hip region"</span>,
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>        <span class="jxr_string">"operating system"</span>, <span class="jxr_string">"mouse"</span>,
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>        <span class="jxr_string">"List of Xbox 360 games without region encoding"</span>, <span class="jxr_string">"Shakepearian sonnet"</span>,
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>        <span class="jxr_string">"\&quot;The Monday Night Miracle\&quot;"</span>, <span class="jxr_string">"India"</span>, <span class="jxr_string">"Dad's Army"</span>,
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>        <span class="jxr_string">"Solanum melanocerasum"</span>, <span class="jxr_string">"\&quot;List of PlayStation Portable Wi-Fi games\&quot;"</span>,
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>        <span class="jxr_string">"Little Pixie Geldof"</span>, <span class="jxr_string">"Planes, Trains &amp; Automobiles"</span>, <span class="jxr_string">"Freddy Ingalls"</span>,
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>        <span class="jxr_string">"The Return of Chef"</span>, <span class="jxr_string">"Nehalem"</span>, <span class="jxr_string">"Turtle"</span>, <span class="jxr_string">"Calculus"</span>, <span class="jxr_string">"Superman-Prime"</span>,
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>        <span class="jxr_string">"\&quot;The Losers\&quot;"</span>, <span class="jxr_string">"pen-pal"</span>, <span class="jxr_string">"Audio stream input output"</span>, <span class="jxr_string">"lifehouse"</span>,
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>        <span class="jxr_string">"50 greatest gunners"</span>, <span class="jxr_string">"Polyfecalia"</span>, <span class="jxr_string">"freeloader"</span>, <span class="jxr_string">"The Filthy Youth"</span> };
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>  
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> Query[] getPrebuiltQueries(String field) {
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>      WildcardQuery wcq = <strong class="jxr_keyword">new</strong> WildcardQuery(<strong class="jxr_keyword">new</strong> Term(field, <span class="jxr_string">"fo*"</span>));
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>      wcq .setRewriteMethod(MultiTermQuery.CONSTANT_SCORE_REWRITE);
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>      <em class="jxr_comment">// be wary of unanalyzed text</em>
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>      <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> Query[] {
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>          <strong class="jxr_keyword">new</strong> SpanFirstQuery(<strong class="jxr_keyword">new</strong> SpanTermQuery(<strong class="jxr_keyword">new</strong> Term(field, <span class="jxr_string">"ford"</span>)), 5),
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>          <strong class="jxr_keyword">new</strong> SpanNearQuery(<strong class="jxr_keyword">new</strong> SpanQuery[] {
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>              <strong class="jxr_keyword">new</strong> SpanTermQuery(<strong class="jxr_keyword">new</strong> Term(field, <span class="jxr_string">"night"</span>)),
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>              <strong class="jxr_keyword">new</strong> SpanTermQuery(<strong class="jxr_keyword">new</strong> Term(field, <span class="jxr_string">"trading"</span>)) }, 4, false),
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>          <strong class="jxr_keyword">new</strong> SpanNearQuery(<strong class="jxr_keyword">new</strong> SpanQuery[] {
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>              <strong class="jxr_keyword">new</strong> SpanFirstQuery(<strong class="jxr_keyword">new</strong> SpanTermQuery(<strong class="jxr_keyword">new</strong> Term(field, <span class="jxr_string">"ford"</span>)), 10),
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>              <strong class="jxr_keyword">new</strong> SpanTermQuery(<strong class="jxr_keyword">new</strong> Term(field, <span class="jxr_string">"credit"</span>)) }, 10, false), wcq, };
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>    }
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>  
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>    <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>  <em class="jxr_javadoccomment">   * Parse the strings containing Lucene queries.</em>
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>  <em class="jxr_javadoccomment">   * </em>
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>  <em class="jxr_javadoccomment">   * @param qs array of strings containing query expressions</em>
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>  <em class="jxr_javadoccomment">   * @param a analyzer to use when parsing queries</em>
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>  <em class="jxr_javadoccomment">   * @return array of Lucene queries</em>
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>  <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> Query[] createQueries(List&lt;Object&gt; qs, Analyzer a) {
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>      QueryParser qp = <strong class="jxr_keyword">new</strong> QueryParser(DocMaker.BODY_FIELD, a);
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>      List&lt;Object&gt; queries = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>      <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; qs.size(); i++) {
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>        <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>  
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>         Object query = qs.get(i);
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>         Query q = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>         <strong class="jxr_keyword">if</strong> (query instanceof String) {
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>           q = qp.parse((String) query);
+<a class="jxr_linenumber" name="L104" href="#L104">104</a> 
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (query instanceof Query) {
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>           q = (Query) query;
+<a class="jxr_linenumber" name="L107" href="#L107">107</a> 
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>           System.err.println(<span class="jxr_string">"Unsupported Query Type: "</span> + query);
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>         }
+<a class="jxr_linenumber" name="L111" href="#L111">111</a> 
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>         <strong class="jxr_keyword">if</strong> (q != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>           queries.add(q);
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>         }
+<a class="jxr_linenumber" name="L115" href="#L115">115</a> 
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>       } <strong class="jxr_keyword">catch</strong> (Exception e) {
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>         e.printStackTrace();
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>       }
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>     }
+<a class="jxr_linenumber" name="L120" href="#L120">120</a> 
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>     <strong class="jxr_keyword">return</strong> queries.toArray(<strong class="jxr_keyword">new</strong> Query[0]);
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>   }
+<a class="jxr_linenumber" name="L123" href="#L123">123</a> 
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>   @Override
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>   <strong class="jxr_keyword">protected</strong> Query[] prepareQueries() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>     <em class="jxr_comment">// analyzer (default is standard analyzer)</em>
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>     Analyzer anlzr = NewAnalyzerTask.createAnalyzer(config.get(<span class="jxr_string">"analyzer"</span>, StandardAnalyzer.<strong class="jxr_keyword">class</strong>.getName()));
+<a class="jxr_linenumber" name="L128" href="#L128">128</a> 
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>     List&lt;Object&gt; queryList = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;(20);
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>     queryList.addAll(Arrays.asList(STANDARD_QUERIES));
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>     <strong class="jxr_keyword">if</strong>(!config.get(<span class="jxr_string">"enwikiQueryMaker.disableSpanQueries"</span>, false))
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>       queryList.addAll(Arrays.asList(getPrebuiltQueries(DocMaker.BODY_FIELD)));
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>     <strong class="jxr_keyword">return</strong> createQueries(queryList, anlzr);
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>   }
+<a class="jxr_linenumber" name="L135" href="#L135">135</a> 
+<a class="jxr_linenumber" name="L136" href="#L136">136</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

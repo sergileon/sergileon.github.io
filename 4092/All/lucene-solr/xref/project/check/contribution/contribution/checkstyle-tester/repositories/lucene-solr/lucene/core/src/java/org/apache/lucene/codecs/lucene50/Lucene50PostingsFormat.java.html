@@ -1,0 +1,503 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>Lucene50PostingsFormat xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.lucene.codecs.lucene50;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> java.io.IOException;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.codecs.BlockTermState;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.codecs.CodecUtil;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.codecs.FieldsConsumer;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.codecs.FieldsProducer;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.codecs.MultiLevelSkipListWriter;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.codecs.PostingsFormat;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.codecs.PostingsReaderBase;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.codecs.PostingsWriterBase;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.codecs.blocktree.BlockTreeTermsReader;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.codecs.blocktree.BlockTreeTermsWriter;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.PostingsEnum;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.IndexOptions;
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.SegmentReadState;
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.SegmentWriteState;
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.TermState;
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.store.DataOutput;
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.IOUtils;
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.packed.PackedInts;
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>  <em class="jxr_javadoccomment"> * Lucene 5.0 postings format, which encodes postings in packed integer blocks </em>
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>  <em class="jxr_javadoccomment"> * for fast decode.</em>
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>  <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>  <em class="jxr_javadoccomment"> * &lt;p&gt;</em>
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>  <em class="jxr_javadoccomment"> * Basic idea:</em>
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>  <em class="jxr_javadoccomment"> * &lt;ul&gt;</em>
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>  <em class="jxr_javadoccomment"> *   &lt;li&gt;</em>
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>  <em class="jxr_javadoccomment"> *   &lt;b&gt;Packed Blocks and VInt Blocks&lt;/b&gt;: </em>
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>  <em class="jxr_javadoccomment"> *   &lt;p&gt;In packed blocks, integers are encoded with the same bit width ({@link PackedInts packed format}):</em>
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>  <em class="jxr_javadoccomment"> *      the block size (i.e. number of integers inside block) is fixed (currently 128). Additionally blocks</em>
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>  <em class="jxr_javadoccomment"> *      that are all the same value are encoded in an optimized way.&lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>  <em class="jxr_javadoccomment"> *   &lt;p&gt;In VInt blocks, integers are encoded as {@link DataOutput#writeVInt VInt}:</em>
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>  <em class="jxr_javadoccomment"> *      the block size is variable.&lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>  <em class="jxr_javadoccomment"> *   &lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>  <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>  <em class="jxr_javadoccomment"> *   &lt;li&gt; </em>
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>  <em class="jxr_javadoccomment"> *   &lt;b&gt;Block structure&lt;/b&gt;: </em>
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>  <em class="jxr_javadoccomment"> *   &lt;p&gt;When the postings are long enough, Lucene50PostingsFormat will try to encode most integer data </em>
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>  <em class="jxr_javadoccomment"> *      as a packed block.&lt;/p&gt; </em>
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>  <em class="jxr_javadoccomment"> *   &lt;p&gt;Take a term with 259 documents as an example, the first 256 document ids are encoded as two packed </em>
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>  <em class="jxr_javadoccomment"> *      blocks, while the remaining 3 are encoded as one VInt block. &lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>  <em class="jxr_javadoccomment"> *   &lt;p&gt;Different kinds of data are always encoded separately into different packed blocks, but may </em>
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>  <em class="jxr_javadoccomment"> *      possibly be interleaved into the same VInt block. &lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>  <em class="jxr_javadoccomment"> *   &lt;p&gt;This strategy is applied to pairs: </em>
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>  <em class="jxr_javadoccomment"> *      &amp;lt;document number, frequency&amp;gt;,</em>
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>  <em class="jxr_javadoccomment"> *      &amp;lt;position, payload length&amp;gt;, </em>
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>  <em class="jxr_javadoccomment"> *      &amp;lt;position, offset start, offset length&amp;gt;, and</em>
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>  <em class="jxr_javadoccomment"> *      &amp;lt;position, payload length, offsetstart, offset length&amp;gt;.&lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>  <em class="jxr_javadoccomment"> *   &lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>  <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>  <em class="jxr_javadoccomment"> *   &lt;li&gt;</em>
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>  <em class="jxr_javadoccomment"> *   &lt;b&gt;Skipdata settings&lt;/b&gt;: </em>
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>  <em class="jxr_javadoccomment"> *   &lt;p&gt;The structure of skip table is quite similar to previous version of Lucene. Skip interval is the </em>
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>  <em class="jxr_javadoccomment"> *      same as block size, and each skip entry points to the beginning of each block. However, for </em>
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>  <em class="jxr_javadoccomment"> *      the first block, skip data is omitted.&lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>  <em class="jxr_javadoccomment"> *   &lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>  <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>  <em class="jxr_javadoccomment"> *   &lt;li&gt;</em>
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>  <em class="jxr_javadoccomment"> *   &lt;b&gt;Positions, Payloads, and Offsets&lt;/b&gt;: </em>
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>  <em class="jxr_javadoccomment"> *   &lt;p&gt;A position is an integer indicating where the term occurs within one document. </em>
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>  <em class="jxr_javadoccomment"> *      A payload is a blob of metadata associated with current position. </em>
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>  <em class="jxr_javadoccomment"> *      An offset is a pair of integers indicating the tokenized start/end offsets for given term </em>
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>  <em class="jxr_javadoccomment"> *      in current position: it is essentially a specialized payload. &lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>  <em class="jxr_javadoccomment"> *   &lt;p&gt;When payloads and offsets are not omitted, numPositions==numPayloads==numOffsets (assuming a </em>
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>  <em class="jxr_javadoccomment"> *      null payload contributes one count). As mentioned in block structure, it is possible to encode </em>
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>  <em class="jxr_javadoccomment"> *      these three either combined or separately. </em>
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>  <em class="jxr_javadoccomment"> *   &lt;p&gt;In all cases, payloads and offsets are stored together. When encoded as a packed block, </em>
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>  <em class="jxr_javadoccomment"> *      position data is separated out as .pos, while payloads and offsets are encoded in .pay (payload </em>
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>  <em class="jxr_javadoccomment"> *      metadata will also be stored directly in .pay). When encoded as VInt blocks, all these three are </em>
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>  <em class="jxr_javadoccomment"> *      stored interleaved into the .pos (so is payload metadata).&lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>  <em class="jxr_javadoccomment"> *   &lt;p&gt;With this strategy, the majority of payload and offset data will be outside .pos file. </em>
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>  <em class="jxr_javadoccomment"> *      So for queries that require only position data, running on a full index with payloads and offsets, </em>
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>  <em class="jxr_javadoccomment"> *      this reduces disk pre-fetches.&lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>  <em class="jxr_javadoccomment"> *   &lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>  <em class="jxr_javadoccomment"> * &lt;/ul&gt;</em>
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>  <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>  <em class="jxr_javadoccomment"> * &lt;p&gt;</em>
+<a class="jxr_linenumber" name="L100" href="#L100">100</a> <em class="jxr_javadoccomment"> * Files and detailed format:</em>
+<a class="jxr_linenumber" name="L101" href="#L101">101</a> <em class="jxr_javadoccomment"> * &lt;ul&gt;</em>
+<a class="jxr_linenumber" name="L102" href="#L102">102</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;&lt;tt&gt;.tim&lt;/tt&gt;: &lt;a href="#Termdictionary"&gt;Term Dictionary&lt;/a&gt;&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L103" href="#L103">103</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;&lt;tt&gt;.tip&lt;/tt&gt;: &lt;a href="#Termindex"&gt;Term Index&lt;/a&gt;&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L104" href="#L104">104</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;&lt;tt&gt;.doc&lt;/tt&gt;: &lt;a href="#Frequencies"&gt;Frequencies and Skip Data&lt;/a&gt;&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L105" href="#L105">105</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;&lt;tt&gt;.pos&lt;/tt&gt;: &lt;a href="#Positions"&gt;Positions&lt;/a&gt;&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L106" href="#L106">106</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;&lt;tt&gt;.pay&lt;/tt&gt;: &lt;a href="#Payloads"&gt;Payloads and Offsets&lt;/a&gt;&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L107" href="#L107">107</a> <em class="jxr_javadoccomment"> * &lt;/ul&gt;</em>
+<a class="jxr_linenumber" name="L108" href="#L108">108</a> <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L109" href="#L109">109</a> <em class="jxr_javadoccomment"> * &lt;a name="Termdictionary"&gt;&lt;/a&gt;</em>
+<a class="jxr_linenumber" name="L110" href="#L110">110</a> <em class="jxr_javadoccomment"> * &lt;dl&gt;</em>
+<a class="jxr_linenumber" name="L111" href="#L111">111</a> <em class="jxr_javadoccomment"> * &lt;dd&gt;</em>
+<a class="jxr_linenumber" name="L112" href="#L112">112</a> <em class="jxr_javadoccomment"> * &lt;b&gt;Term Dictionary&lt;/b&gt;</em>
+<a class="jxr_linenumber" name="L113" href="#L113">113</a> <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L114" href="#L114">114</a> <em class="jxr_javadoccomment"> * &lt;p&gt;The .tim file contains the list of terms in each</em>
+<a class="jxr_linenumber" name="L115" href="#L115">115</a> <em class="jxr_javadoccomment"> * field along with per-term statistics (such as docfreq)</em>
+<a class="jxr_linenumber" name="L116" href="#L116">116</a> <em class="jxr_javadoccomment"> * and pointers to the frequencies, positions, payload and</em>
+<a class="jxr_linenumber" name="L117" href="#L117">117</a> <em class="jxr_javadoccomment"> * skip data in the .doc, .pos, and .pay files.</em>
+<a class="jxr_linenumber" name="L118" href="#L118">118</a> <em class="jxr_javadoccomment"> * See {@link BlockTreeTermsWriter} for more details on the format.</em>
+<a class="jxr_linenumber" name="L119" href="#L119">119</a> <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L120" href="#L120">120</a> <em class="jxr_javadoccomment"> * &lt;p&gt;NOTE: The term dictionary can plug into different postings implementations:</em>
+<a class="jxr_linenumber" name="L121" href="#L121">121</a> <em class="jxr_javadoccomment"> * the postings writer/reader are actually responsible for encoding </em>
+<a class="jxr_linenumber" name="L122" href="#L122">122</a> <em class="jxr_javadoccomment"> * and decoding the PostingsHeader and TermMetadata sections described here:</em>
+<a class="jxr_linenumber" name="L123" href="#L123">123</a> <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L124" href="#L124">124</a> <em class="jxr_javadoccomment"> * &lt;ul&gt;</em>
+<a class="jxr_linenumber" name="L125" href="#L125">125</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PostingsHeader --&amp;gt; Header, PackedBlockSize&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L126" href="#L126">126</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;TermMetadata --&amp;gt; (DocFPDelta|SingletonDocID), PosFPDelta?, PosVIntBlockFPDelta?, PayFPDelta?, </em>
+<a class="jxr_linenumber" name="L127" href="#L127">127</a> <em class="jxr_javadoccomment"> *                            SkipFPDelta?&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L128" href="#L128">128</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;Header, --&amp;gt; {@link CodecUtil#writeIndexHeader IndexHeader}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L129" href="#L129">129</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PackedBlockSize, SingletonDocID --&amp;gt; {@link DataOutput#writeVInt VInt}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L130" href="#L130">130</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;DocFPDelta, PosFPDelta, PayFPDelta, PosVIntBlockFPDelta, SkipFPDelta --&amp;gt; {@link DataOutput#writeVLong VLong}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L131" href="#L131">131</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;Footer --&amp;gt; {@link CodecUtil#writeFooter CodecFooter}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L132" href="#L132">132</a> <em class="jxr_javadoccomment"> * &lt;/ul&gt;</em>
+<a class="jxr_linenumber" name="L133" href="#L133">133</a> <em class="jxr_javadoccomment"> * &lt;p&gt;Notes:</em>
+<a class="jxr_linenumber" name="L134" href="#L134">134</a> <em class="jxr_javadoccomment"> * &lt;ul&gt;</em>
+<a class="jxr_linenumber" name="L135" href="#L135">135</a> <em class="jxr_javadoccomment"> *    &lt;li&gt;Header is a {@link CodecUtil#writeIndexHeader IndexHeader} storing the version information</em>
+<a class="jxr_linenumber" name="L136" href="#L136">136</a> <em class="jxr_javadoccomment"> *        for the postings.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L137" href="#L137">137</a> <em class="jxr_javadoccomment"> *    &lt;li&gt;PackedBlockSize is the fixed block size for packed blocks. In packed block, bit width is </em>
+<a class="jxr_linenumber" name="L138" href="#L138">138</a> <em class="jxr_javadoccomment"> *        determined by the largest integer. Smaller block size result in smaller variance among width </em>
+<a class="jxr_linenumber" name="L139" href="#L139">139</a> <em class="jxr_javadoccomment"> *        of integers hence smaller indexes. Larger block size result in more efficient bulk i/o hence</em>
+<a class="jxr_linenumber" name="L140" href="#L140">140</a> <em class="jxr_javadoccomment"> *        better acceleration. This value should always be a multiple of 64, currently fixed as 128 as </em>
+<a class="jxr_linenumber" name="L141" href="#L141">141</a> <em class="jxr_javadoccomment"> *        a tradeoff. It is also the skip interval used to accelerate {@link org.apache.lucene.index.PostingsEnum#advance(int)}.</em>
+<a class="jxr_linenumber" name="L142" href="#L142">142</a> <em class="jxr_javadoccomment"> *    &lt;li&gt;DocFPDelta determines the position of this term's TermFreqs within the .doc file. </em>
+<a class="jxr_linenumber" name="L143" href="#L143">143</a> <em class="jxr_javadoccomment"> *        In particular, it is the difference of file offset between this term's</em>
+<a class="jxr_linenumber" name="L144" href="#L144">144</a> <em class="jxr_javadoccomment"> *        data and previous term's data (or zero, for the first term in the block).On disk it is </em>
+<a class="jxr_linenumber" name="L145" href="#L145">145</a> <em class="jxr_javadoccomment"> *        stored as the difference from previous value in sequence. &lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L146" href="#L146">146</a> <em class="jxr_javadoccomment"> *    &lt;li&gt;PosFPDelta determines the position of this term's TermPositions within the .pos file.</em>
+<a class="jxr_linenumber" name="L147" href="#L147">147</a> <em class="jxr_javadoccomment"> *        While PayFPDelta determines the position of this term's &amp;lt;TermPayloads, TermOffsets?&amp;gt; within </em>
+<a class="jxr_linenumber" name="L148" href="#L148">148</a> <em class="jxr_javadoccomment"> *        the .pay file. Similar to DocFPDelta, it is the difference between two file positions (or </em>
+<a class="jxr_linenumber" name="L149" href="#L149">149</a> <em class="jxr_javadoccomment"> *        neglected, for fields that omit payloads and offsets).&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L150" href="#L150">150</a> <em class="jxr_javadoccomment"> *    &lt;li&gt;PosVIntBlockFPDelta determines the position of this term's last TermPosition in last pos packed</em>
+<a class="jxr_linenumber" name="L151" href="#L151">151</a> <em class="jxr_javadoccomment"> *        block within the .pos file. It is synonym for PayVIntBlockFPDelta or OffsetVIntBlockFPDelta. </em>
+<a class="jxr_linenumber" name="L152" href="#L152">152</a> <em class="jxr_javadoccomment"> *        This is actually used to indicate whether it is necessary to load following</em>
+<a class="jxr_linenumber" name="L153" href="#L153">153</a> <em class="jxr_javadoccomment"> *        payloads and offsets from .pos instead of .pay. Every time a new block of positions are to be </em>
+<a class="jxr_linenumber" name="L154" href="#L154">154</a> <em class="jxr_javadoccomment"> *        loaded, the PostingsReader will use this value to check whether current block is packed format</em>
+<a class="jxr_linenumber" name="L155" href="#L155">155</a> <em class="jxr_javadoccomment"> *        or VInt. When packed format, payloads and offsets are fetched from .pay, otherwise from .pos. </em>
+<a class="jxr_linenumber" name="L156" href="#L156">156</a> <em class="jxr_javadoccomment"> *        (this value is neglected when total number of positions i.e. totalTermFreq is less or equal </em>
+<a class="jxr_linenumber" name="L157" href="#L157">157</a> <em class="jxr_javadoccomment"> *        to PackedBlockSize).</em>
+<a class="jxr_linenumber" name="L158" href="#L158">158</a> <em class="jxr_javadoccomment"> *    &lt;li&gt;SkipFPDelta determines the position of this term's SkipData within the .doc</em>
+<a class="jxr_linenumber" name="L159" href="#L159">159</a> <em class="jxr_javadoccomment"> *        file. In particular, it is the length of the TermFreq data.</em>
+<a class="jxr_linenumber" name="L160" href="#L160">160</a> <em class="jxr_javadoccomment"> *        SkipDelta is only stored if DocFreq is not smaller than SkipMinimum</em>
+<a class="jxr_linenumber" name="L161" href="#L161">161</a> <em class="jxr_javadoccomment"> *        (i.e. 128 in Lucene50PostingsFormat).&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L162" href="#L162">162</a> <em class="jxr_javadoccomment"> *    &lt;li&gt;SingletonDocID is an optimization when a term only appears in one document. In this case, instead</em>
+<a class="jxr_linenumber" name="L163" href="#L163">163</a> <em class="jxr_javadoccomment"> *        of writing a file pointer to the .doc file (DocFPDelta), and then a VIntBlock at that location, the </em>
+<a class="jxr_linenumber" name="L164" href="#L164">164</a> <em class="jxr_javadoccomment"> *        single document ID is written to the term dictionary.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L165" href="#L165">165</a> <em class="jxr_javadoccomment"> * &lt;/ul&gt;</em>
+<a class="jxr_linenumber" name="L166" href="#L166">166</a> <em class="jxr_javadoccomment"> * &lt;/dd&gt;</em>
+<a class="jxr_linenumber" name="L167" href="#L167">167</a> <em class="jxr_javadoccomment"> * &lt;/dl&gt;</em>
+<a class="jxr_linenumber" name="L168" href="#L168">168</a> <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L169" href="#L169">169</a> <em class="jxr_javadoccomment"> * &lt;a name="Termindex"&gt;&lt;/a&gt;</em>
+<a class="jxr_linenumber" name="L170" href="#L170">170</a> <em class="jxr_javadoccomment"> * &lt;dl&gt;</em>
+<a class="jxr_linenumber" name="L171" href="#L171">171</a> <em class="jxr_javadoccomment"> * &lt;dd&gt;</em>
+<a class="jxr_linenumber" name="L172" href="#L172">172</a> <em class="jxr_javadoccomment"> * &lt;b&gt;Term Index&lt;/b&gt;</em>
+<a class="jxr_linenumber" name="L173" href="#L173">173</a> <em class="jxr_javadoccomment"> * &lt;p&gt;The .tip file contains an index into the term dictionary, so that it can be </em>
+<a class="jxr_linenumber" name="L174" href="#L174">174</a> <em class="jxr_javadoccomment"> * accessed randomly.  See {@link BlockTreeTermsWriter} for more details on the format.</em>
+<a class="jxr_linenumber" name="L175" href="#L175">175</a> <em class="jxr_javadoccomment"> * &lt;/dd&gt;</em>
+<a class="jxr_linenumber" name="L176" href="#L176">176</a> <em class="jxr_javadoccomment"> * &lt;/dl&gt;</em>
+<a class="jxr_linenumber" name="L177" href="#L177">177</a> <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L178" href="#L178">178</a> <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L179" href="#L179">179</a> <em class="jxr_javadoccomment"> * &lt;a name="Frequencies"&gt;&lt;/a&gt;</em>
+<a class="jxr_linenumber" name="L180" href="#L180">180</a> <em class="jxr_javadoccomment"> * &lt;dl&gt;</em>
+<a class="jxr_linenumber" name="L181" href="#L181">181</a> <em class="jxr_javadoccomment"> * &lt;dd&gt;</em>
+<a class="jxr_linenumber" name="L182" href="#L182">182</a> <em class="jxr_javadoccomment"> * &lt;b&gt;Frequencies and Skip Data&lt;/b&gt;</em>
+<a class="jxr_linenumber" name="L183" href="#L183">183</a> <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L184" href="#L184">184</a> <em class="jxr_javadoccomment"> * &lt;p&gt;The .doc file contains the lists of documents which contain each term, along</em>
+<a class="jxr_linenumber" name="L185" href="#L185">185</a> <em class="jxr_javadoccomment"> * with the frequency of the term in that document (except when frequencies are</em>
+<a class="jxr_linenumber" name="L186" href="#L186">186</a> <em class="jxr_javadoccomment"> * omitted: {@link IndexOptions#DOCS}). It also saves skip data to the beginning of </em>
+<a class="jxr_linenumber" name="L187" href="#L187">187</a> <em class="jxr_javadoccomment"> * each packed or VInt block, when the length of document list is larger than packed block size.&lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L188" href="#L188">188</a> <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L189" href="#L189">189</a> <em class="jxr_javadoccomment"> * &lt;ul&gt;</em>
+<a class="jxr_linenumber" name="L190" href="#L190">190</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;docFile(.doc) --&amp;gt; Header, &amp;lt;TermFreqs, SkipData?&amp;gt;&lt;sup&gt;TermCount&lt;/sup&gt;, Footer&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L191" href="#L191">191</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;Header --&amp;gt; {@link CodecUtil#writeIndexHeader IndexHeader}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L192" href="#L192">192</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;TermFreqs --&amp;gt; &amp;lt;PackedBlock&amp;gt; &lt;sup&gt;PackedDocBlockNum&lt;/sup&gt;,  </em>
+<a class="jxr_linenumber" name="L193" href="#L193">193</a> <em class="jxr_javadoccomment"> *                        VIntBlock? &lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L194" href="#L194">194</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PackedBlock --&amp;gt; PackedDocDeltaBlock, PackedFreqBlock?</em>
+<a class="jxr_linenumber" name="L195" href="#L195">195</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;VIntBlock --&amp;gt; &amp;lt;DocDelta[, Freq?]&amp;gt;&lt;sup&gt;DocFreq-PackedBlockSize*PackedDocBlockNum&lt;/sup&gt;</em>
+<a class="jxr_linenumber" name="L196" href="#L196">196</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;SkipData --&amp;gt; &amp;lt;&amp;lt;SkipLevelLength, SkipLevel&amp;gt;</em>
+<a class="jxr_linenumber" name="L197" href="#L197">197</a> <em class="jxr_javadoccomment"> *       &lt;sup&gt;NumSkipLevels-1&lt;/sup&gt;, SkipLevel&amp;gt;, SkipDatum?&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L198" href="#L198">198</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;SkipLevel --&amp;gt; &amp;lt;SkipDatum&amp;gt; &lt;sup&gt;TrimmedDocFreq/(PackedBlockSize^(Level + 1))&lt;/sup&gt;&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L199" href="#L199">199</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;SkipDatum --&amp;gt; DocSkip, DocFPSkip, &amp;lt;PosFPSkip, PosBlockOffset, PayLength?, </em>
+<a class="jxr_linenumber" name="L200" href="#L200">200</a> <em class="jxr_javadoccomment"> *                        PayFPSkip?&amp;gt;?, SkipChildLevelPointer?&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L201" href="#L201">201</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PackedDocDeltaBlock, PackedFreqBlock --&amp;gt; {@link PackedInts PackedInts}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L202" href="#L202">202</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;DocDelta, Freq, DocSkip, DocFPSkip, PosFPSkip, PosBlockOffset, PayByteUpto, PayFPSkip </em>
+<a class="jxr_linenumber" name="L203" href="#L203">203</a> <em class="jxr_javadoccomment"> *       --&amp;gt; </em>
+<a class="jxr_linenumber" name="L204" href="#L204">204</a> <em class="jxr_javadoccomment"> *   {@link DataOutput#writeVInt VInt}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L205" href="#L205">205</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;SkipChildLevelPointer --&amp;gt; {@link DataOutput#writeVLong VLong}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L206" href="#L206">206</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;Footer --&amp;gt; {@link CodecUtil#writeFooter CodecFooter}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L207" href="#L207">207</a> <em class="jxr_javadoccomment"> * &lt;/ul&gt;</em>
+<a class="jxr_linenumber" name="L208" href="#L208">208</a> <em class="jxr_javadoccomment"> * &lt;p&gt;Notes:</em>
+<a class="jxr_linenumber" name="L209" href="#L209">209</a> <em class="jxr_javadoccomment"> * &lt;ul&gt;</em>
+<a class="jxr_linenumber" name="L210" href="#L210">210</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PackedDocDeltaBlock is theoretically generated from two steps: </em>
+<a class="jxr_linenumber" name="L211" href="#L211">211</a> <em class="jxr_javadoccomment"> *     &lt;ol&gt;</em>
+<a class="jxr_linenumber" name="L212" href="#L212">212</a> <em class="jxr_javadoccomment"> *       &lt;li&gt;Calculate the difference between each document number and previous one, </em>
+<a class="jxr_linenumber" name="L213" href="#L213">213</a> <em class="jxr_javadoccomment"> *           and get a d-gaps list (for the first document, use absolute value); &lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L214" href="#L214">214</a> <em class="jxr_javadoccomment"> *       &lt;li&gt;For those d-gaps from first one to PackedDocBlockNum*PackedBlockSize&lt;sup&gt;th&lt;/sup&gt;, </em>
+<a class="jxr_linenumber" name="L215" href="#L215">215</a> <em class="jxr_javadoccomment"> *           separately encode as packed blocks.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L216" href="#L216">216</a> <em class="jxr_javadoccomment"> *     &lt;/ol&gt;</em>
+<a class="jxr_linenumber" name="L217" href="#L217">217</a> <em class="jxr_javadoccomment"> *     If frequencies are not omitted, PackedFreqBlock will be generated without d-gap step.</em>
+<a class="jxr_linenumber" name="L218" href="#L218">218</a> <em class="jxr_javadoccomment"> *   &lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L219" href="#L219">219</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;VIntBlock stores remaining d-gaps (along with frequencies when possible) with a format </em>
+<a class="jxr_linenumber" name="L220" href="#L220">220</a> <em class="jxr_javadoccomment"> *       that encodes DocDelta and Freq:</em>
+<a class="jxr_linenumber" name="L221" href="#L221">221</a> <em class="jxr_javadoccomment"> *       &lt;p&gt;DocDelta: if frequencies are indexed, this determines both the document</em>
+<a class="jxr_linenumber" name="L222" href="#L222">222</a> <em class="jxr_javadoccomment"> *       number and the frequency. In particular, DocDelta/2 is the difference between</em>
+<a class="jxr_linenumber" name="L223" href="#L223">223</a> <em class="jxr_javadoccomment"> *       this document number and the previous document number (or zero when this is the</em>
+<a class="jxr_linenumber" name="L224" href="#L224">224</a> <em class="jxr_javadoccomment"> *       first document in a TermFreqs). When DocDelta is odd, the frequency is one.</em>
+<a class="jxr_linenumber" name="L225" href="#L225">225</a> <em class="jxr_javadoccomment"> *       When DocDelta is even, the frequency is read as another VInt. If frequencies</em>
+<a class="jxr_linenumber" name="L226" href="#L226">226</a> <em class="jxr_javadoccomment"> *       are omitted, DocDelta contains the gap (not multiplied by 2) between document</em>
+<a class="jxr_linenumber" name="L227" href="#L227">227</a> <em class="jxr_javadoccomment"> *       numbers and no frequency information is stored.&lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L228" href="#L228">228</a> <em class="jxr_javadoccomment"> *       &lt;p&gt;For example, the TermFreqs for a term which occurs once in document seven</em>
+<a class="jxr_linenumber" name="L229" href="#L229">229</a> <em class="jxr_javadoccomment"> *          and three times in document eleven, with frequencies indexed, would be the</em>
+<a class="jxr_linenumber" name="L230" href="#L230">230</a> <em class="jxr_javadoccomment"> *          following sequence of VInts:&lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L231" href="#L231">231</a> <em class="jxr_javadoccomment"> *       &lt;p&gt;15, 8, 3&lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L232" href="#L232">232</a> <em class="jxr_javadoccomment"> *       &lt;p&gt;If frequencies were omitted ({@link IndexOptions#DOCS}) it would be this</em>
+<a class="jxr_linenumber" name="L233" href="#L233">233</a> <em class="jxr_javadoccomment"> *          sequence of VInts instead:&lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L234" href="#L234">234</a> <em class="jxr_javadoccomment"> *       &lt;p&gt;7,4&lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L235" href="#L235">235</a> <em class="jxr_javadoccomment"> *   &lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L236" href="#L236">236</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PackedDocBlockNum is the number of packed blocks for current term's docids or frequencies. </em>
+<a class="jxr_linenumber" name="L237" href="#L237">237</a> <em class="jxr_javadoccomment"> *       In particular, PackedDocBlockNum = floor(DocFreq/PackedBlockSize) &lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L238" href="#L238">238</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;TrimmedDocFreq = DocFreq % PackedBlockSize == 0 ? DocFreq - 1 : DocFreq. </em>
+<a class="jxr_linenumber" name="L239" href="#L239">239</a> <em class="jxr_javadoccomment"> *       We use this trick since the definition of skip entry is a little different from base interface.</em>
+<a class="jxr_linenumber" name="L240" href="#L240">240</a> <em class="jxr_javadoccomment"> *       In {@link MultiLevelSkipListWriter}, skip data is assumed to be saved for</em>
+<a class="jxr_linenumber" name="L241" href="#L241">241</a> <em class="jxr_javadoccomment"> *       skipInterval&lt;sup&gt;th&lt;/sup&gt;, 2*skipInterval&lt;sup&gt;th&lt;/sup&gt; ... posting in the list. However, </em>
+<a class="jxr_linenumber" name="L242" href="#L242">242</a> <em class="jxr_javadoccomment"> *       in Lucene50PostingsFormat, the skip data is saved for skipInterval+1&lt;sup&gt;th&lt;/sup&gt;, </em>
+<a class="jxr_linenumber" name="L243" href="#L243">243</a> <em class="jxr_javadoccomment"> *       2*skipInterval+1&lt;sup&gt;th&lt;/sup&gt; ... posting (skipInterval==PackedBlockSize in this case). </em>
+<a class="jxr_linenumber" name="L244" href="#L244">244</a> <em class="jxr_javadoccomment"> *       When DocFreq is multiple of PackedBlockSize, MultiLevelSkipListWriter will expect one </em>
+<a class="jxr_linenumber" name="L245" href="#L245">245</a> <em class="jxr_javadoccomment"> *       more skip data than Lucene50SkipWriter. &lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L246" href="#L246">246</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;SkipDatum is the metadata of one skip entry.</em>
+<a class="jxr_linenumber" name="L247" href="#L247">247</a> <em class="jxr_javadoccomment"> *      For the first block (no matter packed or VInt), it is omitted.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L248" href="#L248">248</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;DocSkip records the document number of every PackedBlockSize&lt;sup&gt;th&lt;/sup&gt; document number in</em>
+<a class="jxr_linenumber" name="L249" href="#L249">249</a> <em class="jxr_javadoccomment"> *       the postings (i.e. last document number in each packed block). On disk it is stored as the </em>
+<a class="jxr_linenumber" name="L250" href="#L250">250</a> <em class="jxr_javadoccomment"> *       difference from previous value in the sequence. &lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L251" href="#L251">251</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;DocFPSkip records the file offsets of each block (excluding )posting at </em>
+<a class="jxr_linenumber" name="L252" href="#L252">252</a> <em class="jxr_javadoccomment"> *       PackedBlockSize+1&lt;sup&gt;th&lt;/sup&gt;, 2*PackedBlockSize+1&lt;sup&gt;th&lt;/sup&gt; ... , in DocFile. </em>
+<a class="jxr_linenumber" name="L253" href="#L253">253</a> <em class="jxr_javadoccomment"> *       The file offsets are relative to the start of current term's TermFreqs. </em>
+<a class="jxr_linenumber" name="L254" href="#L254">254</a> <em class="jxr_javadoccomment"> *       On disk it is also stored as the difference from previous SkipDatum in the sequence.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L255" href="#L255">255</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;Since positions and payloads are also block encoded, the skip should skip to related block first,</em>
+<a class="jxr_linenumber" name="L256" href="#L256">256</a> <em class="jxr_javadoccomment"> *       then fetch the values according to in-block offset. PosFPSkip and PayFPSkip record the file </em>
+<a class="jxr_linenumber" name="L257" href="#L257">257</a> <em class="jxr_javadoccomment"> *       offsets of related block in .pos and .pay, respectively. While PosBlockOffset indicates</em>
+<a class="jxr_linenumber" name="L258" href="#L258">258</a> <em class="jxr_javadoccomment"> *       which value to fetch inside the related block (PayBlockOffset is unnecessary since it is always</em>
+<a class="jxr_linenumber" name="L259" href="#L259">259</a> <em class="jxr_javadoccomment"> *       equal to PosBlockOffset). Same as DocFPSkip, the file offsets are relative to the start of </em>
+<a class="jxr_linenumber" name="L260" href="#L260">260</a> <em class="jxr_javadoccomment"> *       current term's TermFreqs, and stored as a difference sequence.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L261" href="#L261">261</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PayByteUpto indicates the start offset of the current payload. It is equivalent to</em>
+<a class="jxr_linenumber" name="L262" href="#L262">262</a> <em class="jxr_javadoccomment"> *       the sum of the payload lengths in the current block up to PosBlockOffset&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L263" href="#L263">263</a> <em class="jxr_javadoccomment"> * &lt;/ul&gt;</em>
+<a class="jxr_linenumber" name="L264" href="#L264">264</a> <em class="jxr_javadoccomment"> * &lt;/dd&gt;</em>
+<a class="jxr_linenumber" name="L265" href="#L265">265</a> <em class="jxr_javadoccomment"> * &lt;/dl&gt;</em>
+<a class="jxr_linenumber" name="L266" href="#L266">266</a> <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L267" href="#L267">267</a> <em class="jxr_javadoccomment"> * &lt;a name="Positions"&gt;&lt;/a&gt;</em>
+<a class="jxr_linenumber" name="L268" href="#L268">268</a> <em class="jxr_javadoccomment"> * &lt;dl&gt;</em>
+<a class="jxr_linenumber" name="L269" href="#L269">269</a> <em class="jxr_javadoccomment"> * &lt;dd&gt;</em>
+<a class="jxr_linenumber" name="L270" href="#L270">270</a> <em class="jxr_javadoccomment"> * &lt;b&gt;Positions&lt;/b&gt;</em>
+<a class="jxr_linenumber" name="L271" href="#L271">271</a> <em class="jxr_javadoccomment"> * &lt;p&gt;The .pos file contains the lists of positions that each term occurs at within documents. It also</em>
+<a class="jxr_linenumber" name="L272" href="#L272">272</a> <em class="jxr_javadoccomment"> *    sometimes stores part of payloads and offsets for speedup.&lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L273" href="#L273">273</a> <em class="jxr_javadoccomment"> * &lt;ul&gt;</em>
+<a class="jxr_linenumber" name="L274" href="#L274">274</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PosFile(.pos) --&amp;gt; Header, &amp;lt;TermPositions&amp;gt; &lt;sup&gt;TermCount&lt;/sup&gt;, Footer&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L275" href="#L275">275</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;Header --&amp;gt; {@link CodecUtil#writeIndexHeader IndexHeader}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L276" href="#L276">276</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;TermPositions --&amp;gt; &amp;lt;PackedPosDeltaBlock&amp;gt; &lt;sup&gt;PackedPosBlockNum&lt;/sup&gt;,  </em>
+<a class="jxr_linenumber" name="L277" href="#L277">277</a> <em class="jxr_javadoccomment"> *                            VIntBlock? &lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L278" href="#L278">278</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;VIntBlock --&amp;gt; &amp;lt;PositionDelta[, PayloadLength?], PayloadData?, </em>
+<a class="jxr_linenumber" name="L279" href="#L279">279</a> <em class="jxr_javadoccomment"> *                        OffsetDelta?, OffsetLength?&amp;gt;&lt;sup&gt;PosVIntCount&lt;/sup&gt;</em>
+<a class="jxr_linenumber" name="L280" href="#L280">280</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PackedPosDeltaBlock --&amp;gt; {@link PackedInts PackedInts}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L281" href="#L281">281</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PositionDelta, OffsetDelta, OffsetLength --&amp;gt; </em>
+<a class="jxr_linenumber" name="L282" href="#L282">282</a> <em class="jxr_javadoccomment"> *       {@link DataOutput#writeVInt VInt}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L283" href="#L283">283</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PayloadData --&amp;gt; {@link DataOutput#writeByte byte}&lt;sup&gt;PayLength&lt;/sup&gt;&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L284" href="#L284">284</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;Footer --&amp;gt; {@link CodecUtil#writeFooter CodecFooter}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L285" href="#L285">285</a> <em class="jxr_javadoccomment"> * &lt;/ul&gt;</em>
+<a class="jxr_linenumber" name="L286" href="#L286">286</a> <em class="jxr_javadoccomment"> * &lt;p&gt;Notes:</em>
+<a class="jxr_linenumber" name="L287" href="#L287">287</a> <em class="jxr_javadoccomment"> * &lt;ul&gt;</em>
+<a class="jxr_linenumber" name="L288" href="#L288">288</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;TermPositions are order by term (terms are implicit, from the term dictionary), and position </em>
+<a class="jxr_linenumber" name="L289" href="#L289">289</a> <em class="jxr_javadoccomment"> *       values for each term document pair are incremental, and ordered by document number.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L290" href="#L290">290</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PackedPosBlockNum is the number of packed blocks for current term's positions, payloads or offsets. </em>
+<a class="jxr_linenumber" name="L291" href="#L291">291</a> <em class="jxr_javadoccomment"> *       In particular, PackedPosBlockNum = floor(totalTermFreq/PackedBlockSize) &lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L292" href="#L292">292</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PosVIntCount is the number of positions encoded as VInt format. In particular, </em>
+<a class="jxr_linenumber" name="L293" href="#L293">293</a> <em class="jxr_javadoccomment"> *       PosVIntCount = totalTermFreq - PackedPosBlockNum*PackedBlockSize&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L294" href="#L294">294</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;The procedure how PackedPosDeltaBlock is generated is the same as PackedDocDeltaBlock </em>
+<a class="jxr_linenumber" name="L295" href="#L295">295</a> <em class="jxr_javadoccomment"> *       in chapter &lt;a href="#Frequencies"&gt;Frequencies and Skip Data&lt;/a&gt;.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L296" href="#L296">296</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PositionDelta is, if payloads are disabled for the term's field, the</em>
+<a class="jxr_linenumber" name="L297" href="#L297">297</a> <em class="jxr_javadoccomment"> *       difference between the position of the current occurrence in the document and</em>
+<a class="jxr_linenumber" name="L298" href="#L298">298</a> <em class="jxr_javadoccomment"> *       the previous occurrence (or zero, if this is the first occurrence in this</em>
+<a class="jxr_linenumber" name="L299" href="#L299">299</a> <em class="jxr_javadoccomment"> *       document). If payloads are enabled for the term's field, then PositionDelta/2</em>
+<a class="jxr_linenumber" name="L300" href="#L300">300</a> <em class="jxr_javadoccomment"> *       is the difference between the current and the previous position. If payloads</em>
+<a class="jxr_linenumber" name="L301" href="#L301">301</a> <em class="jxr_javadoccomment"> *       are enabled and PositionDelta is odd, then PayloadLength is stored, indicating</em>
+<a class="jxr_linenumber" name="L302" href="#L302">302</a> <em class="jxr_javadoccomment"> *       the length of the payload at the current term position.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L303" href="#L303">303</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;For example, the TermPositions for a term which occurs as the fourth term in</em>
+<a class="jxr_linenumber" name="L304" href="#L304">304</a> <em class="jxr_javadoccomment"> *       one document, and as the fifth and ninth term in a subsequent document, would</em>
+<a class="jxr_linenumber" name="L305" href="#L305">305</a> <em class="jxr_javadoccomment"> *       be the following sequence of VInts (payloads disabled):</em>
+<a class="jxr_linenumber" name="L306" href="#L306">306</a> <em class="jxr_javadoccomment"> *       &lt;p&gt;4, 5, 4&lt;/p&gt;&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L307" href="#L307">307</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PayloadData is metadata associated with the current term position. If</em>
+<a class="jxr_linenumber" name="L308" href="#L308">308</a> <em class="jxr_javadoccomment"> *       PayloadLength is stored at the current position, then it indicates the length</em>
+<a class="jxr_linenumber" name="L309" href="#L309">309</a> <em class="jxr_javadoccomment"> *       of this payload. If PayloadLength is not stored, then this payload has the same</em>
+<a class="jxr_linenumber" name="L310" href="#L310">310</a> <em class="jxr_javadoccomment"> *       length as the payload at the previous position.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L311" href="#L311">311</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;OffsetDelta/2 is the difference between this position's startOffset from the</em>
+<a class="jxr_linenumber" name="L312" href="#L312">312</a> <em class="jxr_javadoccomment"> *       previous occurrence (or zero, if this is the first occurrence in this document).</em>
+<a class="jxr_linenumber" name="L313" href="#L313">313</a> <em class="jxr_javadoccomment"> *       If OffsetDelta is odd, then the length (endOffset-startOffset) differs from the</em>
+<a class="jxr_linenumber" name="L314" href="#L314">314</a> <em class="jxr_javadoccomment"> *       previous occurrence and an OffsetLength follows. Offset data is only written for</em>
+<a class="jxr_linenumber" name="L315" href="#L315">315</a> <em class="jxr_javadoccomment"> *       {@link IndexOptions#DOCS_AND_FREQS_AND_POSITIONS_AND_OFFSETS}.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L316" href="#L316">316</a> <em class="jxr_javadoccomment"> * &lt;/ul&gt;</em>
+<a class="jxr_linenumber" name="L317" href="#L317">317</a> <em class="jxr_javadoccomment"> * &lt;/dd&gt;</em>
+<a class="jxr_linenumber" name="L318" href="#L318">318</a> <em class="jxr_javadoccomment"> * &lt;/dl&gt;</em>
+<a class="jxr_linenumber" name="L319" href="#L319">319</a> <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L320" href="#L320">320</a> <em class="jxr_javadoccomment"> * &lt;a name="Payloads"&gt;&lt;/a&gt;</em>
+<a class="jxr_linenumber" name="L321" href="#L321">321</a> <em class="jxr_javadoccomment"> * &lt;dl&gt;</em>
+<a class="jxr_linenumber" name="L322" href="#L322">322</a> <em class="jxr_javadoccomment"> * &lt;dd&gt;</em>
+<a class="jxr_linenumber" name="L323" href="#L323">323</a> <em class="jxr_javadoccomment"> * &lt;b&gt;Payloads and Offsets&lt;/b&gt;</em>
+<a class="jxr_linenumber" name="L324" href="#L324">324</a> <em class="jxr_javadoccomment"> * &lt;p&gt;The .pay file will store payloads and offsets associated with certain term-document positions. </em>
+<a class="jxr_linenumber" name="L325" href="#L325">325</a> <em class="jxr_javadoccomment"> *    Some payloads and offsets will be separated out into .pos file, for performance reasons.</em>
+<a class="jxr_linenumber" name="L326" href="#L326">326</a> <em class="jxr_javadoccomment"> * &lt;ul&gt;</em>
+<a class="jxr_linenumber" name="L327" href="#L327">327</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PayFile(.pay): --&amp;gt; Header, &amp;lt;TermPayloads, TermOffsets?&amp;gt; &lt;sup&gt;TermCount&lt;/sup&gt;, Footer&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L328" href="#L328">328</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;Header --&amp;gt; {@link CodecUtil#writeIndexHeader IndexHeader}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L329" href="#L329">329</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;TermPayloads --&amp;gt; &amp;lt;PackedPayLengthBlock, SumPayLength, PayData&amp;gt; &lt;sup&gt;PackedPayBlockNum&lt;/sup&gt;</em>
+<a class="jxr_linenumber" name="L330" href="#L330">330</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;TermOffsets --&amp;gt; &amp;lt;PackedOffsetStartDeltaBlock, PackedOffsetLengthBlock&amp;gt; &lt;sup&gt;PackedPayBlockNum&lt;/sup&gt;</em>
+<a class="jxr_linenumber" name="L331" href="#L331">331</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PackedPayLengthBlock, PackedOffsetStartDeltaBlock, PackedOffsetLengthBlock --&amp;gt; {@link PackedInts PackedInts}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L332" href="#L332">332</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;SumPayLength --&amp;gt; {@link DataOutput#writeVInt VInt}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L333" href="#L333">333</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PayData --&amp;gt; {@link DataOutput#writeByte byte}&lt;sup&gt;SumPayLength&lt;/sup&gt;&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L334" href="#L334">334</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;Footer --&amp;gt; {@link CodecUtil#writeFooter CodecFooter}&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L335" href="#L335">335</a> <em class="jxr_javadoccomment"> * &lt;/ul&gt;</em>
+<a class="jxr_linenumber" name="L336" href="#L336">336</a> <em class="jxr_javadoccomment"> * &lt;p&gt;Notes:</em>
+<a class="jxr_linenumber" name="L337" href="#L337">337</a> <em class="jxr_javadoccomment"> * &lt;ul&gt;</em>
+<a class="jxr_linenumber" name="L338" href="#L338">338</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;The order of TermPayloads/TermOffsets will be the same as TermPositions, note that part of </em>
+<a class="jxr_linenumber" name="L339" href="#L339">339</a> <em class="jxr_javadoccomment"> *       payload/offsets are stored in .pos.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L340" href="#L340">340</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;The procedure how PackedPayLengthBlock and PackedOffsetLengthBlock are generated is the </em>
+<a class="jxr_linenumber" name="L341" href="#L341">341</a> <em class="jxr_javadoccomment"> *       same as PackedFreqBlock in chapter &lt;a href="#Frequencies"&gt;Frequencies and Skip Data&lt;/a&gt;. </em>
+<a class="jxr_linenumber" name="L342" href="#L342">342</a> <em class="jxr_javadoccomment"> *       While PackedStartDeltaBlock follows a same procedure as PackedDocDeltaBlock.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L343" href="#L343">343</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PackedPayBlockNum is always equal to PackedPosBlockNum, for the same term. It is also synonym </em>
+<a class="jxr_linenumber" name="L344" href="#L344">344</a> <em class="jxr_javadoccomment"> *       for PackedOffsetBlockNum.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L345" href="#L345">345</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;SumPayLength is the total length of payloads written within one block, should be the sum</em>
+<a class="jxr_linenumber" name="L346" href="#L346">346</a> <em class="jxr_javadoccomment"> *       of PayLengths in one packed block.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L347" href="#L347">347</a> <em class="jxr_javadoccomment"> *   &lt;li&gt;PayLength in PackedPayLengthBlock is the length of each payload associated with the current </em>
+<a class="jxr_linenumber" name="L348" href="#L348">348</a> <em class="jxr_javadoccomment"> *       position.&lt;/li&gt;</em>
+<a class="jxr_linenumber" name="L349" href="#L349">349</a> <em class="jxr_javadoccomment"> * &lt;/ul&gt;</em>
+<a class="jxr_linenumber" name="L350" href="#L350">350</a> <em class="jxr_javadoccomment"> * &lt;/dd&gt;</em>
+<a class="jxr_linenumber" name="L351" href="#L351">351</a> <em class="jxr_javadoccomment"> * &lt;/dl&gt;</em>
+<a class="jxr_linenumber" name="L352" href="#L352">352</a> <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L353" href="#L353">353</a> <em class="jxr_javadoccomment"> * @lucene.experimental</em>
+<a class="jxr_linenumber" name="L354" href="#L354">354</a> <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L355" href="#L355">355</a> 
+<a class="jxr_linenumber" name="L356" href="#L356">356</a> <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">class</strong> Lucene50PostingsFormat <strong class="jxr_keyword">extends</strong> PostingsFormat {
+<a class="jxr_linenumber" name="L357" href="#L357">357</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L358" href="#L358">358</a> <em class="jxr_javadoccomment">   * Filename extension for document number, frequencies, and skip data.</em>
+<a class="jxr_linenumber" name="L359" href="#L359">359</a> <em class="jxr_javadoccomment">   * See chapter: &lt;a href="#Frequencies"&gt;Frequencies and Skip Data&lt;/a&gt;</em>
+<a class="jxr_linenumber" name="L360" href="#L360">360</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L361" href="#L361">361</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DOC_EXTENSION = <span class="jxr_string">"doc"</span>;
+<a class="jxr_linenumber" name="L362" href="#L362">362</a> 
+<a class="jxr_linenumber" name="L363" href="#L363">363</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L364" href="#L364">364</a> <em class="jxr_javadoccomment">   * Filename extension for positions. </em>
+<a class="jxr_linenumber" name="L365" href="#L365">365</a> <em class="jxr_javadoccomment">   * See chapter: &lt;a href="#Positions"&gt;Positions&lt;/a&gt;</em>
+<a class="jxr_linenumber" name="L366" href="#L366">366</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L367" href="#L367">367</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String POS_EXTENSION = <span class="jxr_string">"pos"</span>;
+<a class="jxr_linenumber" name="L368" href="#L368">368</a> 
+<a class="jxr_linenumber" name="L369" href="#L369">369</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L370" href="#L370">370</a> <em class="jxr_javadoccomment">   * Filename extension for payloads and offsets.</em>
+<a class="jxr_linenumber" name="L371" href="#L371">371</a> <em class="jxr_javadoccomment">   * See chapter: &lt;a href="#Payloads"&gt;Payloads and Offsets&lt;/a&gt;</em>
+<a class="jxr_linenumber" name="L372" href="#L372">372</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L373" href="#L373">373</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String PAY_EXTENSION = <span class="jxr_string">"pay"</span>;
+<a class="jxr_linenumber" name="L374" href="#L374">374</a>   
+<a class="jxr_linenumber" name="L375" href="#L375">375</a>   <em class="jxr_javadoccomment">/** </em>
+<a class="jxr_linenumber" name="L376" href="#L376">376</a> <em class="jxr_javadoccomment">   * Expert: The maximum number of skip levels. Smaller values result in </em>
+<a class="jxr_linenumber" name="L377" href="#L377">377</a> <em class="jxr_javadoccomment">   * slightly smaller indexes, but slower skipping in big posting lists.</em>
+<a class="jxr_linenumber" name="L378" href="#L378">378</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L379" href="#L379">379</a>   <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> MAX_SKIP_LEVELS = 10;
+<a class="jxr_linenumber" name="L380" href="#L380">380</a> 
+<a class="jxr_linenumber" name="L381" href="#L381">381</a>   <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">static</strong> String TERMS_CODEC = <span class="jxr_string">"Lucene50PostingsWriterTerms"</span>;
+<a class="jxr_linenumber" name="L382" href="#L382">382</a>   <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">static</strong> String DOC_CODEC = <span class="jxr_string">"Lucene50PostingsWriterDoc"</span>;
+<a class="jxr_linenumber" name="L383" href="#L383">383</a>   <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">static</strong> String POS_CODEC = <span class="jxr_string">"Lucene50PostingsWriterPos"</span>;
+<a class="jxr_linenumber" name="L384" href="#L384">384</a>   <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">static</strong> String PAY_CODEC = <span class="jxr_string">"Lucene50PostingsWriterPay"</span>;
+<a class="jxr_linenumber" name="L385" href="#L385">385</a> 
+<a class="jxr_linenumber" name="L386" href="#L386">386</a>   <em class="jxr_comment">// Increment version to change it</em>
+<a class="jxr_linenumber" name="L387" href="#L387">387</a>   <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">int</strong> VERSION_START = 0;
+<a class="jxr_linenumber" name="L388" href="#L388">388</a>   <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">int</strong> VERSION_CURRENT = VERSION_START;
+<a class="jxr_linenumber" name="L389" href="#L389">389</a> 
+<a class="jxr_linenumber" name="L390" href="#L390">390</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> minTermBlockSize;
+<a class="jxr_linenumber" name="L391" href="#L391">391</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> maxTermBlockSize;
+<a class="jxr_linenumber" name="L392" href="#L392">392</a> 
+<a class="jxr_linenumber" name="L393" href="#L393">393</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L394" href="#L394">394</a> <em class="jxr_javadoccomment">   * Fixed packed block size, number of integers encoded in </em>
+<a class="jxr_linenumber" name="L395" href="#L395">395</a> <em class="jxr_javadoccomment">   * a single packed block.</em>
+<a class="jxr_linenumber" name="L396" href="#L396">396</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L397" href="#L397">397</a>   <em class="jxr_comment">// NOTE: must be multiple of 64 because of PackedInts long-aligned encoding/decoding</em>
+<a class="jxr_linenumber" name="L398" href="#L398">398</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">int</strong> BLOCK_SIZE = 128;
+<a class="jxr_linenumber" name="L399" href="#L399">399</a> 
+<a class="jxr_linenumber" name="L400" href="#L400">400</a>   <em class="jxr_javadoccomment">/** Creates {@code Lucene50PostingsFormat} with default</em>
+<a class="jxr_linenumber" name="L401" href="#L401">401</a> <em class="jxr_javadoccomment">   *  settings. */</em>
+<a class="jxr_linenumber" name="L402" href="#L402">402</a>   <strong class="jxr_keyword">public</strong> Lucene50PostingsFormat() {
+<a class="jxr_linenumber" name="L403" href="#L403">403</a>     <strong class="jxr_keyword">this</strong>(BlockTreeTermsWriter.DEFAULT_MIN_BLOCK_SIZE, BlockTreeTermsWriter.DEFAULT_MAX_BLOCK_SIZE);
+<a class="jxr_linenumber" name="L404" href="#L404">404</a>   }
+<a class="jxr_linenumber" name="L405" href="#L405">405</a> 
+<a class="jxr_linenumber" name="L406" href="#L406">406</a>   <em class="jxr_javadoccomment">/** Creates {@code Lucene50PostingsFormat} with custom</em>
+<a class="jxr_linenumber" name="L407" href="#L407">407</a> <em class="jxr_javadoccomment">   *  values for {@code minBlockSize} and {@code</em>
+<a class="jxr_linenumber" name="L408" href="#L408">408</a> <em class="jxr_javadoccomment">   *  maxBlockSize} passed to block terms dictionary.</em>
+<a class="jxr_linenumber" name="L409" href="#L409">409</a> <em class="jxr_javadoccomment">   *  @see BlockTreeTermsWriter#BlockTreeTermsWriter(SegmentWriteState,PostingsWriterBase,int,int) */</em>
+<a class="jxr_linenumber" name="L410" href="#L410">410</a>   <strong class="jxr_keyword">public</strong> Lucene50PostingsFormat(<strong class="jxr_keyword">int</strong> minTermBlockSize, <strong class="jxr_keyword">int</strong> maxTermBlockSize) {
+<a class="jxr_linenumber" name="L411" href="#L411">411</a>     <strong class="jxr_keyword">super</strong>(<span class="jxr_string">"Lucene50"</span>);
+<a class="jxr_linenumber" name="L412" href="#L412">412</a>     BlockTreeTermsWriter.validateSettings(minTermBlockSize, maxTermBlockSize);
+<a class="jxr_linenumber" name="L413" href="#L413">413</a>     <strong class="jxr_keyword">this</strong>.minTermBlockSize = minTermBlockSize;
+<a class="jxr_linenumber" name="L414" href="#L414">414</a>     <strong class="jxr_keyword">this</strong>.maxTermBlockSize = maxTermBlockSize;
+<a class="jxr_linenumber" name="L415" href="#L415">415</a>   }
+<a class="jxr_linenumber" name="L416" href="#L416">416</a> 
+<a class="jxr_linenumber" name="L417" href="#L417">417</a>   @Override
+<a class="jxr_linenumber" name="L418" href="#L418">418</a>   <strong class="jxr_keyword">public</strong> String toString() {
+<a class="jxr_linenumber" name="L419" href="#L419">419</a>     <strong class="jxr_keyword">return</strong> getName() + <span class="jxr_string">"(blocksize="</span> + BLOCK_SIZE + <span class="jxr_string">")"</span>;
+<a class="jxr_linenumber" name="L420" href="#L420">420</a>   }
+<a class="jxr_linenumber" name="L421" href="#L421">421</a> 
+<a class="jxr_linenumber" name="L422" href="#L422">422</a>   @Override
+<a class="jxr_linenumber" name="L423" href="#L423">423</a>   <strong class="jxr_keyword">public</strong> FieldsConsumer fieldsConsumer(SegmentWriteState state) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L424" href="#L424">424</a>     PostingsWriterBase postingsWriter = <strong class="jxr_keyword">new</strong> Lucene50PostingsWriter(state);
+<a class="jxr_linenumber" name="L425" href="#L425">425</a> 
+<a class="jxr_linenumber" name="L426" href="#L426">426</a>     <strong class="jxr_keyword">boolean</strong> success = false;
+<a class="jxr_linenumber" name="L427" href="#L427">427</a>     <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L428" href="#L428">428</a>       FieldsConsumer ret = <strong class="jxr_keyword">new</strong> BlockTreeTermsWriter(state, 
+<a class="jxr_linenumber" name="L429" href="#L429">429</a>                                                     postingsWriter,
+<a class="jxr_linenumber" name="L430" href="#L430">430</a>                                                     minTermBlockSize, 
+<a class="jxr_linenumber" name="L431" href="#L431">431</a>                                                     maxTermBlockSize);
+<a class="jxr_linenumber" name="L432" href="#L432">432</a>       success = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L433" href="#L433">433</a>       <strong class="jxr_keyword">return</strong> ret;
+<a class="jxr_linenumber" name="L434" href="#L434">434</a>     } <strong class="jxr_keyword">finally</strong> {
+<a class="jxr_linenumber" name="L435" href="#L435">435</a>       <strong class="jxr_keyword">if</strong> (!success) {
+<a class="jxr_linenumber" name="L436" href="#L436">436</a>         IOUtils.closeWhileHandlingException(postingsWriter);
+<a class="jxr_linenumber" name="L437" href="#L437">437</a>       }
+<a class="jxr_linenumber" name="L438" href="#L438">438</a>     }
+<a class="jxr_linenumber" name="L439" href="#L439">439</a>   }
+<a class="jxr_linenumber" name="L440" href="#L440">440</a> 
+<a class="jxr_linenumber" name="L441" href="#L441">441</a>   @Override
+<a class="jxr_linenumber" name="L442" href="#L442">442</a>   <strong class="jxr_keyword">public</strong> FieldsProducer fieldsProducer(SegmentReadState state) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L443" href="#L443">443</a>     PostingsReaderBase postingsReader = <strong class="jxr_keyword">new</strong> Lucene50PostingsReader(state);
+<a class="jxr_linenumber" name="L444" href="#L444">444</a>     <strong class="jxr_keyword">boolean</strong> success = false;
+<a class="jxr_linenumber" name="L445" href="#L445">445</a>     <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L446" href="#L446">446</a>       FieldsProducer ret = <strong class="jxr_keyword">new</strong> BlockTreeTermsReader(postingsReader, state);
+<a class="jxr_linenumber" name="L447" href="#L447">447</a>       success = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L448" href="#L448">448</a>       <strong class="jxr_keyword">return</strong> ret;
+<a class="jxr_linenumber" name="L449" href="#L449">449</a>     } <strong class="jxr_keyword">finally</strong> {
+<a class="jxr_linenumber" name="L450" href="#L450">450</a>       <strong class="jxr_keyword">if</strong> (!success) {
+<a class="jxr_linenumber" name="L451" href="#L451">451</a>         IOUtils.closeWhileHandlingException(postingsReader);
+<a class="jxr_linenumber" name="L452" href="#L452">452</a>       }
+<a class="jxr_linenumber" name="L453" href="#L453">453</a>     }
+<a class="jxr_linenumber" name="L454" href="#L454">454</a>   }
+<a class="jxr_linenumber" name="L455" href="#L455">455</a>   
+<a class="jxr_linenumber" name="L456" href="#L456">456</a>   <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">class</strong> IntBlockTermState <strong class="jxr_keyword">extends</strong> BlockTermState {
+<a class="jxr_linenumber" name="L457" href="#L457">457</a>     <strong class="jxr_keyword">long</strong> docStartFP = 0;
+<a class="jxr_linenumber" name="L458" href="#L458">458</a>     <strong class="jxr_keyword">long</strong> posStartFP = 0;
+<a class="jxr_linenumber" name="L459" href="#L459">459</a>     <strong class="jxr_keyword">long</strong> payStartFP = 0;
+<a class="jxr_linenumber" name="L460" href="#L460">460</a>     <strong class="jxr_keyword">long</strong> skipOffset = -1;
+<a class="jxr_linenumber" name="L461" href="#L461">461</a>     <strong class="jxr_keyword">long</strong> lastPosBlockOffset = -1;
+<a class="jxr_linenumber" name="L462" href="#L462">462</a>     <em class="jxr_comment">// docid when there is a single pulsed posting, otherwise -1</em>
+<a class="jxr_linenumber" name="L463" href="#L463">463</a>     <em class="jxr_comment">// freq is always implicitly totalTermFreq in this case.</em>
+<a class="jxr_linenumber" name="L464" href="#L464">464</a>     <strong class="jxr_keyword">int</strong> singletonDocID = -1;
+<a class="jxr_linenumber" name="L465" href="#L465">465</a> 
+<a class="jxr_linenumber" name="L466" href="#L466">466</a>     @Override
+<a class="jxr_linenumber" name="L467" href="#L467">467</a>     <strong class="jxr_keyword">public</strong> IntBlockTermState clone() {
+<a class="jxr_linenumber" name="L468" href="#L468">468</a>       IntBlockTermState other = <strong class="jxr_keyword">new</strong> IntBlockTermState();
+<a class="jxr_linenumber" name="L469" href="#L469">469</a>       other.copyFrom(<strong class="jxr_keyword">this</strong>);
+<a class="jxr_linenumber" name="L470" href="#L470">470</a>       <strong class="jxr_keyword">return</strong> other;
+<a class="jxr_linenumber" name="L471" href="#L471">471</a>     }
+<a class="jxr_linenumber" name="L472" href="#L472">472</a> 
+<a class="jxr_linenumber" name="L473" href="#L473">473</a>     @Override
+<a class="jxr_linenumber" name="L474" href="#L474">474</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> copyFrom(TermState _other) {
+<a class="jxr_linenumber" name="L475" href="#L475">475</a>       <strong class="jxr_keyword">super</strong>.copyFrom(_other);
+<a class="jxr_linenumber" name="L476" href="#L476">476</a>       IntBlockTermState other = (IntBlockTermState) _other;
+<a class="jxr_linenumber" name="L477" href="#L477">477</a>       docStartFP = other.docStartFP;
+<a class="jxr_linenumber" name="L478" href="#L478">478</a>       posStartFP = other.posStartFP;
+<a class="jxr_linenumber" name="L479" href="#L479">479</a>       payStartFP = other.payStartFP;
+<a class="jxr_linenumber" name="L480" href="#L480">480</a>       lastPosBlockOffset = other.lastPosBlockOffset;
+<a class="jxr_linenumber" name="L481" href="#L481">481</a>       skipOffset = other.skipOffset;
+<a class="jxr_linenumber" name="L482" href="#L482">482</a>       singletonDocID = other.singletonDocID;
+<a class="jxr_linenumber" name="L483" href="#L483">483</a>     }
+<a class="jxr_linenumber" name="L484" href="#L484">484</a> 
+<a class="jxr_linenumber" name="L485" href="#L485">485</a>     @Override
+<a class="jxr_linenumber" name="L486" href="#L486">486</a>     <strong class="jxr_keyword">public</strong> String toString() {
+<a class="jxr_linenumber" name="L487" href="#L487">487</a>       <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">super</strong>.toString() + <span class="jxr_string">" docStartFP="</span> + docStartFP + <span class="jxr_string">" posStartFP="</span> + posStartFP + <span class="jxr_string">" payStartFP="</span> + payStartFP + <span class="jxr_string">" lastPosBlockOffset="</span> + lastPosBlockOffset + <span class="jxr_string">" singletonDocID="</span> + singletonDocID;
+<a class="jxr_linenumber" name="L488" href="#L488">488</a>     }
+<a class="jxr_linenumber" name="L489" href="#L489">489</a>   }
+<a class="jxr_linenumber" name="L490" href="#L490">490</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

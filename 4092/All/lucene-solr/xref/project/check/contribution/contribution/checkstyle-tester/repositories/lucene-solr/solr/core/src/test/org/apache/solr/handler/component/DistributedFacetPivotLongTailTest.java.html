@@ -1,0 +1,368 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>DistributedFacetPivotLongTailTest xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.solr.handler.component;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> java.util.List;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.BaseDistributedSearchTestCase;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.SolrClient;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.response.FieldStatsInfo;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.response.PivotField;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.params.FacetParams;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.params.SolrParams;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.params.ModifiableSolrParams;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.junit.Test;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <em class="jxr_javadoccomment"> * test demonstrating how overrequesting helps finds top-terms in the "long tail" </em>
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <em class="jxr_javadoccomment"> * of shards that don't have even distributions of terms (something that can be common</em>
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <em class="jxr_javadoccomment"> * in cases of custom sharding -- even if you don't know that there is a corrolation </em>
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <em class="jxr_javadoccomment"> * between the property you are sharding on and the property you are faceting on).</em>
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <em class="jxr_javadoccomment"> * NOTE: This test ignores the control collection (in single node mode, there is no </em>
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <em class="jxr_javadoccomment"> * need for the overrequesting, all the data is local -- so comparisons with it wouldn't </em>
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <em class="jxr_javadoccomment"> * be valid in the cases we are testing here)</em>
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> DistributedFacetPivotLongTailTest <strong class="jxr_keyword">extends</strong> BaseDistributedSearchTestCase {
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>    
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">int</strong> docNumber = 0;
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>    
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">int</strong> getDocNum() {
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>      docNumber++;
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>      <strong class="jxr_keyword">return</strong> docNumber;
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>    }
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>  
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>    @Test
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>    @ShardsFixed(num = 3)
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> test() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>  
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>      <strong class="jxr_keyword">final</strong> SolrClient shard0 = clients.get(0);
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>      <strong class="jxr_keyword">final</strong> SolrClient shard1 = clients.get(1);
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>      <strong class="jxr_keyword">final</strong> SolrClient shard2 = clients.get(2);
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>      
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>      <em class="jxr_comment">// the 5 top foo_s terms have 100 docs each on every shard</em>
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>      <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; 100; i++) {
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>        <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> j = 0; j &lt; 5; j++) {
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>          shard0.add(sdoc(<span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"foo_s"</span>, <span class="jxr_string">"aaa"</span>+j, <span class="jxr_string">"stat_i"</span>, j * 13 - i));
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>          shard1.add(sdoc(<span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"foo_s"</span>, <span class="jxr_string">"aaa"</span>+j, <span class="jxr_string">"stat_i"</span>, j * 3 + i));
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>          shard2.add(sdoc(<span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"foo_s"</span>, <span class="jxr_string">"aaa"</span>+j, <span class="jxr_string">"stat_i"</span>, i * 7 + j));
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>        }
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>      }
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>  
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>      <em class="jxr_comment">// 20 foo_s terms that come in "second" with 50 docs each </em>
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>      <em class="jxr_comment">// on both shard0 &amp; shard1 ("bbb_")</em>
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>      <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; 50; i++) {
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>        <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> j = 0; j &lt; 20; j++) {
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>          shard0.add(sdoc(<span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"foo_s"</span>, <span class="jxr_string">"bbb"</span>+j, <span class="jxr_string">"stat_i"</span>, 0));
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>          shard1.add(sdoc(<span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"foo_s"</span>, <span class="jxr_string">"bbb"</span>+j, <span class="jxr_string">"stat_i"</span>, 1));
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>        }
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>        <em class="jxr_comment">// distracting term appears on only on shard2 50 times</em>
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>        shard2.add(sdoc(<span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"foo_s"</span>, <span class="jxr_string">"junkA"</span>));
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>      }
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>      <em class="jxr_comment">// put "bbb0" on shard2 exactly once to sanity check refinement</em>
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>      shard2.add(sdoc(<span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"foo_s"</span>, <span class="jxr_string">"bbb0"</span>, <span class="jxr_string">"stat_i"</span>, -2));
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>  
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>      <em class="jxr_comment">// long 'tail' foo_s term appears in 45 docs on every shard</em>
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>      <em class="jxr_comment">// foo_s:tail is the only term with bar_s sub-pivot terms</em>
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>      <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; 45; i++) {
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>  
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>        <em class="jxr_comment">// for sub-pivot, shard0 &amp; shard1 have 6 docs each for "tailB"</em>
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>        <em class="jxr_comment">// but the top 5 terms are ccc(0-4) -- 7 on each shard</em>
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>        <em class="jxr_comment">// (4 docs each have junk terms)</em>
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>        String sub_term = (i &lt; 35) ? <span class="jxr_string">"ccc"</span>+(i % 5) : ((i &lt; 41) ? <span class="jxr_string">"tailB"</span> : <span class="jxr_string">"junkA"</span>);
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>        shard0.add(sdoc(<span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"foo_s"</span>, <span class="jxr_string">"tail"</span>, <span class="jxr_string">"bar_s"</span>, sub_term, <span class="jxr_string">"stat_i"</span>, i));
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>        shard1.add(sdoc(<span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"foo_s"</span>, <span class="jxr_string">"tail"</span>, <span class="jxr_string">"bar_s"</span>, sub_term, <span class="jxr_string">"stat_i"</span>, i));
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>  
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>        <em class="jxr_comment">// shard2's top 5 sub-pivot terms are junk only it has with 8 docs each</em>
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>        <em class="jxr_comment">// and 5 docs that use "tailB"</em>
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>        <em class="jxr_comment">// NOTE: none of these get stat_i ! !</em>
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>        sub_term = (i &lt; 40) ? <span class="jxr_string">"junkB"</span>+(i % 5) : <span class="jxr_string">"tailB"</span>;
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>        shard2.add(sdoc(<span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"foo_s"</span>, <span class="jxr_string">"tail"</span>, <span class="jxr_string">"bar_s"</span>, sub_term));
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>      }
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>  
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>      <em class="jxr_comment">// really long tail uncommon foo_s terms on shard2</em>
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>      <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; 30; i++) {
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>       shard2.add(sdoc(<span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"foo_s"</span>, <span class="jxr_string">"zzz"</span>+i));
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>     }
+<a class="jxr_linenumber" name="L102" href="#L102">102</a> 
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>     commit();
+<a class="jxr_linenumber" name="L104" href="#L104">104</a> 
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>     SolrParams req = params( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>, 
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>                              <span class="jxr_string">"distrib"</span>, <span class="jxr_string">"false"</span>,
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>                              <span class="jxr_string">"facet"</span>, <span class="jxr_string">"true"</span>, 
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>                              <span class="jxr_string">"facet.limit"</span>, <span class="jxr_string">"10"</span>,
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>                              <span class="jxr_string">"facet.pivot"</span>, <span class="jxr_string">"foo_s,bar_s"</span>);
+<a class="jxr_linenumber" name="L110" href="#L110">110</a> 
+<a class="jxr_linenumber" name="L111" href="#L111">111</a>     <em class="jxr_comment">// sanity check that our expectations about each shard (non-distrib) are correct</em>
+<a class="jxr_linenumber" name="L112" href="#L112">112</a> 
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>     PivotField pivot = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>     List&lt;PivotField&gt; pivots = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L115" href="#L115">115</a>     List&lt;PivotField&gt;[] shardPivots = <strong class="jxr_keyword">new</strong> List[3];
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>     shardPivots[0] = shard0.query( req ).getFacetPivot().get(<span class="jxr_string">"foo_s,bar_s"</span>);
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>     shardPivots[1] = shard1.query( req ).getFacetPivot().get(<span class="jxr_string">"foo_s,bar_s"</span>);
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>     shardPivots[2] = shard2.query( req ).getFacetPivot().get(<span class="jxr_string">"foo_s,bar_s"</span>);
+<a class="jxr_linenumber" name="L119" href="#L119">119</a> 
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>     <em class="jxr_comment">// top 5 same on all shards</em>
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; 3; i++) {
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>       assertEquals(10, shardPivots[i].size());
+<a class="jxr_linenumber" name="L123" href="#L123">123</a>       <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> j = 0; j &lt; 5; j++) {
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>         pivot = shardPivots[i].get(j);
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>         assertEquals(pivot.toString(), <span class="jxr_string">"aaa"</span>+j, pivot.getValue());
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>         assertEquals(pivot.toString(), 100, pivot.getCount());
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>       }
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>     }
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>     <em class="jxr_comment">// top 6-10 same on shard0 &amp; shard11</em>
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; 2; i++) {
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>       <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> j = 5; j &lt; 10; j++) {
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>         pivot = shardPivots[i].get(j);
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>         assertTrue(pivot.toString(), pivot.getValue().toString().startsWith(<span class="jxr_string">"bbb"</span>));
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>         assertEquals(pivot.toString(), 50, pivot.getCount());
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>       }
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>     }
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>     <em class="jxr_comment">// 6-10 on shard2</em>
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>     assertEquals(<span class="jxr_string">"junkA"</span>, shardPivots[2].get(5).getValue());
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>     assertEquals(50, shardPivots[2].get(5).getCount());
+<a class="jxr_linenumber" name="L140" href="#L140">140</a>     assertEquals(<span class="jxr_string">"tail"</span>, shardPivots[2].get(6).getValue());
+<a class="jxr_linenumber" name="L141" href="#L141">141</a>     assertEquals(45, shardPivots[2].get(6).getCount());
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>     assertEquals(<span class="jxr_string">"bbb0"</span>, shardPivots[2].get(7).getValue());
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>     assertEquals(1, shardPivots[2].get(7).getCount());
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> j = 8; j &lt; 10; j++) {
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>       pivot = shardPivots[2].get(j);
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>       assertTrue(pivot.toString(), pivot.getValue().toString().startsWith(<span class="jxr_string">"zzz"</span>));
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>       assertEquals(pivot.toString(), 1, pivot.getCount());
+<a class="jxr_linenumber" name="L148" href="#L148">148</a>     }
+<a class="jxr_linenumber" name="L149" href="#L149">149</a>     <em class="jxr_comment">// check sub-shardPivots on "tail" from shard2</em>
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>     pivots = shardPivots[2].get(6).getPivot();
+<a class="jxr_linenumber" name="L151" href="#L151">151</a>     assertEquals(6, pivots.size());
+<a class="jxr_linenumber" name="L152" href="#L152">152</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> j = 0; j &lt; 5; j++) {
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>       pivot = pivots.get(j);
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>       assertTrue(pivot.toString(), pivot.getValue().toString().startsWith(<span class="jxr_string">"junkB"</span>));
+<a class="jxr_linenumber" name="L155" href="#L155">155</a>       assertEquals(pivot.toString(), 8, pivot.getCount());
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>     }
+<a class="jxr_linenumber" name="L157" href="#L157">157</a>     pivot = pivots.get(5);
+<a class="jxr_linenumber" name="L158" href="#L158">158</a>     assertEquals(<span class="jxr_string">"tailB"</span>, pivot.getValue());
+<a class="jxr_linenumber" name="L159" href="#L159">159</a>     assertEquals(5, pivot.getCount());
+<a class="jxr_linenumber" name="L160" href="#L160">160</a> 
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>     <em class="jxr_comment">// if we disable overrequesting, we don't find the long tail</em>
+<a class="jxr_linenumber" name="L162" href="#L162">162</a> 
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>     pivots = queryServer( params( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>                                   <span class="jxr_string">"shards"</span>, getShardsString(),
+<a class="jxr_linenumber" name="L165" href="#L165">165</a>                                   FacetParams.FACET_OVERREQUEST_COUNT, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>                                   FacetParams.FACET_OVERREQUEST_RATIO, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>                                   <span class="jxr_string">"facet"</span>, <span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L168" href="#L168">168</a>                                   <span class="jxr_string">"facet.limit"</span>, <span class="jxr_string">"6"</span>,
+<a class="jxr_linenumber" name="L169" href="#L169">169</a>                                   <span class="jxr_string">"facet.pivot"</span>, <span class="jxr_string">"{!stats=sxy}foo_s,bar_s"</span>,
+<a class="jxr_linenumber" name="L170" href="#L170">170</a>                                   <span class="jxr_string">"stats"</span>, <span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L171" href="#L171">171</a>                                   <span class="jxr_string">"stats.field"</span>, <span class="jxr_string">"{!tag=sxy}stat_i"</span>)
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>                           ).getFacetPivot().get(<span class="jxr_string">"foo_s,bar_s"</span>);
+<a class="jxr_linenumber" name="L173" href="#L173">173</a>     assertEquals(6, pivots.size());
+<a class="jxr_linenumber" name="L174" href="#L174">174</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; 5; i++) {
+<a class="jxr_linenumber" name="L175" href="#L175">175</a>       pivot = pivots.get(i);
+<a class="jxr_linenumber" name="L176" href="#L176">176</a>       assertTrue(pivot.toString(), pivot.getValue().toString().startsWith(<span class="jxr_string">"aaa"</span>));
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>       assertEquals(pivot.toString(), 300, pivot.getCount());
+<a class="jxr_linenumber" name="L178" href="#L178">178</a>     }
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>     { <em class="jxr_comment">// even w/o the long tail, we should have still asked shard2 to refine bbb0</em>
+<a class="jxr_linenumber" name="L180" href="#L180">180</a>       pivot = pivots.get(5);
+<a class="jxr_linenumber" name="L181" href="#L181">181</a>       assertTrue(pivot.toString(), pivot.getValue().equals(<span class="jxr_string">"bbb0"</span>));
+<a class="jxr_linenumber" name="L182" href="#L182">182</a>       assertEquals(pivot.toString(), 101, pivot.getCount());
+<a class="jxr_linenumber" name="L183" href="#L183">183</a>       <em class="jxr_comment">// basic check of refined stats</em>
+<a class="jxr_linenumber" name="L184" href="#L184">184</a>       FieldStatsInfo bbb0Stats = pivot.getFieldStatsInfo().get(<span class="jxr_string">"stat_i"</span>);
+<a class="jxr_linenumber" name="L185" href="#L185">185</a>       assertEquals(<span class="jxr_string">"stat_i"</span>, bbb0Stats.getName());
+<a class="jxr_linenumber" name="L186" href="#L186">186</a>       assertEquals(-2.0, bbb0Stats.getMin());
+<a class="jxr_linenumber" name="L187" href="#L187">187</a>       assertEquals(1.0, bbb0Stats.getMax());
+<a class="jxr_linenumber" name="L188" href="#L188">188</a>       assertEquals(101, (<strong class="jxr_keyword">long</strong>) bbb0Stats.getCount());
+<a class="jxr_linenumber" name="L189" href="#L189">189</a>       assertEquals(0, (<strong class="jxr_keyword">long</strong>) bbb0Stats.getMissing());
+<a class="jxr_linenumber" name="L190" href="#L190">190</a>       assertEquals(48.0, bbb0Stats.getSum());
+<a class="jxr_linenumber" name="L191" href="#L191">191</a>       assertEquals(0.475247524752475, (<strong class="jxr_keyword">double</strong>) bbb0Stats.getMean(), 0.1E-7);
+<a class="jxr_linenumber" name="L192" href="#L192">192</a>       assertEquals(54.0, bbb0Stats.getSumOfSquares(), 0.1E-7);
+<a class="jxr_linenumber" name="L193" href="#L193">193</a>       assertEquals(0.55846323792, bbb0Stats.getStddev(), 0.1E-7);
+<a class="jxr_linenumber" name="L194" href="#L194">194</a>     }
+<a class="jxr_linenumber" name="L195" href="#L195">195</a> 
+<a class="jxr_linenumber" name="L196" href="#L196">196</a> 
+<a class="jxr_linenumber" name="L197" href="#L197">197</a>     <em class="jxr_comment">// with default overrequesting, we should find the correct top 6 including </em>
+<a class="jxr_linenumber" name="L198" href="#L198">198</a>     <em class="jxr_comment">// long tail and top sub-pivots</em>
+<a class="jxr_linenumber" name="L199" href="#L199">199</a>     <em class="jxr_comment">// (even if we disable overrequesting on the sub-pivot)</em>
+<a class="jxr_linenumber" name="L200" href="#L200">200</a>     <strong class="jxr_keyword">for</strong> (ModifiableSolrParams q : <strong class="jxr_keyword">new</strong> ModifiableSolrParams[] { 
+<a class="jxr_linenumber" name="L201" href="#L201">201</a>         params(),
+<a class="jxr_linenumber" name="L202" href="#L202">202</a>         params(<span class="jxr_string">"f.bar_s.facet.overrequest.ratio"</span>,<span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L203" href="#L203">203</a>                <span class="jxr_string">"f.bar_s.facet.overrequest.count"</span>,<span class="jxr_string">"0"</span>)      }) {
+<a class="jxr_linenumber" name="L204" href="#L204">204</a>       
+<a class="jxr_linenumber" name="L205" href="#L205">205</a>       q.add( params( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L206" href="#L206">206</a>                      <span class="jxr_string">"shards"</span>, getShardsString(),
+<a class="jxr_linenumber" name="L207" href="#L207">207</a>                      <span class="jxr_string">"facet"</span>, <span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L208" href="#L208">208</a>                      <span class="jxr_string">"facet.limit"</span>, <span class="jxr_string">"6"</span>,
+<a class="jxr_linenumber" name="L209" href="#L209">209</a>                      <span class="jxr_string">"facet.pivot"</span>, <span class="jxr_string">"foo_s,bar_s"</span> ));
+<a class="jxr_linenumber" name="L210" href="#L210">210</a>       pivots = queryServer( q ).getFacetPivot().get(<span class="jxr_string">"foo_s,bar_s"</span>);
+<a class="jxr_linenumber" name="L211" href="#L211">211</a>         
+<a class="jxr_linenumber" name="L212" href="#L212">212</a>       assertEquals(6, pivots.size());
+<a class="jxr_linenumber" name="L213" href="#L213">213</a>       <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; 5; i++) {
+<a class="jxr_linenumber" name="L214" href="#L214">214</a>         pivot = pivots.get(i);
+<a class="jxr_linenumber" name="L215" href="#L215">215</a>         assertTrue(pivot.toString(), pivot.getValue().toString().startsWith(<span class="jxr_string">"aaa"</span>));
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>         assertEquals(pivot.toString(), 300, pivot.getCount());
+<a class="jxr_linenumber" name="L217" href="#L217">217</a>       }
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>       pivot = pivots.get(5);
+<a class="jxr_linenumber" name="L219" href="#L219">219</a>       assertEquals(pivot.toString(), <span class="jxr_string">"tail"</span>, pivot.getValue());
+<a class="jxr_linenumber" name="L220" href="#L220">220</a>       assertEquals(pivot.toString(), 135, pivot.getCount());
+<a class="jxr_linenumber" name="L221" href="#L221">221</a>       <em class="jxr_comment">// check the sub pivots</em>
+<a class="jxr_linenumber" name="L222" href="#L222">222</a>       pivots = pivot.getPivot();
+<a class="jxr_linenumber" name="L223" href="#L223">223</a>       assertEquals(6, pivots.size());
+<a class="jxr_linenumber" name="L224" href="#L224">224</a>       pivot = pivots.get(0);
+<a class="jxr_linenumber" name="L225" href="#L225">225</a>       assertEquals(pivot.toString(), <span class="jxr_string">"tailB"</span>, pivot.getValue());
+<a class="jxr_linenumber" name="L226" href="#L226">226</a>       assertEquals(pivot.toString(), 17, pivot.getCount());
+<a class="jxr_linenumber" name="L227" href="#L227">227</a>       <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 1; i &lt; 6; i++) { <em class="jxr_comment">// ccc(0-4)</em>
+<a class="jxr_linenumber" name="L228" href="#L228">228</a>         pivot = pivots.get(i);
+<a class="jxr_linenumber" name="L229" href="#L229">229</a>         assertTrue(pivot.toString(), pivot.getValue().toString().startsWith(<span class="jxr_string">"ccc"</span>));
+<a class="jxr_linenumber" name="L230" href="#L230">230</a>         assertEquals(pivot.toString(), 14, pivot.getCount());
+<a class="jxr_linenumber" name="L231" href="#L231">231</a>       }
+<a class="jxr_linenumber" name="L232" href="#L232">232</a>     }
+<a class="jxr_linenumber" name="L233" href="#L233">233</a> 
+<a class="jxr_linenumber" name="L234" href="#L234">234</a>     <em class="jxr_comment">// if we lower the facet.limit on the sub-pivot, overrequesting should still ensure </em>
+<a class="jxr_linenumber" name="L235" href="#L235">235</a>     <em class="jxr_comment">// that we get the correct top5 including "tailB"</em>
+<a class="jxr_linenumber" name="L236" href="#L236">236</a> 
+<a class="jxr_linenumber" name="L237" href="#L237">237</a>     pivots = queryServer( params( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L238" href="#L238">238</a>                                   <span class="jxr_string">"shards"</span>, getShardsString(),
+<a class="jxr_linenumber" name="L239" href="#L239">239</a>                                   <span class="jxr_string">"facet"</span>, <span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L240" href="#L240">240</a>                                   <span class="jxr_string">"facet.limit"</span>, <span class="jxr_string">"6"</span>,
+<a class="jxr_linenumber" name="L241" href="#L241">241</a>                                   <span class="jxr_string">"f.bar_s.facet.limit"</span>, <span class="jxr_string">"5"</span>,
+<a class="jxr_linenumber" name="L242" href="#L242">242</a>                                   <span class="jxr_string">"facet.pivot"</span>, <span class="jxr_string">"foo_s,bar_s"</span> )
+<a class="jxr_linenumber" name="L243" href="#L243">243</a>                           ).getFacetPivot().get(<span class="jxr_string">"foo_s,bar_s"</span>);
+<a class="jxr_linenumber" name="L244" href="#L244">244</a>     assertEquals(6, pivots.size());
+<a class="jxr_linenumber" name="L245" href="#L245">245</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; 5; i++) {
+<a class="jxr_linenumber" name="L246" href="#L246">246</a>       pivot = pivots.get(i);
+<a class="jxr_linenumber" name="L247" href="#L247">247</a>       assertTrue(pivot.toString(), pivot.getValue().toString().startsWith(<span class="jxr_string">"aaa"</span>));
+<a class="jxr_linenumber" name="L248" href="#L248">248</a>       assertEquals(pivot.toString(), 300, pivot.getCount());
+<a class="jxr_linenumber" name="L249" href="#L249">249</a>     }
+<a class="jxr_linenumber" name="L250" href="#L250">250</a>     pivot = pivots.get(5);
+<a class="jxr_linenumber" name="L251" href="#L251">251</a>     assertEquals(pivot.toString(), <span class="jxr_string">"tail"</span>, pivot.getValue());
+<a class="jxr_linenumber" name="L252" href="#L252">252</a>     assertEquals(pivot.toString(), 135, pivot.getCount());
+<a class="jxr_linenumber" name="L253" href="#L253">253</a>     <em class="jxr_comment">// check the sub pivots</em>
+<a class="jxr_linenumber" name="L254" href="#L254">254</a>     pivots = pivot.getPivot();
+<a class="jxr_linenumber" name="L255" href="#L255">255</a>     assertEquals(5, pivots.size());
+<a class="jxr_linenumber" name="L256" href="#L256">256</a>     pivot = pivots.get(0);
+<a class="jxr_linenumber" name="L257" href="#L257">257</a>     assertEquals(pivot.toString(), <span class="jxr_string">"tailB"</span>, pivot.getValue());
+<a class="jxr_linenumber" name="L258" href="#L258">258</a>     assertEquals(pivot.toString(), 17, pivot.getCount());
+<a class="jxr_linenumber" name="L259" href="#L259">259</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 1; i &lt; 5; i++) { <em class="jxr_comment">// ccc(0-3)</em>
+<a class="jxr_linenumber" name="L260" href="#L260">260</a>       pivot = pivots.get(i);
+<a class="jxr_linenumber" name="L261" href="#L261">261</a>       assertTrue(pivot.toString(), pivot.getValue().toString().startsWith(<span class="jxr_string">"ccc"</span>));
+<a class="jxr_linenumber" name="L262" href="#L262">262</a>       assertEquals(pivot.toString(), 14, pivot.getCount());
+<a class="jxr_linenumber" name="L263" href="#L263">263</a>     }
+<a class="jxr_linenumber" name="L264" href="#L264">264</a> 
+<a class="jxr_linenumber" name="L265" href="#L265">265</a>     <em class="jxr_comment">// however with a lower limit and overrequesting disabled, </em>
+<a class="jxr_linenumber" name="L266" href="#L266">266</a>     <em class="jxr_comment">// we're going to miss out on tailB</em>
+<a class="jxr_linenumber" name="L267" href="#L267">267</a> 
+<a class="jxr_linenumber" name="L268" href="#L268">268</a>     pivots = queryServer( params( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L269" href="#L269">269</a>                                   <span class="jxr_string">"shards"</span>, getShardsString(),
+<a class="jxr_linenumber" name="L270" href="#L270">270</a>                                   <span class="jxr_string">"facet"</span>, <span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L271" href="#L271">271</a>                                   <span class="jxr_string">"facet.limit"</span>, <span class="jxr_string">"6"</span>,
+<a class="jxr_linenumber" name="L272" href="#L272">272</a>                                   <span class="jxr_string">"f.bar_s.facet.overrequest.ratio"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L273" href="#L273">273</a>                                   <span class="jxr_string">"f.bar_s.facet.overrequest.count"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L274" href="#L274">274</a>                                   <span class="jxr_string">"f.bar_s.facet.limit"</span>, <span class="jxr_string">"5"</span>,
+<a class="jxr_linenumber" name="L275" href="#L275">275</a>                                   <span class="jxr_string">"facet.pivot"</span>, <span class="jxr_string">"foo_s,bar_s"</span> )
+<a class="jxr_linenumber" name="L276" href="#L276">276</a>                           ).getFacetPivot().get(<span class="jxr_string">"foo_s,bar_s"</span>);
+<a class="jxr_linenumber" name="L277" href="#L277">277</a>     assertEquals(6, pivots.size());
+<a class="jxr_linenumber" name="L278" href="#L278">278</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; 5; i++) {
+<a class="jxr_linenumber" name="L279" href="#L279">279</a>       pivot = pivots.get(i);
+<a class="jxr_linenumber" name="L280" href="#L280">280</a>       assertTrue(pivot.toString(), pivot.getValue().toString().startsWith(<span class="jxr_string">"aaa"</span>));
+<a class="jxr_linenumber" name="L281" href="#L281">281</a>       assertEquals(pivot.toString(), 300, pivot.getCount());
+<a class="jxr_linenumber" name="L282" href="#L282">282</a>     }
+<a class="jxr_linenumber" name="L283" href="#L283">283</a>     pivot = pivots.get(5);
+<a class="jxr_linenumber" name="L284" href="#L284">284</a>     assertEquals(pivot.toString(), <span class="jxr_string">"tail"</span>, pivot.getValue());
+<a class="jxr_linenumber" name="L285" href="#L285">285</a>     assertEquals(pivot.toString(), 135, pivot.getCount());
+<a class="jxr_linenumber" name="L286" href="#L286">286</a>     <em class="jxr_comment">// check the sub pivots</em>
+<a class="jxr_linenumber" name="L287" href="#L287">287</a>     pivots = pivot.getPivot();
+<a class="jxr_linenumber" name="L288" href="#L288">288</a>     assertEquals(5, pivots.size());
+<a class="jxr_linenumber" name="L289" href="#L289">289</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; 5; i++) { <em class="jxr_comment">// ccc(0-4)</em>
+<a class="jxr_linenumber" name="L290" href="#L290">290</a>       pivot = pivots.get(i);
+<a class="jxr_linenumber" name="L291" href="#L291">291</a>       assertTrue(pivot.toString(), pivot.getValue().toString().startsWith(<span class="jxr_string">"ccc"</span>));
+<a class="jxr_linenumber" name="L292" href="#L292">292</a>       assertEquals(pivot.toString(), 14, pivot.getCount());
+<a class="jxr_linenumber" name="L293" href="#L293">293</a>     }
+<a class="jxr_linenumber" name="L294" href="#L294">294</a>     
+<a class="jxr_linenumber" name="L295" href="#L295">295</a>     doTestDeepPivotStats();
+<a class="jxr_linenumber" name="L296" href="#L296">296</a>   }
+<a class="jxr_linenumber" name="L297" href="#L297">297</a> 
+<a class="jxr_linenumber" name="L298" href="#L298">298</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> doTestDeepPivotStats() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L299" href="#L299">299</a>     <em class="jxr_comment">// Deep checking of some Facet stats - no refinement involved here</em>
+<a class="jxr_linenumber" name="L300" href="#L300">300</a> 
+<a class="jxr_linenumber" name="L301" href="#L301">301</a>     List&lt;PivotField&gt; pivots = 
+<a class="jxr_linenumber" name="L302" href="#L302">302</a>       query(<span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L303" href="#L303">303</a>             <span class="jxr_string">"shards"</span>, getShardsString(),
+<a class="jxr_linenumber" name="L304" href="#L304">304</a>             <span class="jxr_string">"facet"</span>, <span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L305" href="#L305">305</a>             <span class="jxr_string">"rows"</span> , <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L306" href="#L306">306</a>             <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"{!stats=s1}foo_s,bar_s"</span>,
+<a class="jxr_linenumber" name="L307" href="#L307">307</a>             <span class="jxr_string">"stats"</span>, <span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L308" href="#L308">308</a>             <span class="jxr_string">"stats.field"</span>, <span class="jxr_string">"{!key=avg_price tag=s1}stat_i"</span>).getFacetPivot().get(<span class="jxr_string">"foo_s,bar_s"</span>);
+<a class="jxr_linenumber" name="L309" href="#L309">309</a>     PivotField aaa0PivotField = pivots.get(0);
+<a class="jxr_linenumber" name="L310" href="#L310">310</a>     assertEquals(<span class="jxr_string">"aaa0"</span>, aaa0PivotField.getValue());
+<a class="jxr_linenumber" name="L311" href="#L311">311</a>     assertEquals(300, aaa0PivotField.getCount());
+<a class="jxr_linenumber" name="L312" href="#L312">312</a> 
+<a class="jxr_linenumber" name="L313" href="#L313">313</a>     FieldStatsInfo aaa0StatsInfo = aaa0PivotField.getFieldStatsInfo().get(<span class="jxr_string">"avg_price"</span>);
+<a class="jxr_linenumber" name="L314" href="#L314">314</a>     assertEquals(<span class="jxr_string">"avg_price"</span>, aaa0StatsInfo.getName());
+<a class="jxr_linenumber" name="L315" href="#L315">315</a>     assertEquals(-99.0, aaa0StatsInfo.getMin());
+<a class="jxr_linenumber" name="L316" href="#L316">316</a>     assertEquals(693.0, aaa0StatsInfo.getMax());
+<a class="jxr_linenumber" name="L317" href="#L317">317</a>     assertEquals(300, (<strong class="jxr_keyword">long</strong>) aaa0StatsInfo.getCount());
+<a class="jxr_linenumber" name="L318" href="#L318">318</a>     assertEquals(0, (<strong class="jxr_keyword">long</strong>) aaa0StatsInfo.getMissing());
+<a class="jxr_linenumber" name="L319" href="#L319">319</a>     assertEquals(34650.0, aaa0StatsInfo.getSum());
+<a class="jxr_linenumber" name="L320" href="#L320">320</a>     assertEquals(1.674585E7, aaa0StatsInfo.getSumOfSquares(), 0.1E-7);
+<a class="jxr_linenumber" name="L321" href="#L321">321</a>     assertEquals(115.5, (<strong class="jxr_keyword">double</strong>) aaa0StatsInfo.getMean(), 0.1E-7);
+<a class="jxr_linenumber" name="L322" href="#L322">322</a>     assertEquals(206.4493184076, aaa0StatsInfo.getStddev(), 0.1E-7);
+<a class="jxr_linenumber" name="L323" href="#L323">323</a> 
+<a class="jxr_linenumber" name="L324" href="#L324">324</a>     PivotField tailPivotField = pivots.get(5);
+<a class="jxr_linenumber" name="L325" href="#L325">325</a>     assertEquals(<span class="jxr_string">"tail"</span>, tailPivotField.getValue());
+<a class="jxr_linenumber" name="L326" href="#L326">326</a>     assertEquals(135, tailPivotField.getCount());
+<a class="jxr_linenumber" name="L327" href="#L327">327</a> 
+<a class="jxr_linenumber" name="L328" href="#L328">328</a>     FieldStatsInfo tailPivotFieldStatsInfo = tailPivotField.getFieldStatsInfo().get(<span class="jxr_string">"avg_price"</span>);
+<a class="jxr_linenumber" name="L329" href="#L329">329</a>     assertEquals(<span class="jxr_string">"avg_price"</span>, tailPivotFieldStatsInfo.getName());
+<a class="jxr_linenumber" name="L330" href="#L330">330</a>     assertEquals(0.0, tailPivotFieldStatsInfo.getMin());
+<a class="jxr_linenumber" name="L331" href="#L331">331</a>     assertEquals(44.0, tailPivotFieldStatsInfo.getMax());
+<a class="jxr_linenumber" name="L332" href="#L332">332</a>     assertEquals(90, (<strong class="jxr_keyword">long</strong>) tailPivotFieldStatsInfo.getCount());
+<a class="jxr_linenumber" name="L333" href="#L333">333</a>     assertEquals(45, (<strong class="jxr_keyword">long</strong>) tailPivotFieldStatsInfo.getMissing());
+<a class="jxr_linenumber" name="L334" href="#L334">334</a>     assertEquals(1980.0, tailPivotFieldStatsInfo.getSum());
+<a class="jxr_linenumber" name="L335" href="#L335">335</a>     assertEquals(22.0, (<strong class="jxr_keyword">double</strong>) tailPivotFieldStatsInfo.getMean(), 0.1E-7);
+<a class="jxr_linenumber" name="L336" href="#L336">336</a>     assertEquals(58740.0, tailPivotFieldStatsInfo.getSumOfSquares(), 0.1E-7);
+<a class="jxr_linenumber" name="L337" href="#L337">337</a>     assertEquals(13.0599310011, tailPivotFieldStatsInfo.getStddev(), 0.1E-7);
+<a class="jxr_linenumber" name="L338" href="#L338">338</a> 
+<a class="jxr_linenumber" name="L339" href="#L339">339</a>     PivotField tailBPivotField = tailPivotField.getPivot().get(0);
+<a class="jxr_linenumber" name="L340" href="#L340">340</a>     assertEquals(<span class="jxr_string">"tailB"</span>, tailBPivotField.getValue());
+<a class="jxr_linenumber" name="L341" href="#L341">341</a>     assertEquals(17, tailBPivotField.getCount());
+<a class="jxr_linenumber" name="L342" href="#L342">342</a> 
+<a class="jxr_linenumber" name="L343" href="#L343">343</a>     FieldStatsInfo tailBPivotFieldStatsInfo = tailBPivotField.getFieldStatsInfo().get(<span class="jxr_string">"avg_price"</span>);
+<a class="jxr_linenumber" name="L344" href="#L344">344</a>     assertEquals(<span class="jxr_string">"avg_price"</span>, tailBPivotFieldStatsInfo.getName());
+<a class="jxr_linenumber" name="L345" href="#L345">345</a>     assertEquals(35.0, tailBPivotFieldStatsInfo.getMin());
+<a class="jxr_linenumber" name="L346" href="#L346">346</a>     assertEquals(40.0, tailBPivotFieldStatsInfo.getMax());
+<a class="jxr_linenumber" name="L347" href="#L347">347</a>     assertEquals(12, (<strong class="jxr_keyword">long</strong>) tailBPivotFieldStatsInfo.getCount());
+<a class="jxr_linenumber" name="L348" href="#L348">348</a>     assertEquals(5, (<strong class="jxr_keyword">long</strong>) tailBPivotFieldStatsInfo.getMissing());
+<a class="jxr_linenumber" name="L349" href="#L349">349</a>     assertEquals(450.0, tailBPivotFieldStatsInfo.getSum());
+<a class="jxr_linenumber" name="L350" href="#L350">350</a>     assertEquals(37.5, (<strong class="jxr_keyword">double</strong>) tailBPivotFieldStatsInfo.getMean(), 0.1E-7);
+<a class="jxr_linenumber" name="L351" href="#L351">351</a>     assertEquals(16910.0, tailBPivotFieldStatsInfo.getSumOfSquares(), 0.1E-7);
+<a class="jxr_linenumber" name="L352" href="#L352">352</a>     assertEquals(1.78376517, tailBPivotFieldStatsInfo.getStddev(), 0.1E-7);
+<a class="jxr_linenumber" name="L353" href="#L353">353</a>   }
+<a class="jxr_linenumber" name="L354" href="#L354">354</a> 
+<a class="jxr_linenumber" name="L355" href="#L355">355</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

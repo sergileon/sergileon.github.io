@@ -1,0 +1,290 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>InspectorTest xref</title>
+<link type="text/css" rel="stylesheet" href="../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   <em class="jxr_comment"> *  Licensed to the Apache Software Foundation (ASF) under one</em>
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment"> *  or more contributor license agreements.  See the NOTICE file</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> *  distributed with this work for additional information</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> *  regarding copyright ownership.  The ASF licenses this file</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> *  to you under the Apache License, Version 2.0 (the</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> *  "License"); you may not use this file except in compliance</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> *  with the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *    <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *  Unless required by applicable law or agreed to in writing,</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> *  software distributed under the License is distributed on an</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> *  KIND, either express or implied.  See the License for the</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> *  specific language governing permissions and limitations</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> *  under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  <strong class="jxr_keyword">package</strong> groovy.inspect;
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> groovy.lang.GroovyShell;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> groovy.lang.MetaProperty;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> groovy.lang.PropertyValue;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> org.jmock.Mock;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> org.jmock.cglib.MockObjectTestCase;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> java.io.ByteArrayOutputStream;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> java.io.PrintStream;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> java.io.Serializable;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> java.lang.reflect.Field;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> java.util.*;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> java.util.regex.Matcher;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> java.util.regex.Pattern;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> InspectorTest <strong class="jxr_keyword">extends</strong> MockObjectTestCase <strong class="jxr_keyword">implements</strong> Serializable {
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>      <strong class="jxr_keyword">public</strong> String someField = <span class="jxr_string">"only for testing"</span>;
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String SOME_CONST = <span class="jxr_string">"only for testing"</span>;
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>      <strong class="jxr_keyword">public</strong> InspectorTest(String name) {
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>          <strong class="jxr_keyword">super</strong>(name);
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>      }
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>      <em class="jxr_comment">// additional constructor not used directly but exercises inspection code</em>
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>      <strong class="jxr_keyword">public</strong> InspectorTest(String name, Object other) <strong class="jxr_keyword">throws</strong> RuntimeException, Throwable {
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>          <strong class="jxr_keyword">super</strong>(name);
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>      }
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>  
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testCtor() {
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>          Object object = <strong class="jxr_keyword">new</strong> Object();
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>          Inspector inspector = <strong class="jxr_keyword">new</strong> Inspector(object);
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>          assertEquals(object, inspector.getObject());
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>          <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>              <strong class="jxr_keyword">new</strong> Inspector(<strong class="jxr_keyword">null</strong>);
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>              fail(<span class="jxr_string">"should have thown IllegalArgumentException"</span>);
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>          } <strong class="jxr_keyword">catch</strong> (Exception expected) {
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>          }
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>      }
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>  
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testClassPropsJava() {
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>          Inspector insp = <strong class="jxr_keyword">new</strong> Inspector(<strong class="jxr_keyword">this</strong>);
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>          String[] classProps = insp.getClassProps();
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>          assertEquals(<span class="jxr_string">"package groovy.inspect"</span>, classProps[Inspector.CLASS_PACKAGE_IDX]);
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>          assertEquals(<span class="jxr_string">"public class InspectorTest"</span>, classProps[Inspector.CLASS_CLASS_IDX]);
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>          assertEquals(<span class="jxr_string">"implements Serializable "</span>, classProps[Inspector.CLASS_INTERFACE_IDX]);
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>          assertEquals(<span class="jxr_string">"extends MockObjectTestCase"</span>, classProps[Inspector.CLASS_SUPERCLASS_IDX]);
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>          assertEquals(<span class="jxr_string">"is Primitive: false, is Array: false, is Groovy: false"</span>, classProps[Inspector.CLASS_OTHER_IDX]);
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>      }
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>  
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testClassPropsGroovy() {
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>          Object testObject = <strong class="jxr_keyword">new</strong> GroovyShell().evaluate(<span class="jxr_string">"class Test {def meth1(a,b){}}\nreturn new Test()"</span>);
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>          Inspector insp = <strong class="jxr_keyword">new</strong> Inspector(testObject);
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>          String[] classProps = insp.getClassProps();
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>          assertEquals(<span class="jxr_string">"package n/a"</span>, classProps[Inspector.CLASS_PACKAGE_IDX]);
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>          assertEquals(<span class="jxr_string">"public class Test"</span>, classProps[Inspector.CLASS_CLASS_IDX]);
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>          assertEquals(<span class="jxr_string">"implements GroovyObject "</span>, classProps[Inspector.CLASS_INTERFACE_IDX]);
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>          assertEquals(<span class="jxr_string">"extends Object"</span>, classProps[Inspector.CLASS_SUPERCLASS_IDX]);
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>          assertEquals(<span class="jxr_string">"is Primitive: false, is Array: false, is Groovy: true"</span>, classProps[Inspector.CLASS_OTHER_IDX]);
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>      }
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>  
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testMethods() {
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>          Inspector insp = <strong class="jxr_keyword">new</strong> Inspector(<strong class="jxr_keyword">new</strong> Object());
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>          Object[] methods = insp.getMethods();
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>          assertEquals(10, methods.length);
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>          String[] names = {<span class="jxr_string">"hashCode"</span>, <span class="jxr_string">"getClass"</span>, <span class="jxr_string">"wait"</span>, <span class="jxr_string">"wait"</span>, <span class="jxr_string">"wait"</span>, <span class="jxr_string">"equals"</span>, <span class="jxr_string">"notify"</span>, <span class="jxr_string">"notifyAll"</span>, <span class="jxr_string">"toString"</span>, <span class="jxr_string">"java.lang.Object"</span>};
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>          assertNameEquals(names, methods);
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>          String[] details = {<span class="jxr_string">"JAVA"</span>, <span class="jxr_string">"public final"</span>, <span class="jxr_string">"Object"</span>, <span class="jxr_string">"void"</span>, <span class="jxr_string">"wait"</span>, <span class="jxr_string">"long, int"</span>, <span class="jxr_string">"InterruptedException"</span>};
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>          assertContains(methods, details);
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>          <em class="jxr_comment">// ctors are not considered static !</em>
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>          String[] ctorDetails = {<span class="jxr_string">"JAVA"</span>, <span class="jxr_string">"public"</span>, <span class="jxr_string">"Object"</span>, <span class="jxr_string">"Object"</span>, <span class="jxr_string">"java.lang.Object"</span>, <span class="jxr_string">""</span>, <span class="jxr_string">""</span>};
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>          assertContains(methods, ctorDetails);
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>      }
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>  
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testStaticMethods() {
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>          Inspector insp = <strong class="jxr_keyword">new</strong> Inspector(<strong class="jxr_keyword">this</strong>);
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>          Object[] methods = insp.getMethods();
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>          <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; methods.length; i++) {
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>              String[] strings = (String[]) methods[i];
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>              <strong class="jxr_keyword">if</strong> (strings[1].indexOf(<span class="jxr_string">"static"</span>) &gt; -1) <strong class="jxr_keyword">return</strong>; <em class="jxr_comment">// ok, found one static method</em>
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>          }
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>         fail(<span class="jxr_string">"there should have been at least one static method in this TestCase, e.g. 'fail'."</span>);
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>     }
+<a class="jxr_linenumber" name="L102" href="#L102">102</a> 
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testMetaMethods() {
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>         Inspector insp = <strong class="jxr_keyword">new</strong> Inspector(<strong class="jxr_keyword">new</strong> Object());
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>         Object[] metaMethods = insp.getMetaMethods();
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>         String[] names = {<span class="jxr_string">"sleep"</span>, <span class="jxr_string">"sleep"</span>, <span class="jxr_string">"println"</span>, <span class="jxr_string">"println"</span>, <span class="jxr_string">"println"</span>, <span class="jxr_string">"find"</span>, <span class="jxr_string">"find"</span>, <span class="jxr_string">"findResult"</span>, <span class="jxr_string">"findResult"</span>,
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>                 <span class="jxr_string">"print"</span>, <span class="jxr_string">"print"</span>, <span class="jxr_string">"each"</span>, <span class="jxr_string">"invokeMethod"</span>, <span class="jxr_string">"asType"</span>, <span class="jxr_string">"inspect"</span>, <span class="jxr_string">"is"</span>, <span class="jxr_string">"isCase"</span>, <span class="jxr_string">"identity"</span>, <span class="jxr_string">"getAt"</span>,
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>                 <span class="jxr_string">"putAt"</span>, <span class="jxr_string">"dump"</span>, <span class="jxr_string">"getMetaPropertyValues"</span>, <span class="jxr_string">"getProperties"</span>, <span class="jxr_string">"use"</span>, <span class="jxr_string">"use"</span>, <span class="jxr_string">"use"</span>, <span class="jxr_string">"printf"</span>, <span class="jxr_string">"printf"</span>,
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>                 <span class="jxr_string">"eachWithIndex"</span>, <span class="jxr_string">"every"</span>, <span class="jxr_string">"every"</span>, <span class="jxr_string">"any"</span>, <span class="jxr_string">"any"</span>, <span class="jxr_string">"grep"</span>, <span class="jxr_string">"grep"</span>, <span class="jxr_string">"collect"</span>, <span class="jxr_string">"collect"</span>, <span class="jxr_string">"collect"</span>, <span class="jxr_string">"findAll"</span>,<span class="jxr_string">"findAll"</span>,
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>                 <span class="jxr_string">"split"</span>, <span class="jxr_string">"findIndexOf"</span>, <span class="jxr_string">"findIndexOf"</span>, <span class="jxr_string">"findLastIndexOf"</span>, <span class="jxr_string">"findLastIndexOf"</span>, <span class="jxr_string">"findIndexValues"</span>, <span class="jxr_string">"findIndexValues"</span>,
+<a class="jxr_linenumber" name="L111" href="#L111">111</a>                 <span class="jxr_string">"iterator"</span>, <span class="jxr_string">"addShutdownHook"</span>, <span class="jxr_string">"sprintf"</span>, <span class="jxr_string">"sprintf"</span>, <span class="jxr_string">"with"</span>, <span class="jxr_string">"inject"</span>, <span class="jxr_string">"inject"</span>, <span class="jxr_string">"getMetaClass"</span>, <span class="jxr_string">"setMetaClass"</span>,
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>                 <span class="jxr_string">"metaClass"</span>, <span class="jxr_string">"respondsTo"</span>, <span class="jxr_string">"respondsTo"</span>, <span class="jxr_string">"hasProperty"</span>, <span class="jxr_string">"toString"</span>, <span class="jxr_string">"asBoolean"</span>
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>         };
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>         assertEquals(<span class="jxr_string">"Incorrect number of methods found examining: "</span> + getNamesFor(metaMethods), names.length, metaMethods.length);
+<a class="jxr_linenumber" name="L115" href="#L115">115</a>         assertNameEquals(names, metaMethods);
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>         String[] details = {<span class="jxr_string">"GROOVY"</span>, <span class="jxr_string">"public"</span>, <span class="jxr_string">"Object"</span>, <span class="jxr_string">"void"</span>, <span class="jxr_string">"println"</span>, <span class="jxr_string">"Object"</span>, <span class="jxr_string">"n/a"</span>};
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>         assertContains(metaMethods, details);
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>     }
+<a class="jxr_linenumber" name="L119" href="#L119">119</a> 
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>     <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">class</strong> ClassWithPrivate {
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>         <strong class="jxr_keyword">private</strong> String hidden = <span class="jxr_string">"you can't see me"</span>;
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>     }
+<a class="jxr_linenumber" name="L123" href="#L123">123</a> 
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>     <em class="jxr_comment">// TODO: if our code can never access inspect in this way, it would be better</em>
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>     <em class="jxr_comment">// to move this to a boundary class and then we wouldn't need this test</em>
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testInspectPrivateField() <strong class="jxr_keyword">throws</strong> NoSuchFieldException {
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>         ClassWithPrivate underInspection = <strong class="jxr_keyword">new</strong> ClassWithPrivate();
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>         Field field = underInspection.getClass().getDeclaredField(<span class="jxr_string">"hidden"</span>);
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>         Inspector inspector = getTestableInspector(underInspection);
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>         String[] result = inspector.fieldInfo(field);
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>         assertEquals(Inspector.NOT_APPLICABLE, result[Inspector.MEMBER_VALUE_IDX]);
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>     }
+<a class="jxr_linenumber" name="L133" href="#L133">133</a> 
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>     <em class="jxr_comment">// TODO: if our code can never access inspect in this way, it would be better</em>
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>     <em class="jxr_comment">// to move this to a boundary class and then we wouldn't need this test</em>
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testInspectUninspectableProperty() {
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>         Object dummyInstance = <strong class="jxr_keyword">new</strong> Object();
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>         Inspector inspector = getTestableInspector(dummyInstance);
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>         Class[] paramTypes = {Object.<strong class="jxr_keyword">class</strong>, MetaProperty.<strong class="jxr_keyword">class</strong>};
+<a class="jxr_linenumber" name="L140" href="#L140">140</a>         Object[] params = {<strong class="jxr_keyword">null</strong>, <strong class="jxr_keyword">null</strong>};
+<a class="jxr_linenumber" name="L141" href="#L141">141</a>         Mock mock = mock(PropertyValue.<strong class="jxr_keyword">class</strong>, paramTypes, params);
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>         mock.expects(once()).method(<span class="jxr_string">"getType"</span>);
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>         mock.expects(once()).method(<span class="jxr_string">"getName"</span>);
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>         mock.expects(once()).method(<span class="jxr_string">"getValue"</span>).will(throwException(<strong class="jxr_keyword">new</strong> RuntimeException()));
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>         PropertyValue propertyValue = (PropertyValue) mock.proxy();
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>         String[] result = inspector.fieldInfo(propertyValue);
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>         assertEquals(Inspector.NOT_APPLICABLE, result[Inspector.MEMBER_VALUE_IDX]);
+<a class="jxr_linenumber" name="L148" href="#L148">148</a>     }
+<a class="jxr_linenumber" name="L149" href="#L149">149</a> 
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>     <strong class="jxr_keyword">private</strong> Inspector getTestableInspector(Object objectUnderInspection) {
+<a class="jxr_linenumber" name="L151" href="#L151">151</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> Inspector(objectUnderInspection) {
+<a class="jxr_linenumber" name="L152" href="#L152">152</a>             <strong class="jxr_keyword">public</strong> String[] fieldInfo(Field field) {
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>                 <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">super</strong>.fieldInfo(field);
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>             }
+<a class="jxr_linenumber" name="L155" href="#L155">155</a> 
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>             <strong class="jxr_keyword">public</strong> String[] fieldInfo(PropertyValue pv) {
+<a class="jxr_linenumber" name="L157" href="#L157">157</a>                 <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">super</strong>.fieldInfo(pv);
+<a class="jxr_linenumber" name="L158" href="#L158">158</a>             }
+<a class="jxr_linenumber" name="L159" href="#L159">159</a>         };
+<a class="jxr_linenumber" name="L160" href="#L160">160</a>     }
+<a class="jxr_linenumber" name="L161" href="#L161">161</a> 
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testSortWithDifferentOrigin() {
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>         String[] details2 = {<span class="jxr_string">"JAVA"</span>, <span class="jxr_string">"public"</span>, <span class="jxr_string">"Object"</span>, <span class="jxr_string">"void"</span>, <span class="jxr_string">"println"</span>, <span class="jxr_string">"Object"</span>, <span class="jxr_string">"n/a"</span>};
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>         String[] details1 = {<span class="jxr_string">"GROOVY"</span>, <span class="jxr_string">"public"</span>, <span class="jxr_string">"Object"</span>, <span class="jxr_string">"void"</span>, <span class="jxr_string">"println"</span>, <span class="jxr_string">"Object"</span>, <span class="jxr_string">"n/a"</span>};
+<a class="jxr_linenumber" name="L165" href="#L165">165</a>         String[] first = sortWithMemberComparator(details1, details2);
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>         assertEquals(<span class="jxr_string">"GROOVY"</span>, first[0]);
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>     }
+<a class="jxr_linenumber" name="L168" href="#L168">168</a> 
+<a class="jxr_linenumber" name="L169" href="#L169">169</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testSortWithDifferentModifier() {
+<a class="jxr_linenumber" name="L170" href="#L170">170</a>         String[] details2 = {<strong class="jxr_keyword">null</strong>, <span class="jxr_string">"public"</span>, <span class="jxr_string">"Object"</span>, <span class="jxr_string">"void"</span>, <span class="jxr_string">"println"</span>, <span class="jxr_string">"Object"</span>, <span class="jxr_string">"n/a"</span>};
+<a class="jxr_linenumber" name="L171" href="#L171">171</a>         String[] details1 = {<strong class="jxr_keyword">null</strong>, <span class="jxr_string">"private"</span>, <span class="jxr_string">"Object"</span>, <span class="jxr_string">"void"</span>, <span class="jxr_string">"println"</span>, <span class="jxr_string">"Object"</span>, <span class="jxr_string">"n/a"</span>};
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>         String[] first = sortWithMemberComparator(details1, details2);
+<a class="jxr_linenumber" name="L173" href="#L173">173</a>         assertEquals(<span class="jxr_string">"private"</span>, first[1]);
+<a class="jxr_linenumber" name="L174" href="#L174">174</a>     }
+<a class="jxr_linenumber" name="L175" href="#L175">175</a> 
+<a class="jxr_linenumber" name="L176" href="#L176">176</a>     <strong class="jxr_keyword">private</strong> String[] sortWithMemberComparator(String[] details1, String[] details2) {
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>         List details = <strong class="jxr_keyword">new</strong> ArrayList();
+<a class="jxr_linenumber" name="L178" href="#L178">178</a>         details.add(details1);
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>         details.add(details2);
+<a class="jxr_linenumber" name="L180" href="#L180">180</a>         Inspector.sort(details);
+<a class="jxr_linenumber" name="L181" href="#L181">181</a>         <strong class="jxr_keyword">return</strong> (String[]) details.get(0);
+<a class="jxr_linenumber" name="L182" href="#L182">182</a>     }
+<a class="jxr_linenumber" name="L183" href="#L183">183</a> 
+<a class="jxr_linenumber" name="L184" href="#L184">184</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testStaticMetaMethods() {
+<a class="jxr_linenumber" name="L185" href="#L185">185</a>         Matcher matcher = Pattern.compile(<span class="jxr_string">""</span>).matcher(<span class="jxr_string">""</span>);
+<a class="jxr_linenumber" name="L186" href="#L186">186</a>         Inspector insp = <strong class="jxr_keyword">new</strong> Inspector(matcher);
+<a class="jxr_linenumber" name="L187" href="#L187">187</a>         Object[] metaMethods = insp.getMetaMethods();
+<a class="jxr_linenumber" name="L188" href="#L188">188</a>         assertUnique(Inspector.sort(Arrays.asList(metaMethods)));
+<a class="jxr_linenumber" name="L189" href="#L189">189</a>         String[] details = {<span class="jxr_string">"GROOVY"</span>, <span class="jxr_string">"public static"</span>, <span class="jxr_string">"Matcher"</span>, <span class="jxr_string">"Matcher"</span>, <span class="jxr_string">"getLastMatcher"</span>, <span class="jxr_string">""</span>, <span class="jxr_string">"n/a"</span>};
+<a class="jxr_linenumber" name="L190" href="#L190">190</a>         assertContains(metaMethods, details);
+<a class="jxr_linenumber" name="L191" href="#L191">191</a>     }
+<a class="jxr_linenumber" name="L192" href="#L192">192</a> 
+<a class="jxr_linenumber" name="L193" href="#L193">193</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testFields() {
+<a class="jxr_linenumber" name="L194" href="#L194">194</a>         Inspector insp = <strong class="jxr_keyword">new</strong> Inspector(<strong class="jxr_keyword">this</strong>);
+<a class="jxr_linenumber" name="L195" href="#L195">195</a>         Object[] fields = insp.getPublicFields();
+<a class="jxr_linenumber" name="L196" href="#L196">196</a>         assertEquals(5, fields.length); <em class="jxr_comment">// 3 from JMock</em>
+<a class="jxr_linenumber" name="L197" href="#L197">197</a>         String[] names = {<span class="jxr_string">"someField"</span>, <span class="jxr_string">"SOME_CONST"</span>, <span class="jxr_string">"ANYTHING"</span>, <span class="jxr_string">"NULL"</span>, <span class="jxr_string">"NOT_NULL"</span>};
+<a class="jxr_linenumber" name="L198" href="#L198">198</a>         assertNameEquals(names, fields);
+<a class="jxr_linenumber" name="L199" href="#L199">199</a>         String[] details = {<span class="jxr_string">"JAVA"</span>, <span class="jxr_string">"public"</span>, <span class="jxr_string">"InspectorTest"</span>, <span class="jxr_string">"String"</span>, <span class="jxr_string">"someField"</span>, <span class="jxr_string">"'only for testing'"</span>};
+<a class="jxr_linenumber" name="L200" href="#L200">200</a>         assertContains(fields, details);
+<a class="jxr_linenumber" name="L201" href="#L201">201</a>     }
+<a class="jxr_linenumber" name="L202" href="#L202">202</a> 
+<a class="jxr_linenumber" name="L203" href="#L203">203</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testProperties() {
+<a class="jxr_linenumber" name="L204" href="#L204">204</a>         Inspector insp = <strong class="jxr_keyword">new</strong> Inspector(<strong class="jxr_keyword">this</strong>);
+<a class="jxr_linenumber" name="L205" href="#L205">205</a>         Object[] properties = insp.getPropertyInfo();
+<a class="jxr_linenumber" name="L206" href="#L206">206</a>         assertEquals(2, properties.length);
+<a class="jxr_linenumber" name="L207" href="#L207">207</a>         String[] names = {<span class="jxr_string">"class"</span>, <span class="jxr_string">"name"</span>};
+<a class="jxr_linenumber" name="L208" href="#L208">208</a>         assertNameEquals(names, properties);
+<a class="jxr_linenumber" name="L209" href="#L209">209</a>         String[] details = {<span class="jxr_string">"GROOVY"</span>, <span class="jxr_string">"public"</span>, <span class="jxr_string">"n/a"</span>, <span class="jxr_string">"Class"</span>, <span class="jxr_string">"class"</span>, <span class="jxr_string">"class groovy.inspect.InspectorTest"</span>};
+<a class="jxr_linenumber" name="L210" href="#L210">210</a>         assertContains(properties, details);
+<a class="jxr_linenumber" name="L211" href="#L211">211</a>     }
+<a class="jxr_linenumber" name="L212" href="#L212">212</a> 
+<a class="jxr_linenumber" name="L213" href="#L213">213</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testPrint() {
+<a class="jxr_linenumber" name="L214" href="#L214">214</a>         ByteArrayOutputStream bytes = <strong class="jxr_keyword">new</strong> ByteArrayOutputStream();
+<a class="jxr_linenumber" name="L215" href="#L215">215</a>         PrintStream printStream = <strong class="jxr_keyword">new</strong> PrintStream(bytes);
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>         String ls = System.getProperty(<span class="jxr_string">"line.separator"</span>);
+<a class="jxr_linenumber" name="L217" href="#L217">217</a>         String[] first = {<span class="jxr_string">"a"</span>, <span class="jxr_string">"b"</span>};
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>         String[] second = {<span class="jxr_string">"x"</span>, <span class="jxr_string">"y"</span>};
+<a class="jxr_linenumber" name="L219" href="#L219">219</a>         Object[] memberInfo = {first, second};
+<a class="jxr_linenumber" name="L220" href="#L220">220</a>         Inspector.print(printStream, memberInfo);
+<a class="jxr_linenumber" name="L221" href="#L221">221</a>         assertEquals(<span class="jxr_string">"0:\ta b "</span> + ls + <span class="jxr_string">"1:\tx y "</span> + ls, bytes.toString());
+<a class="jxr_linenumber" name="L222" href="#L222">222</a>         <em class="jxr_comment">// just for coverage, print to System.out (yuck)</em>
+<a class="jxr_linenumber" name="L223" href="#L223">223</a>         Inspector.print(memberInfo);
+<a class="jxr_linenumber" name="L224" href="#L224">224</a>     }
+<a class="jxr_linenumber" name="L225" href="#L225">225</a> 
+<a class="jxr_linenumber" name="L226" href="#L226">226</a>     <strong class="jxr_keyword">private</strong> List getNamesFor(Object[] metaMethods) {
+<a class="jxr_linenumber" name="L227" href="#L227">227</a>         List result = <strong class="jxr_keyword">new</strong> ArrayList();
+<a class="jxr_linenumber" name="L228" href="#L228">228</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; metaMethods.length; i++) {
+<a class="jxr_linenumber" name="L229" href="#L229">229</a>             String[] strings = (String[]) metaMethods[i];
+<a class="jxr_linenumber" name="L230" href="#L230">230</a>             result.add(strings[Inspector.MEMBER_NAME_IDX]);
+<a class="jxr_linenumber" name="L231" href="#L231">231</a>         }
+<a class="jxr_linenumber" name="L232" href="#L232">232</a>         <strong class="jxr_keyword">return</strong> result;
+<a class="jxr_linenumber" name="L233" href="#L233">233</a>     }
+<a class="jxr_linenumber" name="L234" href="#L234">234</a> 
+<a class="jxr_linenumber" name="L235" href="#L235">235</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> assertNameEquals(String[] names, Object[] metaMethods) {
+<a class="jxr_linenumber" name="L236" href="#L236">236</a>         Set metaSet = <strong class="jxr_keyword">new</strong> HashSet();
+<a class="jxr_linenumber" name="L237" href="#L237">237</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; metaMethods.length; i++) {
+<a class="jxr_linenumber" name="L238" href="#L238">238</a>             String[] strings = (String[]) metaMethods[i];
+<a class="jxr_linenumber" name="L239" href="#L239">239</a>             metaSet.add(strings[Inspector.MEMBER_NAME_IDX]);
+<a class="jxr_linenumber" name="L240" href="#L240">240</a>         }
+<a class="jxr_linenumber" name="L241" href="#L241">241</a>         Set nameSet = <strong class="jxr_keyword">new</strong> HashSet(Arrays.asList(names));
+<a class="jxr_linenumber" name="L242" href="#L242">242</a>         assertEquals(nameSet, metaSet);
+<a class="jxr_linenumber" name="L243" href="#L243">243</a>     }
+<a class="jxr_linenumber" name="L244" href="#L244">244</a> 
+<a class="jxr_linenumber" name="L245" href="#L245">245</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> assertContains(Object[] candidates, String[] sample) {
+<a class="jxr_linenumber" name="L246" href="#L246">246</a>         String sampleBuffer = concat(sample);
+<a class="jxr_linenumber" name="L247" href="#L247">247</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; candidates.length; i++) {
+<a class="jxr_linenumber" name="L248" href="#L248">248</a>             String[] entry = (String[]) candidates[i];
+<a class="jxr_linenumber" name="L249" href="#L249">249</a>             <strong class="jxr_keyword">if</strong> (sampleBuffer.equals(concat(entry))) <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L250" href="#L250">250</a>         }
+<a class="jxr_linenumber" name="L251" href="#L251">251</a>         fail(<span class="jxr_string">"should have found sample: "</span> + sampleBuffer);
+<a class="jxr_linenumber" name="L252" href="#L252">252</a>     }
+<a class="jxr_linenumber" name="L253" href="#L253">253</a> 
+<a class="jxr_linenumber" name="L254" href="#L254">254</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> assertUnique(Collection sortedMembers) {
+<a class="jxr_linenumber" name="L255" href="#L255">255</a>         <strong class="jxr_keyword">if</strong> (sortedMembers.size() &lt; 2) <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L256" href="#L256">256</a>         Comparator comp = <strong class="jxr_keyword">new</strong> Inspector.MemberComparator();
+<a class="jxr_linenumber" name="L257" href="#L257">257</a>         Iterator iter = sortedMembers.iterator();
+<a class="jxr_linenumber" name="L258" href="#L258">258</a>         Object last = iter.next();
+<a class="jxr_linenumber" name="L259" href="#L259">259</a>         <strong class="jxr_keyword">while</strong> (iter.hasNext()) {
+<a class="jxr_linenumber" name="L260" href="#L260">260</a>             Object element = iter.next();
+<a class="jxr_linenumber" name="L261" href="#L261">261</a>             <strong class="jxr_keyword">if</strong> (0 == comp.compare(last, element)) {
+<a class="jxr_linenumber" name="L262" href="#L262">262</a>                 fail(<span class="jxr_string">"found duplication for element "</span> + element);
+<a class="jxr_linenumber" name="L263" href="#L263">263</a>             }
+<a class="jxr_linenumber" name="L264" href="#L264">264</a>             last = element;
+<a class="jxr_linenumber" name="L265" href="#L265">265</a>         }
+<a class="jxr_linenumber" name="L266" href="#L266">266</a>     }
+<a class="jxr_linenumber" name="L267" href="#L267">267</a> 
+<a class="jxr_linenumber" name="L268" href="#L268">268</a>     <strong class="jxr_keyword">private</strong> String concat(String[] details) {
+<a class="jxr_linenumber" name="L269" href="#L269">269</a>         StringBuilder detailBuffer = <strong class="jxr_keyword">new</strong> StringBuilder();
+<a class="jxr_linenumber" name="L270" href="#L270">270</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; details.length; i++) {
+<a class="jxr_linenumber" name="L271" href="#L271">271</a>             detailBuffer.append(details[i]);
+<a class="jxr_linenumber" name="L272" href="#L272">272</a>             detailBuffer.append(<span class="jxr_string">" "</span>);
+<a class="jxr_linenumber" name="L273" href="#L273">273</a>         }
+<a class="jxr_linenumber" name="L274" href="#L274">274</a>         <strong class="jxr_keyword">return</strong> detailBuffer.toString();
+<a class="jxr_linenumber" name="L275" href="#L275">275</a>     }
+<a class="jxr_linenumber" name="L276" href="#L276">276</a> 
+<a class="jxr_linenumber" name="L277" href="#L277">277</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

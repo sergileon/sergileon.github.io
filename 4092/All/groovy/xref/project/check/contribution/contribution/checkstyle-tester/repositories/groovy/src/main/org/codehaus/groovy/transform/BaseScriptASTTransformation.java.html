@@ -1,0 +1,180 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>BaseScriptASTTransformation xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   <em class="jxr_comment"> *  Licensed to the Apache Software Foundation (ASF) under one</em>
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment"> *  or more contributor license agreements.  See the NOTICE file</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> *  distributed with this work for additional information</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> *  regarding copyright ownership.  The ASF licenses this file</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> *  to you under the Apache License, Version 2.0 (the</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> *  "License"); you may not use this file except in compliance</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> *  with the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *    <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *  Unless required by applicable law or agreed to in writing,</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> *  software distributed under the License is distributed on an</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> *  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> *  KIND, either express or implied.  See the License for the</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> *  specific language governing permissions and limitations</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> *  under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  <strong class="jxr_keyword">package</strong> org.codehaus.groovy.transform;
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> groovy.transform.BaseScript;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.ASTNode;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.AnnotatedNode;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.AnnotationNode;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.ClassHelper;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.ClassNode;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.ConstructorNode;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.ImportNode;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.MethodNode;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.PackageNode;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.Parameter;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.expr.ClassExpression;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.expr.DeclarationExpression;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.expr.EmptyExpression;
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.expr.Expression;
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.ast.expr.VariableExpression;
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.control.CompilePhase;
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <strong class="jxr_keyword">import</strong> org.codehaus.groovy.control.SourceUnit;
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <strong class="jxr_keyword">import</strong> java.util.List;
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>  <em class="jxr_javadoccomment"> * Handles transformation for the @BaseScript annotation.</em>
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>  <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>  <em class="jxr_javadoccomment"> * @author Paul King</em>
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>  <em class="jxr_javadoccomment"> * @author Cedric Champeau</em>
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>  <em class="jxr_javadoccomment"> * @author Vladimir Orany</em>
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>  <em class="jxr_javadoccomment"> * @author Jim White</em>
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>  @GroovyASTTransformation(phase = CompilePhase.SEMANTIC_ANALYSIS)
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> BaseScriptASTTransformation <strong class="jxr_keyword">extends</strong> AbstractASTTransformation {
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>  
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Class&lt;BaseScript&gt; MY_CLASS = BaseScript.<strong class="jxr_keyword">class</strong>;
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> ClassNode MY_TYPE = ClassHelper.make(MY_CLASS);
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String MY_TYPE_NAME = <span class="jxr_string">"@"</span> + MY_TYPE.getNameWithoutPackage();
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Parameter[] CONTEXT_CTOR_PARAMETERS = {<strong class="jxr_keyword">new</strong> Parameter(ClassHelper.BINDING_TYPE, <span class="jxr_string">"context"</span>)};
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>  
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> visit(ASTNode[] nodes, SourceUnit source) {
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>          init(nodes, source);
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>          AnnotatedNode parent = (AnnotatedNode) nodes[1];
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>          AnnotationNode node = (AnnotationNode) nodes[0];
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>          <strong class="jxr_keyword">if</strong> (!MY_TYPE.equals(node.getClassNode())) <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>  
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>          <strong class="jxr_keyword">if</strong> (parent instanceof DeclarationExpression) {
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>              changeBaseScriptTypeFromDeclaration((DeclarationExpression) parent, node);
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>          } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (parent instanceof ImportNode || parent instanceof PackageNode) {
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>              changeBaseScriptTypeFromPackageOrImport(source, parent, node);
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>          } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (parent instanceof ClassNode) {
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>              changeBaseScriptTypeFromClass((ClassNode) parent, node);
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>          }
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>      }
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>  
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> changeBaseScriptTypeFromPackageOrImport(<strong class="jxr_keyword">final</strong> SourceUnit source, <strong class="jxr_keyword">final</strong> AnnotatedNode parent, <strong class="jxr_keyword">final</strong> AnnotationNode node) {
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>          Expression value = node.getMember(<span class="jxr_string">"value"</span>);
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>          <strong class="jxr_keyword">if</strong> (!(value instanceof ClassExpression)) {
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>              addError(<span class="jxr_string">"Annotation "</span> + MY_TYPE_NAME + <span class="jxr_string">" member 'value' should be a class literal."</span>, value);
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>              <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>          }
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>          List&lt;ClassNode&gt; classes = source.getAST().getClasses();
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>          <strong class="jxr_keyword">for</strong> (ClassNode classNode : classes) {
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>              <strong class="jxr_keyword">if</strong> (classNode.isScriptBody()) {
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>                  changeBaseScriptType(parent, classNode, value.getType());
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>              }
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>          }
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>      }
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>  
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> changeBaseScriptTypeFromClass(<strong class="jxr_keyword">final</strong> ClassNode parent, <strong class="jxr_keyword">final</strong> AnnotationNode node) {
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>  <em class="jxr_comment">//        Expression value = node.getMember("value");</em>
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>  <em class="jxr_comment">//        if (!(value instanceof ClassExpression)) {</em>
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>  <em class="jxr_comment">//            addError("Annotation " + MY_TYPE_NAME + " member 'value' should be a class literal.", value);</em>
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>  <em class="jxr_comment">//            return;</em>
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>  <em class="jxr_comment">//        }</em>
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>          changeBaseScriptType(parent, parent, parent.getSuperClass());
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>      }
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>  
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> changeBaseScriptTypeFromDeclaration(<strong class="jxr_keyword">final</strong> DeclarationExpression de, <strong class="jxr_keyword">final</strong> AnnotationNode node) {
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>          <strong class="jxr_keyword">if</strong> (de.isMultipleAssignmentDeclaration()) {
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>              addError(<span class="jxr_string">"Annotation "</span> + MY_TYPE_NAME + <span class="jxr_string">" not supported with multiple assignment notation."</span>, de);
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>              <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>         }
+<a class="jxr_linenumber" name="L101" href="#L101">101</a> 
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>         <strong class="jxr_keyword">if</strong> (!(de.getRightExpression() instanceof EmptyExpression)) {
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>             addError(<span class="jxr_string">"Annotation "</span> + MY_TYPE_NAME + <span class="jxr_string">" not supported with variable assignment."</span>, de);
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>             <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>         }
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>         Expression value = node.getMember(<span class="jxr_string">"value"</span>);
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>         <strong class="jxr_keyword">if</strong> (value != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>             addError(<span class="jxr_string">"Annotation "</span> + MY_TYPE_NAME + <span class="jxr_string">" cannot have member 'value' if used on a declaration."</span>, value);
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>             <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>         }
+<a class="jxr_linenumber" name="L111" href="#L111">111</a> 
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>         ClassNode cNode = de.getDeclaringClass();
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>         ClassNode baseScriptType = de.getVariableExpression().getType().getPlainNodeReference();
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>         de.setRightExpression(<strong class="jxr_keyword">new</strong> VariableExpression(<span class="jxr_string">"this"</span>));
+<a class="jxr_linenumber" name="L115" href="#L115">115</a> 
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>         changeBaseScriptType(de, cNode, baseScriptType);
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>     }
+<a class="jxr_linenumber" name="L118" href="#L118">118</a> 
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> changeBaseScriptType(<strong class="jxr_keyword">final</strong> AnnotatedNode parent, <strong class="jxr_keyword">final</strong> ClassNode cNode, <strong class="jxr_keyword">final</strong> ClassNode baseScriptType) {
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>         <strong class="jxr_keyword">if</strong> (!cNode.isScriptBody()) {
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>             addError(<span class="jxr_string">"Annotation "</span> + MY_TYPE_NAME + <span class="jxr_string">" can only be used within a Script."</span>, parent);
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>             <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L123" href="#L123">123</a>         }
+<a class="jxr_linenumber" name="L124" href="#L124">124</a> 
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>         <strong class="jxr_keyword">if</strong> (!baseScriptType.isScript()) {
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>             addError(<span class="jxr_string">"Declared type "</span> + baseScriptType + <span class="jxr_string">" does not extend groovy.lang.Script class!"</span>, parent);
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>             <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>         }
+<a class="jxr_linenumber" name="L129" href="#L129">129</a> 
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>         cNode.setSuperClass(baseScriptType);
+<a class="jxr_linenumber" name="L131" href="#L131">131</a> 
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>         <em class="jxr_comment">// Method in base script that will contain the script body code.</em>
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>         MethodNode runScriptMethod = ClassHelper.findSAM(baseScriptType);
+<a class="jxr_linenumber" name="L134" href="#L134">134</a> 
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>         <em class="jxr_comment">// If they want to use a name other than than "run", then make the change.</em>
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>         <strong class="jxr_keyword">if</strong> (isCustomScriptBodyMethod(runScriptMethod)) {
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>             MethodNode defaultMethod = cNode.getDeclaredMethod(<span class="jxr_string">"run"</span>, Parameter.EMPTY_ARRAY);
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>             <em class="jxr_comment">// GROOVY-6706: Sometimes an NPE is thrown here.</em>
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>             <em class="jxr_comment">// The reason is that our transform is getting called more than once sometimes.  </em>
+<a class="jxr_linenumber" name="L140" href="#L140">140</a>             <strong class="jxr_keyword">if</strong> (defaultMethod != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L141" href="#L141">141</a>                 cNode.removeMethod(defaultMethod);
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>                 MethodNode methodNode = <strong class="jxr_keyword">new</strong> MethodNode(runScriptMethod.getName(), runScriptMethod.getModifiers() &amp; ~ACC_ABSTRACT
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>                         , runScriptMethod.getReturnType(), runScriptMethod.getParameters(), runScriptMethod.getExceptions()
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>                         , defaultMethod.getCode());
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>                 <em class="jxr_comment">// The AST node metadata has the flag that indicates that this method is a script body.</em>
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>                 <em class="jxr_comment">// It may also be carrying data for other AST transforms.</em>
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>                 methodNode.copyNodeMetaData(defaultMethod);
+<a class="jxr_linenumber" name="L148" href="#L148">148</a>                 cNode.addMethod(methodNode);
+<a class="jxr_linenumber" name="L149" href="#L149">149</a>             }
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>         }
+<a class="jxr_linenumber" name="L151" href="#L151">151</a> 
+<a class="jxr_linenumber" name="L152" href="#L152">152</a>         <em class="jxr_comment">// If the new script base class does not have a contextual constructor (g.l.Binding), then we won't either.</em>
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>         <em class="jxr_comment">// We have to do things this way (and rely on just default constructors) because the logic that generates</em>
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>         <em class="jxr_comment">// the constructors for our script class have already run.</em>
+<a class="jxr_linenumber" name="L155" href="#L155">155</a>         <strong class="jxr_keyword">if</strong> (cNode.getSuperClass().getDeclaredConstructor(CONTEXT_CTOR_PARAMETERS) == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>             ConstructorNode orphanedConstructor = cNode.getDeclaredConstructor(CONTEXT_CTOR_PARAMETERS);
+<a class="jxr_linenumber" name="L157" href="#L157">157</a>             cNode.removeConstructor(orphanedConstructor);
+<a class="jxr_linenumber" name="L158" href="#L158">158</a>         }
+<a class="jxr_linenumber" name="L159" href="#L159">159</a>     }
+<a class="jxr_linenumber" name="L160" href="#L160">160</a> 
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> isCustomScriptBodyMethod(MethodNode node) {
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>         <strong class="jxr_keyword">return</strong> node != <strong class="jxr_keyword">null</strong>
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>             &amp;&amp; !(node.getDeclaringClass().equals(ClassHelper.SCRIPT_TYPE)
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>                 &amp;&amp; <span class="jxr_string">"run"</span>.equals(node.getName())
+<a class="jxr_linenumber" name="L165" href="#L165">165</a>                 &amp;&amp; node.getParameters().length == 0);
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>     }
+<a class="jxr_linenumber" name="L167" href="#L167">167</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

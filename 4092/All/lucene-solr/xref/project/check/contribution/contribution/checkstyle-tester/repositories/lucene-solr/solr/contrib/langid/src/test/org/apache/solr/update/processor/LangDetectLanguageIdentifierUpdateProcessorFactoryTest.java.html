@@ -1,0 +1,75 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>LangDetectLanguageIdentifierUpdateProcessorFactoryTest xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.solr.update.processor;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.SolrInputDocument;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.params.ModifiableSolrParams;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> org.junit.Test;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> LangDetectLanguageIdentifierUpdateProcessorFactoryTest <strong class="jxr_keyword">extends</strong> LanguageIdentifierUpdateProcessorFactoryTestCase {
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>    @Override
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>    <strong class="jxr_keyword">protected</strong> LanguageIdentifierUpdateProcessor createLangIdProcessor(ModifiableSolrParams parameters) <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>      <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> LangDetectLanguageIdentifierUpdateProcessor(_parser.buildRequestFrom(h.getCore(), parameters, <strong class="jxr_keyword">null</strong>), resp, <strong class="jxr_keyword">null</strong>);
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>    }
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>    
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>    <em class="jxr_comment">// this one actually works better it seems with short docs</em>
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>    @Override
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>    <strong class="jxr_keyword">protected</strong> SolrInputDocument tooShortDoc() {
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>      SolrInputDocument doc = <strong class="jxr_keyword">new</strong> SolrInputDocument();
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>      doc.addField(<span class="jxr_string">"text"</span>, <span class="jxr_string">""</span>);
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>      <strong class="jxr_keyword">return</strong> doc;
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>    }
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>    
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>    <em class="jxr_comment">/* we don't return 'un' for the super-short one (this detector things hungarian?).</em>
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <em class="jxr_comment">   * replace this with japanese</em>
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <em class="jxr_comment">   */</em>
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>    @Test @Override
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testLangIdGlobal() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>      ModifiableSolrParams parameters = <strong class="jxr_keyword">new</strong> ModifiableSolrParams();
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>      parameters.add(<span class="jxr_string">"langid.fl"</span>, <span class="jxr_string">"name,subject"</span>);
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>      parameters.add(<span class="jxr_string">"langid.langField"</span>, <span class="jxr_string">"language_s"</span>);
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>      parameters.add(<span class="jxr_string">"langid.fallback"</span>, <span class="jxr_string">"un"</span>);
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>      liProcessor = createLangIdProcessor(parameters);
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>      
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>      assertLang(<span class="jxr_string">"no"</span>, <span class="jxr_string">"id"</span>, <span class="jxr_string">"1no"</span>, <span class="jxr_string">"name"</span>, <span class="jxr_string">"Lucene"</span>, <span class="jxr_string">"subject"</span>, <span class="jxr_string">"Lucene er et fri/åpen kildekode programvarebibliotek for informasjonsgjenfinning, opprinnelig utviklet i programmeringsspråket Java av Doug Cutting. Lucene støttes av Apache Software Foundation og utgis under Apache-lisensen."</span>);
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>      assertLang(<span class="jxr_string">"en"</span>, <span class="jxr_string">"id"</span>, <span class="jxr_string">"2en"</span>, <span class="jxr_string">"name"</span>, <span class="jxr_string">"Lucene"</span>, <span class="jxr_string">"subject"</span>, <span class="jxr_string">"Apache Lucene is a free/open source information retrieval software library, originally created in Java by Doug Cutting. It is supported by the Apache Software Foundation and is released under the Apache Software License."</span>);
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>      assertLang(<span class="jxr_string">"sv"</span>, <span class="jxr_string">"id"</span>, <span class="jxr_string">"3sv"</span>, <span class="jxr_string">"name"</span>, <span class="jxr_string">"Maven"</span>, <span class="jxr_string">"subject"</span>, <span class="jxr_string">"Apache Maven är ett verktyg utvecklat av Apache Software Foundation och används inom systemutveckling av datorprogram i programspråket Java. Maven används för att automatiskt paketera (bygga) programfilerna till en distribuerbar enhet. Maven används inom samma område som Apache Ant men dess byggfiler är deklarativa till skillnad ifrån Ants skriptbaserade."</span>);
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>      assertLang(<span class="jxr_string">"es"</span>, <span class="jxr_string">"id"</span>, <span class="jxr_string">"4es"</span>, <span class="jxr_string">"name"</span>, <span class="jxr_string">"Lucene"</span>, <span class="jxr_string">"subject"</span>, <span class="jxr_string">"Lucene es un API de código abierto para recuperación de información, originalmente implementada en Java por Doug Cutting. Está apoyado por el Apache Software Foundation y se distribuye bajo la Apache Software License. Lucene tiene versiones para otros lenguajes incluyendo Delphi, Perl, C#, C++, Python, Ruby y PHP."</span>);
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>      assertLang(<span class="jxr_string">"ja"</span>, <span class="jxr_string">"id"</span>, <span class="jxr_string">"5ja"</span>, <span class="jxr_string">"name"</span>, <span class="jxr_string">"Japanese"</span>, <span class="jxr_string">"subject"</span>, <span class="jxr_string">"日本語（にほんご、にっぽんご）は主として、日本で使用されてきた言語である。日本国は法令上、公用語を明記していないが、事実上の公用語となっており、学校教育の「国語」で教えられる。"</span>);
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>      assertLang(<span class="jxr_string">"th"</span>, <span class="jxr_string">"id"</span>, <span class="jxr_string">"6th"</span>, <span class="jxr_string">"name"</span>, <span class="jxr_string">"บทความคัดสรรเดือนนี้"</span>, <span class="jxr_string">"subject"</span>, <span class="jxr_string">"อันเนอลีส มารี อันเนอ ฟรังค์ หรือมักรู้จักในภาษาไทยว่า แอนน์ แฟรงค์ เป็นเด็กหญิงชาวยิว เกิดที่เมืองแฟรงก์เฟิร์ต ประเทศเยอรมนี เธอมีชื่อเสียงโด่งดังในฐานะผู้เขียนบันทึกประจำวันซึ่งต่อมาได้รับการตีพิมพ์เป็นหนังสือ บรรยายเหตุการณ์ขณะหลบซ่อนตัวจากการล่าชาวยิวในประเทศเนเธอร์แลนด์ ระหว่างที่ถูกเยอรมนีเข้าครอบครองในช่วงสงครามโลกครั้งที่สอง"</span>);
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>      assertLang(<span class="jxr_string">"ru"</span>, <span class="jxr_string">"id"</span>, <span class="jxr_string">"7ru"</span>, <span class="jxr_string">"name"</span>, <span class="jxr_string">"Lucene"</span>, <span class="jxr_string">"subject"</span>, <span class="jxr_string">"The Apache Lucene — это свободная библиотека для высокоскоростного полнотекстового поиска, написанная на Java. Может быть использована для поиска в интернете и других областях компьютерной лингвистики (аналитическая философия)."</span>);
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>      assertLang(<span class="jxr_string">"de"</span>, <span class="jxr_string">"id"</span>, <span class="jxr_string">"8de"</span>, <span class="jxr_string">"name"</span>, <span class="jxr_string">"Lucene"</span>, <span class="jxr_string">"subject"</span>, <span class="jxr_string">"Lucene ist ein Freie-Software-Projekt der Apache Software Foundation, das eine Suchsoftware erstellt. Durch die hohe Leistungsfähigkeit und Skalierbarkeit können die Lucene-Werkzeuge für beliebige Projektgrößen und Anforderungen eingesetzt werden. So setzt beispielsweise Wikipedia Lucene für die Volltextsuche ein. Zudem verwenden die beiden Desktop-Suchprogramme Beagle und Strigi eine C#- bzw. C++- Portierung von Lucene als Indexer."</span>);
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>      assertLang(<span class="jxr_string">"fr"</span>, <span class="jxr_string">"id"</span>, <span class="jxr_string">"9fr"</span>, <span class="jxr_string">"name"</span>, <span class="jxr_string">"Lucene"</span>, <span class="jxr_string">"subject"</span>, <span class="jxr_string">"Lucene est un moteur de recherche libre écrit en Java qui permet d'indexer et de rechercher du texte. C'est un projet open source de la fondation Apache mis à disposition sous licence Apache. Il est également disponible pour les langages Ruby, Perl, C++, PHP."</span>);
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>      assertLang(<span class="jxr_string">"nl"</span>, <span class="jxr_string">"id"</span>, <span class="jxr_string">"10nl"</span>, <span class="jxr_string">"name"</span>, <span class="jxr_string">"Lucene"</span>, <span class="jxr_string">"subject"</span>, <span class="jxr_string">"Lucene is een gratis open source, tekst gebaseerde information retrieval API van origine geschreven in Java door Doug Cutting. Het wordt ondersteund door de Apache Software Foundation en is vrijgegeven onder de Apache Software Licentie. Lucene is ook beschikbaar in andere programeertalen zoals Perl, C#, C++, Python, Ruby en PHP."</span>);
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>      assertLang(<span class="jxr_string">"it"</span>, <span class="jxr_string">"id"</span>, <span class="jxr_string">"11it"</span>, <span class="jxr_string">"name"</span>, <span class="jxr_string">"Lucene"</span>, <span class="jxr_string">"subject"</span>, <span class="jxr_string">"Lucene è una API gratuita ed open source per il reperimento di informazioni inizialmente implementata in Java da Doug Cutting. È supportata dall'Apache Software Foundation ed è resa disponibile con l'Apache License. Lucene è stata successivamente reimplementata in Perl, C#, C++, Python, Ruby e PHP."</span>);
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>      assertLang(<span class="jxr_string">"pt"</span>, <span class="jxr_string">"id"</span>, <span class="jxr_string">"12pt"</span>, <span class="jxr_string">"name"</span>, <span class="jxr_string">"Lucene"</span>, <span class="jxr_string">"subject"</span>, <span class="jxr_string">"Apache Lucene, ou simplesmente Lucene, é um software de busca e uma API de indexação de documentos, escrito na linguagem de programação Java. É um software de código aberto da Apache Software Foundation licenciado através da licença Apache."</span>);
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>    }
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>  }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

@@ -1,0 +1,303 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>TestTeeSinkTokenFilter xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.lucene.analysis.sinks;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Copyright 2004 The Apache Software Foundation</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * Licensed under the Apache License, Version 2.0 (the "License");</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * you may not use this file except in compliance with the License.</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  <strong class="jxr_keyword">import</strong> java.io.IOException;
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> java.io.StringReader;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> java.util.Locale;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.*;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.core.LowerCaseFilter;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.standard.StandardFilter;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.standard.StandardTokenizer;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.document.Document;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.document.Field;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.document.FieldType;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.document.TextField;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.DirectoryReader;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.PostingsEnum;
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.IndexReader;
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.IndexWriter;
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.Terms;
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.TermsEnum;
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.DocIdSetIterator;
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.store.Directory;
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.AttributeSource;
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.English;
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>  
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>  
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>  <em class="jxr_javadoccomment"> * tests for the TestTeeSinkTokenFilter</em>
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> TestTeeSinkTokenFilter <strong class="jxr_keyword">extends</strong> BaseTokenStreamTestCase {
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>    <strong class="jxr_keyword">protected</strong> StringBuilder buffer1;
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>    <strong class="jxr_keyword">protected</strong> StringBuilder buffer2;
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>    <strong class="jxr_keyword">protected</strong> String[] tokens1;
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>    <strong class="jxr_keyword">protected</strong> String[] tokens2;
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>  
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>    @Override
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> setUp() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>      <strong class="jxr_keyword">super</strong>.setUp();
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>      tokens1 = <strong class="jxr_keyword">new</strong> String[]{<span class="jxr_string">"The"</span>, <span class="jxr_string">"quick"</span>, <span class="jxr_string">"Burgundy"</span>, <span class="jxr_string">"Fox"</span>, <span class="jxr_string">"jumped"</span>, <span class="jxr_string">"over"</span>, <span class="jxr_string">"the"</span>, <span class="jxr_string">"lazy"</span>, <span class="jxr_string">"Red"</span>, <span class="jxr_string">"Dogs"</span>};
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>      tokens2 = <strong class="jxr_keyword">new</strong> String[]{<span class="jxr_string">"The"</span>, <span class="jxr_string">"Lazy"</span>, <span class="jxr_string">"Dogs"</span>, <span class="jxr_string">"should"</span>, <span class="jxr_string">"stay"</span>, <span class="jxr_string">"on"</span>, <span class="jxr_string">"the"</span>, <span class="jxr_string">"porch"</span>};
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>      buffer1 = <strong class="jxr_keyword">new</strong> StringBuilder();
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>  
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>      <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; tokens1.length; i++) {
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>        buffer1.append(tokens1[i]).append(' ');
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>      }
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>      buffer2 = <strong class="jxr_keyword">new</strong> StringBuilder();
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>      <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; tokens2.length; i++) {
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>        buffer2.append(tokens2[i]).append(' ');
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>      }
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>    }
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>  
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>    <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> TeeSinkTokenFilter.SinkFilter theFilter = <strong class="jxr_keyword">new</strong> TeeSinkTokenFilter.SinkFilter() {
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>      @Override
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> accept(AttributeSource a) {
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>        CharTermAttribute termAtt = a.getAttribute(CharTermAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>        <strong class="jxr_keyword">return</strong> termAtt.toString().equalsIgnoreCase(<span class="jxr_string">"The"</span>);
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>      }
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>    };
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>  
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>    <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> TeeSinkTokenFilter.SinkFilter dogFilter = <strong class="jxr_keyword">new</strong> TeeSinkTokenFilter.SinkFilter() {
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>      @Override
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> accept(AttributeSource a) {
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>        CharTermAttribute termAtt = a.getAttribute(CharTermAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>        <strong class="jxr_keyword">return</strong> termAtt.toString().equalsIgnoreCase(<span class="jxr_string">"Dogs"</span>);
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>      }
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>    };
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>  
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>    <em class="jxr_comment">// LUCENE-1448</em>
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>    <em class="jxr_comment">// TODO: instead of testing it this way, we can test </em>
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>    <em class="jxr_comment">// with BaseTokenStreamTestCase now...</em>
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testEndOffsetPositionWithTeeSinkTokenFilter() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>      Directory dir = newDirectory();
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>      Analyzer analyzer = <strong class="jxr_keyword">new</strong> MockAnalyzer(random(), MockTokenizer.WHITESPACE, false);
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>      IndexWriter w = <strong class="jxr_keyword">new</strong> IndexWriter(dir, newIndexWriterConfig(analyzer));
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>      Document doc = <strong class="jxr_keyword">new</strong> Document();
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>      TokenStream tokenStream = analyzer.tokenStream(<span class="jxr_string">"field"</span>, <span class="jxr_string">"abcd   "</span>);
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>      TeeSinkTokenFilter tee = <strong class="jxr_keyword">new</strong> TeeSinkTokenFilter(tokenStream);
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>      TokenStream sink = tee.newSinkTokenStream();
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>      FieldType ft = <strong class="jxr_keyword">new</strong> FieldType(TextField.TYPE_NOT_STORED);
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>      ft.setStoreTermVectors(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>      ft.setStoreTermVectorOffsets(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>     ft.setStoreTermVectorPositions(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>     Field f1 = <strong class="jxr_keyword">new</strong> Field(<span class="jxr_string">"field"</span>, tee, ft);
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>     Field f2 = <strong class="jxr_keyword">new</strong> Field(<span class="jxr_string">"field"</span>, sink, ft);
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>     doc.add(f1);
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>     doc.add(f2);
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>     w.addDocument(doc);
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>     w.close();
+<a class="jxr_linenumber" name="L107" href="#L107">107</a> 
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>     IndexReader r = DirectoryReader.open(dir);
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>     Terms vector = r.getTermVectors(0).terms(<span class="jxr_string">"field"</span>);
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>     assertEquals(1, vector.size());
+<a class="jxr_linenumber" name="L111" href="#L111">111</a>     TermsEnum termsEnum = vector.iterator();
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>     termsEnum.next();
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>     assertEquals(2, termsEnum.totalTermFreq());
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>     PostingsEnum positions = termsEnum.postings(<strong class="jxr_keyword">null</strong>, PostingsEnum.ALL);
+<a class="jxr_linenumber" name="L115" href="#L115">115</a>     assertTrue(positions.nextDoc() != DocIdSetIterator.NO_MORE_DOCS);
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>     assertEquals(2, positions.freq());
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>     positions.nextPosition();
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>     assertEquals(0, positions.startOffset());
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>     assertEquals(4, positions.endOffset());
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>     positions.nextPosition();
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>     assertEquals(8, positions.startOffset());
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>     assertEquals(12, positions.endOffset());
+<a class="jxr_linenumber" name="L123" href="#L123">123</a>     assertEquals(DocIdSetIterator.NO_MORE_DOCS, positions.nextDoc());
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>     r.close();
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>     dir.close();
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>     analyzer.close();
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>   }
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>   
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testGeneral() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>     <strong class="jxr_keyword">final</strong> TeeSinkTokenFilter source = <strong class="jxr_keyword">new</strong> TeeSinkTokenFilter(whitespaceMockTokenizer(buffer1.toString()));
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>     <strong class="jxr_keyword">final</strong> TokenStream sink1 = source.newSinkTokenStream();
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>     <strong class="jxr_keyword">final</strong> TokenStream sink2 = source.newSinkTokenStream(theFilter);
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>     
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>     source.addAttribute(CheckClearAttributesAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>     sink1.addAttribute(CheckClearAttributesAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>     sink2.addAttribute(CheckClearAttributesAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>     
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>     assertTokenStreamContents(source, tokens1);
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>     assertTokenStreamContents(sink1, tokens1);
+<a class="jxr_linenumber" name="L140" href="#L140">140</a>     assertTokenStreamContents(sink2, <strong class="jxr_keyword">new</strong> String[]{<span class="jxr_string">"The"</span>, <span class="jxr_string">"the"</span>});
+<a class="jxr_linenumber" name="L141" href="#L141">141</a>   }
+<a class="jxr_linenumber" name="L142" href="#L142">142</a> 
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testMultipleSources() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>     <strong class="jxr_keyword">final</strong> TeeSinkTokenFilter tee1 = <strong class="jxr_keyword">new</strong> TeeSinkTokenFilter(whitespaceMockTokenizer(buffer1.toString()));
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>     <strong class="jxr_keyword">final</strong> TeeSinkTokenFilter.SinkTokenStream dogDetector = tee1.newSinkTokenStream(dogFilter);
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>     <strong class="jxr_keyword">final</strong> TeeSinkTokenFilter.SinkTokenStream theDetector = tee1.newSinkTokenStream(theFilter);
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>     <strong class="jxr_keyword">final</strong> TokenStream source1 = <strong class="jxr_keyword">new</strong> CachingTokenFilter(tee1);
+<a class="jxr_linenumber" name="L148" href="#L148">148</a> 
+<a class="jxr_linenumber" name="L149" href="#L149">149</a>     tee1.addAttribute(CheckClearAttributesAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>     dogDetector.addAttribute(CheckClearAttributesAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L151" href="#L151">151</a>     theDetector.addAttribute(CheckClearAttributesAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L152" href="#L152">152</a> 
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>     MockTokenizer tokenizer = <strong class="jxr_keyword">new</strong> MockTokenizer(tee1.getAttributeFactory(), MockTokenizer.WHITESPACE, false);
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>     tokenizer.setReader(<strong class="jxr_keyword">new</strong> StringReader(buffer2.toString()));
+<a class="jxr_linenumber" name="L155" href="#L155">155</a>     <strong class="jxr_keyword">final</strong> TeeSinkTokenFilter tee2 = <strong class="jxr_keyword">new</strong> TeeSinkTokenFilter(tokenizer);
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>     tee2.addSinkTokenStream(dogDetector);
+<a class="jxr_linenumber" name="L157" href="#L157">157</a>     tee2.addSinkTokenStream(theDetector);
+<a class="jxr_linenumber" name="L158" href="#L158">158</a>     <strong class="jxr_keyword">final</strong> TokenStream source2 = tee2;
+<a class="jxr_linenumber" name="L159" href="#L159">159</a> 
+<a class="jxr_linenumber" name="L160" href="#L160">160</a>     assertTokenStreamContents(source1, tokens1);
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>     assertTokenStreamContents(source2, tokens2);
+<a class="jxr_linenumber" name="L162" href="#L162">162</a> 
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>     assertTokenStreamContents(theDetector, <strong class="jxr_keyword">new</strong> String[]{<span class="jxr_string">"The"</span>, <span class="jxr_string">"the"</span>, <span class="jxr_string">"The"</span>, <span class="jxr_string">"the"</span>});
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>     assertTokenStreamContents(dogDetector, <strong class="jxr_keyword">new</strong> String[]{<span class="jxr_string">"Dogs"</span>, <span class="jxr_string">"Dogs"</span>});
+<a class="jxr_linenumber" name="L165" href="#L165">165</a>     
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>     TokenStream lowerCasing = <strong class="jxr_keyword">new</strong> LowerCaseFilter(source1);
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>     String[] lowerCaseTokens = <strong class="jxr_keyword">new</strong> String[tokens1.length];
+<a class="jxr_linenumber" name="L168" href="#L168">168</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; tokens1.length; i++)
+<a class="jxr_linenumber" name="L169" href="#L169">169</a>       lowerCaseTokens[i] = tokens1[i].toLowerCase(Locale.ROOT);
+<a class="jxr_linenumber" name="L170" href="#L170">170</a>     assertTokenStreamContents(lowerCasing, lowerCaseTokens);
+<a class="jxr_linenumber" name="L171" href="#L171">171</a>   }
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>   
+<a class="jxr_linenumber" name="L173" href="#L173">173</a>   <strong class="jxr_keyword">private</strong> StandardTokenizer standardTokenizer(StringBuilder builder) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L174" href="#L174">174</a>     StandardTokenizer tokenizer = <strong class="jxr_keyword">new</strong> StandardTokenizer();
+<a class="jxr_linenumber" name="L175" href="#L175">175</a>     tokenizer.setReader(<strong class="jxr_keyword">new</strong> StringReader(builder.toString()));
+<a class="jxr_linenumber" name="L176" href="#L176">176</a>     <strong class="jxr_keyword">return</strong> tokenizer;
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>   }
+<a class="jxr_linenumber" name="L178" href="#L178">178</a> 
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L180" href="#L180">180</a> <em class="jxr_javadoccomment">   * Not an explicit test, just useful to print out some info on performance</em>
+<a class="jxr_linenumber" name="L181" href="#L181">181</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L182" href="#L182">182</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> performance() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L183" href="#L183">183</a>     <strong class="jxr_keyword">int</strong>[] tokCount = {100, 500, 1000, 2000, 5000, 10000};
+<a class="jxr_linenumber" name="L184" href="#L184">184</a>     <strong class="jxr_keyword">int</strong>[] modCounts = {1, 2, 5, 10, 20, 50, 100, 200, 500};
+<a class="jxr_linenumber" name="L185" href="#L185">185</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> k = 0; k &lt; tokCount.length; k++) {
+<a class="jxr_linenumber" name="L186" href="#L186">186</a>       StringBuilder buffer = <strong class="jxr_keyword">new</strong> StringBuilder();
+<a class="jxr_linenumber" name="L187" href="#L187">187</a>       System.out.println(<span class="jxr_string">"-----Tokens: "</span> + tokCount[k] + <span class="jxr_string">"-----"</span>);
+<a class="jxr_linenumber" name="L188" href="#L188">188</a>       <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; tokCount[k]; i++) {
+<a class="jxr_linenumber" name="L189" href="#L189">189</a>         buffer.append(English.intToEnglish(i).toUpperCase(Locale.ROOT)).append(' ');
+<a class="jxr_linenumber" name="L190" href="#L190">190</a>       }
+<a class="jxr_linenumber" name="L191" href="#L191">191</a>       <em class="jxr_comment">//make sure we produce the same tokens</em>
+<a class="jxr_linenumber" name="L192" href="#L192">192</a>       TeeSinkTokenFilter teeStream = <strong class="jxr_keyword">new</strong> TeeSinkTokenFilter(<strong class="jxr_keyword">new</strong> StandardFilter(standardTokenizer(buffer)));
+<a class="jxr_linenumber" name="L193" href="#L193">193</a>       TokenStream sink = teeStream.newSinkTokenStream(<strong class="jxr_keyword">new</strong> ModuloSinkFilter(100));
+<a class="jxr_linenumber" name="L194" href="#L194">194</a>       teeStream.consumeAllTokens();
+<a class="jxr_linenumber" name="L195" href="#L195">195</a>       TokenStream stream = <strong class="jxr_keyword">new</strong> ModuloTokenFilter(<strong class="jxr_keyword">new</strong> StandardFilter(standardTokenizer(buffer)), 100);
+<a class="jxr_linenumber" name="L196" href="#L196">196</a>       CharTermAttribute tfTok = stream.addAttribute(CharTermAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L197" href="#L197">197</a>       CharTermAttribute sinkTok = sink.addAttribute(CharTermAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L198" href="#L198">198</a>       <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i=0; stream.incrementToken(); i++) {
+<a class="jxr_linenumber" name="L199" href="#L199">199</a>         assertTrue(sink.incrementToken());
+<a class="jxr_linenumber" name="L200" href="#L200">200</a>         assertTrue(tfTok + <span class="jxr_string">" is not equal to "</span> + sinkTok + <span class="jxr_string">" at token: "</span> + i, tfTok.equals(sinkTok) == <strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L201" href="#L201">201</a>       }
+<a class="jxr_linenumber" name="L202" href="#L202">202</a>       
+<a class="jxr_linenumber" name="L203" href="#L203">203</a>       <em class="jxr_comment">//simulate two fields, each being analyzed once, for 20 documents</em>
+<a class="jxr_linenumber" name="L204" href="#L204">204</a>       <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> j = 0; j &lt; modCounts.length; j++) {
+<a class="jxr_linenumber" name="L205" href="#L205">205</a>         <strong class="jxr_keyword">int</strong> tfPos = 0;
+<a class="jxr_linenumber" name="L206" href="#L206">206</a>         <strong class="jxr_keyword">long</strong> start = System.currentTimeMillis();
+<a class="jxr_linenumber" name="L207" href="#L207">207</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; 20; i++) {
+<a class="jxr_linenumber" name="L208" href="#L208">208</a>           stream = <strong class="jxr_keyword">new</strong> StandardFilter(standardTokenizer(buffer));
+<a class="jxr_linenumber" name="L209" href="#L209">209</a>           PositionIncrementAttribute posIncrAtt = stream.getAttribute(PositionIncrementAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L210" href="#L210">210</a>           <strong class="jxr_keyword">while</strong> (stream.incrementToken()) {
+<a class="jxr_linenumber" name="L211" href="#L211">211</a>             tfPos += posIncrAtt.getPositionIncrement();
+<a class="jxr_linenumber" name="L212" href="#L212">212</a>           }
+<a class="jxr_linenumber" name="L213" href="#L213">213</a>           stream = <strong class="jxr_keyword">new</strong> ModuloTokenFilter(<strong class="jxr_keyword">new</strong> StandardFilter(standardTokenizer(buffer)), modCounts[j]);
+<a class="jxr_linenumber" name="L214" href="#L214">214</a>           posIncrAtt = stream.getAttribute(PositionIncrementAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L215" href="#L215">215</a>           <strong class="jxr_keyword">while</strong> (stream.incrementToken()) {
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>             tfPos += posIncrAtt.getPositionIncrement();
+<a class="jxr_linenumber" name="L217" href="#L217">217</a>           }
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>         }
+<a class="jxr_linenumber" name="L219" href="#L219">219</a>         <strong class="jxr_keyword">long</strong> finish = System.currentTimeMillis();
+<a class="jxr_linenumber" name="L220" href="#L220">220</a>         System.out.println(<span class="jxr_string">"ModCount: "</span> + modCounts[j] + <span class="jxr_string">" Two fields took "</span> + (finish - start) + <span class="jxr_string">" ms"</span>);
+<a class="jxr_linenumber" name="L221" href="#L221">221</a>         <strong class="jxr_keyword">int</strong> sinkPos = 0;
+<a class="jxr_linenumber" name="L222" href="#L222">222</a>         <em class="jxr_comment">//simulate one field with one sink</em>
+<a class="jxr_linenumber" name="L223" href="#L223">223</a>         start = System.currentTimeMillis();
+<a class="jxr_linenumber" name="L224" href="#L224">224</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; 20; i++) {
+<a class="jxr_linenumber" name="L225" href="#L225">225</a>           teeStream = <strong class="jxr_keyword">new</strong> TeeSinkTokenFilter(<strong class="jxr_keyword">new</strong> StandardFilter( standardTokenizer(buffer)));
+<a class="jxr_linenumber" name="L226" href="#L226">226</a>           sink = teeStream.newSinkTokenStream(<strong class="jxr_keyword">new</strong> ModuloSinkFilter(modCounts[j]));
+<a class="jxr_linenumber" name="L227" href="#L227">227</a>           PositionIncrementAttribute posIncrAtt = teeStream.getAttribute(PositionIncrementAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L228" href="#L228">228</a>           <strong class="jxr_keyword">while</strong> (teeStream.incrementToken()) {
+<a class="jxr_linenumber" name="L229" href="#L229">229</a>             sinkPos += posIncrAtt.getPositionIncrement();
+<a class="jxr_linenumber" name="L230" href="#L230">230</a>           }
+<a class="jxr_linenumber" name="L231" href="#L231">231</a>           <em class="jxr_comment">//System.out.println("Modulo--------");</em>
+<a class="jxr_linenumber" name="L232" href="#L232">232</a>           posIncrAtt = sink.getAttribute(PositionIncrementAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L233" href="#L233">233</a>           <strong class="jxr_keyword">while</strong> (sink.incrementToken()) {
+<a class="jxr_linenumber" name="L234" href="#L234">234</a>             sinkPos += posIncrAtt.getPositionIncrement();
+<a class="jxr_linenumber" name="L235" href="#L235">235</a>           }
+<a class="jxr_linenumber" name="L236" href="#L236">236</a>         }
+<a class="jxr_linenumber" name="L237" href="#L237">237</a>         finish = System.currentTimeMillis();
+<a class="jxr_linenumber" name="L238" href="#L238">238</a>         System.out.println(<span class="jxr_string">"ModCount: "</span> + modCounts[j] + <span class="jxr_string">" Tee fields took "</span> + (finish - start) + <span class="jxr_string">" ms"</span>);
+<a class="jxr_linenumber" name="L239" href="#L239">239</a>         assertTrue(sinkPos + <span class="jxr_string">" does not equal: "</span> + tfPos, sinkPos == tfPos);
+<a class="jxr_linenumber" name="L240" href="#L240">240</a> 
+<a class="jxr_linenumber" name="L241" href="#L241">241</a>       }
+<a class="jxr_linenumber" name="L242" href="#L242">242</a>       System.out.println(<span class="jxr_string">"- End Tokens: "</span> + tokCount[k] + <span class="jxr_string">"-----"</span>);
+<a class="jxr_linenumber" name="L243" href="#L243">243</a>     }
+<a class="jxr_linenumber" name="L244" href="#L244">244</a> 
+<a class="jxr_linenumber" name="L245" href="#L245">245</a>   }
+<a class="jxr_linenumber" name="L246" href="#L246">246</a> 
+<a class="jxr_linenumber" name="L247" href="#L247">247</a> 
+<a class="jxr_linenumber" name="L248" href="#L248">248</a>   <strong class="jxr_keyword">class</strong> ModuloTokenFilter <strong class="jxr_keyword">extends</strong> TokenFilter {
+<a class="jxr_linenumber" name="L249" href="#L249">249</a> 
+<a class="jxr_linenumber" name="L250" href="#L250">250</a>     <strong class="jxr_keyword">int</strong> modCount;
+<a class="jxr_linenumber" name="L251" href="#L251">251</a> 
+<a class="jxr_linenumber" name="L252" href="#L252">252</a>     ModuloTokenFilter(TokenStream input, <strong class="jxr_keyword">int</strong> mc) {
+<a class="jxr_linenumber" name="L253" href="#L253">253</a>       <strong class="jxr_keyword">super</strong>(input);
+<a class="jxr_linenumber" name="L254" href="#L254">254</a>       modCount = mc;
+<a class="jxr_linenumber" name="L255" href="#L255">255</a>     }
+<a class="jxr_linenumber" name="L256" href="#L256">256</a> 
+<a class="jxr_linenumber" name="L257" href="#L257">257</a>     <strong class="jxr_keyword">int</strong> count = 0;
+<a class="jxr_linenumber" name="L258" href="#L258">258</a> 
+<a class="jxr_linenumber" name="L259" href="#L259">259</a>     <em class="jxr_comment">//return every 100 tokens</em>
+<a class="jxr_linenumber" name="L260" href="#L260">260</a>     @Override
+<a class="jxr_linenumber" name="L261" href="#L261">261</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> incrementToken() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L262" href="#L262">262</a>       <strong class="jxr_keyword">boolean</strong> hasNext;
+<a class="jxr_linenumber" name="L263" href="#L263">263</a>       <strong class="jxr_keyword">for</strong> (hasNext = input.incrementToken();
+<a class="jxr_linenumber" name="L264" href="#L264">264</a>            hasNext &amp;&amp; count % modCount != 0;
+<a class="jxr_linenumber" name="L265" href="#L265">265</a>            hasNext = input.incrementToken()) {
+<a class="jxr_linenumber" name="L266" href="#L266">266</a>         count++;
+<a class="jxr_linenumber" name="L267" href="#L267">267</a>       }
+<a class="jxr_linenumber" name="L268" href="#L268">268</a>       count++;
+<a class="jxr_linenumber" name="L269" href="#L269">269</a>       <strong class="jxr_keyword">return</strong> hasNext;
+<a class="jxr_linenumber" name="L270" href="#L270">270</a>     }
+<a class="jxr_linenumber" name="L271" href="#L271">271</a>   }
+<a class="jxr_linenumber" name="L272" href="#L272">272</a> 
+<a class="jxr_linenumber" name="L273" href="#L273">273</a>   <strong class="jxr_keyword">class</strong> ModuloSinkFilter <strong class="jxr_keyword">extends</strong> TeeSinkTokenFilter.SinkFilter {
+<a class="jxr_linenumber" name="L274" href="#L274">274</a>     <strong class="jxr_keyword">int</strong> count = 0;
+<a class="jxr_linenumber" name="L275" href="#L275">275</a>     <strong class="jxr_keyword">int</strong> modCount;
+<a class="jxr_linenumber" name="L276" href="#L276">276</a> 
+<a class="jxr_linenumber" name="L277" href="#L277">277</a>     ModuloSinkFilter(<strong class="jxr_keyword">int</strong> mc) {
+<a class="jxr_linenumber" name="L278" href="#L278">278</a>       modCount = mc;
+<a class="jxr_linenumber" name="L279" href="#L279">279</a>     }
+<a class="jxr_linenumber" name="L280" href="#L280">280</a> 
+<a class="jxr_linenumber" name="L281" href="#L281">281</a>     @Override
+<a class="jxr_linenumber" name="L282" href="#L282">282</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> accept(AttributeSource a) {
+<a class="jxr_linenumber" name="L283" href="#L283">283</a>       <strong class="jxr_keyword">boolean</strong> b = (a != <strong class="jxr_keyword">null</strong> &amp;&amp; count % modCount == 0);
+<a class="jxr_linenumber" name="L284" href="#L284">284</a>       count++;
+<a class="jxr_linenumber" name="L285" href="#L285">285</a>       <strong class="jxr_keyword">return</strong> b;
+<a class="jxr_linenumber" name="L286" href="#L286">286</a>     }
+<a class="jxr_linenumber" name="L287" href="#L287">287</a> 
+<a class="jxr_linenumber" name="L288" href="#L288">288</a>   }
+<a class="jxr_linenumber" name="L289" href="#L289">289</a> }
+<a class="jxr_linenumber" name="L290" href="#L290">290</a> 
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

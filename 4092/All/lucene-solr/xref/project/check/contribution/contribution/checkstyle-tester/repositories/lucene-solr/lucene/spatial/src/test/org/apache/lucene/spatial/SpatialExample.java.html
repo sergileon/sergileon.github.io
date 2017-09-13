@@ -1,0 +1,214 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>SpatialExample xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.lucene.spatial;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> java.io.IOException;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> com.spatial4j.core.context.SpatialContext;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> com.spatial4j.core.distance.DistanceUtils;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> com.spatial4j.core.shape.Point;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> com.spatial4j.core.shape.Shape;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.document.Document;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.document.Field;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.document.NumericDocValuesField;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.document.StoredField;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.DirectoryReader;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.IndexReader;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.IndexWriter;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.IndexWriterConfig;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.queries.function.ValueSource;
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.IndexSearcher;
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.MatchAllDocsQuery;
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.Query;
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.Sort;
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.SortField;
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.TopDocs;
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.spatial.prefix.RecursivePrefixTreeStrategy;
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.spatial.prefix.tree.GeohashPrefixTree;
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.spatial.query.SpatialArgs;
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.spatial.query.SpatialArgsParser;
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.spatial.query.SpatialOperation;
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.store.Directory;
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.store.RAMDirectory;
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.LuceneTestCase;
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>  
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>  <em class="jxr_javadoccomment"> * This class serves as example code to show how to use the Lucene spatial</em>
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>  <em class="jxr_javadoccomment"> * module.</em>
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> SpatialExample <strong class="jxr_keyword">extends</strong> LuceneTestCase {
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>  
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>    <em class="jxr_comment">//Note: Test invoked via TestTestFramework.spatialExample()</em>
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>  
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> main(String[] args) <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>      <strong class="jxr_keyword">new</strong> SpatialExample().test();
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>    }
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>  
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> test() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>      init();
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>      indexPoints();
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>      search();
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>    }
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>  
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>    <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>  <em class="jxr_javadoccomment">   * The Spatial4j {@link SpatialContext} is a sort of global-ish singleton</em>
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>  <em class="jxr_javadoccomment">   * needed by Lucene spatial.  It's a facade to the rest of Spatial4j, acting</em>
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>  <em class="jxr_javadoccomment">   * as a factory for {@link Shape}s and provides access to reading and writing</em>
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>  <em class="jxr_javadoccomment">   * them from Strings.</em>
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>  <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>    <strong class="jxr_keyword">private</strong> SpatialContext ctx;<em class="jxr_comment">//"ctx" is the conventional variable name</em>
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>  
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>    <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>  <em class="jxr_javadoccomment">   * The Lucene spatial {@link SpatialStrategy} encapsulates an approach to</em>
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>  <em class="jxr_javadoccomment">   * indexing and searching shapes, and providing distance values for them.</em>
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>  <em class="jxr_javadoccomment">   * It's a simple API to unify different approaches. You might use more than</em>
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>  <em class="jxr_javadoccomment">   * one strategy for a shape as each strategy has its strengths and weaknesses.</em>
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>  <em class="jxr_javadoccomment">   * &lt;p /&gt;</em>
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>  <em class="jxr_javadoccomment">   * Note that these are initialized with a field name.</em>
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>  <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>    <strong class="jxr_keyword">private</strong> SpatialStrategy strategy;
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>  
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>    <strong class="jxr_keyword">private</strong> Directory directory;
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>  
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>    <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">void</strong> init() {
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>      <em class="jxr_comment">//Typical geospatial context</em>
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>      <em class="jxr_comment">//  These can also be constructed from SpatialContextFactory</em>
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>      <strong class="jxr_keyword">this</strong>.ctx = SpatialContext.GEO;
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>  
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>      <strong class="jxr_keyword">int</strong> maxLevels = 11;<em class="jxr_comment">//results in sub-meter precision for geohash</em>
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>      <em class="jxr_comment">//TODO demo lookup by detail distance</em>
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>      <em class="jxr_comment">//  This can also be constructed from SpatialPrefixTreeFactory</em>
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>      SpatialPrefixTree grid = <strong class="jxr_keyword">new</strong> GeohashPrefixTree(ctx, maxLevels);
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>  
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>      <strong class="jxr_keyword">this</strong>.strategy = <strong class="jxr_keyword">new</strong> RecursivePrefixTreeStrategy(grid, <span class="jxr_string">"myGeoField"</span>);
+<a class="jxr_linenumber" name="L100" href="#L100">100</a> 
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>     <strong class="jxr_keyword">this</strong>.directory = <strong class="jxr_keyword">new</strong> RAMDirectory();
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>   }
+<a class="jxr_linenumber" name="L103" href="#L103">103</a> 
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> indexPoints() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>     IndexWriterConfig iwConfig = <strong class="jxr_keyword">new</strong> IndexWriterConfig(<strong class="jxr_keyword">null</strong>);
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>     IndexWriter indexWriter = <strong class="jxr_keyword">new</strong> IndexWriter(directory, iwConfig);
+<a class="jxr_linenumber" name="L107" href="#L107">107</a> 
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>     <em class="jxr_comment">//Spatial4j is x-y order for arguments</em>
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>     indexWriter.addDocument(newSampleDocument(
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>         2, ctx.makePoint(-80.93, 33.77)));
+<a class="jxr_linenumber" name="L111" href="#L111">111</a> 
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>     <em class="jxr_comment">//Spatial4j has a WKT parser which is also "x y" order</em>
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>     indexWriter.addDocument(newSampleDocument(
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>         4, ctx.readShapeFromWkt(<span class="jxr_string">"POINT(60.9289094 -50.7693246)"</span>)));
+<a class="jxr_linenumber" name="L115" href="#L115">115</a> 
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>     indexWriter.addDocument(newSampleDocument(
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>         20, ctx.makePoint(0.1,0.1), ctx.makePoint(0, 0)));
+<a class="jxr_linenumber" name="L118" href="#L118">118</a> 
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>     indexWriter.close();
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>   }
+<a class="jxr_linenumber" name="L121" href="#L121">121</a> 
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>   <strong class="jxr_keyword">private</strong> Document newSampleDocument(<strong class="jxr_keyword">int</strong> id, Shape... shapes) {
+<a class="jxr_linenumber" name="L123" href="#L123">123</a>     Document doc = <strong class="jxr_keyword">new</strong> Document();
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>     doc.add(<strong class="jxr_keyword">new</strong> StoredField(<span class="jxr_string">"id"</span>, id));
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>     doc.add(<strong class="jxr_keyword">new</strong> NumericDocValuesField(<span class="jxr_string">"id"</span>, id));
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>     <em class="jxr_comment">//Potentially more than one shape in this field is supported by some</em>
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>     <em class="jxr_comment">// strategies; see the javadocs of the SpatialStrategy impl to see.</em>
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>     <strong class="jxr_keyword">for</strong> (Shape shape : shapes) {
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>       <strong class="jxr_keyword">for</strong> (Field f : strategy.createIndexableFields(shape)) {
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>         doc.add(f);
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>       }
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>       <em class="jxr_comment">//store it too; the format is up to you</em>
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>       <em class="jxr_comment">//  (assume point in this example)</em>
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>       Point pt = (Point) shape;
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>       doc.add(<strong class="jxr_keyword">new</strong> StoredField(strategy.getFieldName(), pt.getX()+<span class="jxr_string">" "</span>+pt.getY()));
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>     }
+<a class="jxr_linenumber" name="L137" href="#L137">137</a> 
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>     <strong class="jxr_keyword">return</strong> doc;
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>   }
+<a class="jxr_linenumber" name="L140" href="#L140">140</a> 
+<a class="jxr_linenumber" name="L141" href="#L141">141</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> search() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>     IndexReader indexReader = DirectoryReader.open(directory);
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>     IndexSearcher indexSearcher = <strong class="jxr_keyword">new</strong> IndexSearcher(indexReader);
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>     Sort idSort = <strong class="jxr_keyword">new</strong> Sort(<strong class="jxr_keyword">new</strong> SortField(<span class="jxr_string">"id"</span>, SortField.Type.INT));
+<a class="jxr_linenumber" name="L145" href="#L145">145</a> 
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>     <em class="jxr_comment">//--Filter by circle (&lt;= distance from a point)</em>
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>     {
+<a class="jxr_linenumber" name="L148" href="#L148">148</a>       <em class="jxr_comment">//Search with circle</em>
+<a class="jxr_linenumber" name="L149" href="#L149">149</a>       <em class="jxr_comment">//note: SpatialArgs can be parsed from a string</em>
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>       SpatialArgs args = <strong class="jxr_keyword">new</strong> SpatialArgs(SpatialOperation.Intersects,
+<a class="jxr_linenumber" name="L151" href="#L151">151</a>           ctx.makeCircle(-80.0, 33.0, DistanceUtils.dist2Degrees(200, DistanceUtils.EARTH_MEAN_RADIUS_KM)));
+<a class="jxr_linenumber" name="L152" href="#L152">152</a>       Query query = strategy.makeQuery(args);
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>       TopDocs docs = indexSearcher.search(query, 10, idSort);
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>       assertDocMatchedIds(indexSearcher, docs, 2);
+<a class="jxr_linenumber" name="L155" href="#L155">155</a>       <em class="jxr_comment">//Now, lets get the distance for the 1st doc via computing from stored point value:</em>
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>       <em class="jxr_comment">// (this computation is usually not redundant)</em>
+<a class="jxr_linenumber" name="L157" href="#L157">157</a>       Document doc1 = indexSearcher.doc(docs.scoreDocs[0].doc);
+<a class="jxr_linenumber" name="L158" href="#L158">158</a>       String doc1Str = doc1.getField(strategy.getFieldName()).stringValue();
+<a class="jxr_linenumber" name="L159" href="#L159">159</a>       <em class="jxr_comment">//assume doc1Str is "x y" as written in newSampleDocument()</em>
+<a class="jxr_linenumber" name="L160" href="#L160">160</a>       <strong class="jxr_keyword">int</strong> spaceIdx = doc1Str.indexOf(' ');
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>       <strong class="jxr_keyword">double</strong> x = Double.parseDouble(doc1Str.substring(0, spaceIdx));
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>       <strong class="jxr_keyword">double</strong> y = Double.parseDouble(doc1Str.substring(spaceIdx+1));
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>       <strong class="jxr_keyword">double</strong> doc1DistDEG = ctx.calcDistance(args.getShape().getCenter(), x, y);
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>       assertEquals(121.6d, DistanceUtils.degrees2Dist(doc1DistDEG, DistanceUtils.EARTH_MEAN_RADIUS_KM), 0.1);
+<a class="jxr_linenumber" name="L165" href="#L165">165</a>       <em class="jxr_comment">//or more simply:</em>
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>       assertEquals(121.6d, doc1DistDEG * DistanceUtils.DEG_TO_KM, 0.1);
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>     }
+<a class="jxr_linenumber" name="L168" href="#L168">168</a>     <em class="jxr_comment">//--Match all, order by distance ascending</em>
+<a class="jxr_linenumber" name="L169" href="#L169">169</a>     {
+<a class="jxr_linenumber" name="L170" href="#L170">170</a>       Point pt = ctx.makePoint(60, -50);
+<a class="jxr_linenumber" name="L171" href="#L171">171</a>       ValueSource valueSource = strategy.makeDistanceValueSource(pt, DistanceUtils.DEG_TO_KM);<em class="jxr_comment">//the distance (in km)</em>
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>       Sort distSort = <strong class="jxr_keyword">new</strong> Sort(valueSource.getSortField(false)).rewrite(indexSearcher);<em class="jxr_comment">//false=asc dist</em>
+<a class="jxr_linenumber" name="L173" href="#L173">173</a>       TopDocs docs = indexSearcher.search(<strong class="jxr_keyword">new</strong> MatchAllDocsQuery(), 10, distSort);
+<a class="jxr_linenumber" name="L174" href="#L174">174</a>       assertDocMatchedIds(indexSearcher, docs, 4, 20, 2);
+<a class="jxr_linenumber" name="L175" href="#L175">175</a>       <em class="jxr_comment">//To get the distance, we could compute from stored values like earlier.</em>
+<a class="jxr_linenumber" name="L176" href="#L176">176</a>       <em class="jxr_comment">// However in this example we sorted on it, and the distance will get</em>
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>       <em class="jxr_comment">// computed redundantly.  If the distance is only needed for the top-X</em>
+<a class="jxr_linenumber" name="L178" href="#L178">178</a>       <em class="jxr_comment">// search results then that's not a big deal. Alternatively, try wrapping</em>
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>       <em class="jxr_comment">// the ValueSource with CachingDoubleValueSource then retrieve the value</em>
+<a class="jxr_linenumber" name="L180" href="#L180">180</a>       <em class="jxr_comment">// from the ValueSource now. See LUCENE-4541 for an example.</em>
+<a class="jxr_linenumber" name="L181" href="#L181">181</a>     }
+<a class="jxr_linenumber" name="L182" href="#L182">182</a>     <em class="jxr_comment">//demo arg parsing</em>
+<a class="jxr_linenumber" name="L183" href="#L183">183</a>     {
+<a class="jxr_linenumber" name="L184" href="#L184">184</a>       SpatialArgs args = <strong class="jxr_keyword">new</strong> SpatialArgs(SpatialOperation.Intersects,
+<a class="jxr_linenumber" name="L185" href="#L185">185</a>           ctx.makeCircle(-80.0, 33.0, 1));
+<a class="jxr_linenumber" name="L186" href="#L186">186</a>       SpatialArgs args2 = <strong class="jxr_keyword">new</strong> SpatialArgsParser().parse(<span class="jxr_string">"Intersects(BUFFER(POINT(-80 33),1))"</span>, ctx);
+<a class="jxr_linenumber" name="L187" href="#L187">187</a>       assertEquals(args.toString(),args2.toString());
+<a class="jxr_linenumber" name="L188" href="#L188">188</a>     }
+<a class="jxr_linenumber" name="L189" href="#L189">189</a> 
+<a class="jxr_linenumber" name="L190" href="#L190">190</a>     indexReader.close();
+<a class="jxr_linenumber" name="L191" href="#L191">191</a>   }
+<a class="jxr_linenumber" name="L192" href="#L192">192</a> 
+<a class="jxr_linenumber" name="L193" href="#L193">193</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> assertDocMatchedIds(IndexSearcher indexSearcher, TopDocs docs, <strong class="jxr_keyword">int</strong>... ids) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L194" href="#L194">194</a>     <strong class="jxr_keyword">int</strong>[] gotIds = <strong class="jxr_keyword">new</strong> <strong class="jxr_keyword">int</strong>[docs.totalHits];
+<a class="jxr_linenumber" name="L195" href="#L195">195</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; gotIds.length; i++) {
+<a class="jxr_linenumber" name="L196" href="#L196">196</a>       gotIds[i] = indexSearcher.doc(docs.scoreDocs[i].doc).getField(<span class="jxr_string">"id"</span>).numericValue().intValue();
+<a class="jxr_linenumber" name="L197" href="#L197">197</a>     }
+<a class="jxr_linenumber" name="L198" href="#L198">198</a>     assertArrayEquals(ids,gotIds);
+<a class="jxr_linenumber" name="L199" href="#L199">199</a>   }
+<a class="jxr_linenumber" name="L200" href="#L200">200</a> 
+<a class="jxr_linenumber" name="L201" href="#L201">201</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

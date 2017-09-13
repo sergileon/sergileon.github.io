@@ -1,0 +1,357 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>LinearScale xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.csstudio.swt.xygraph.linearscale;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <strong class="jxr_keyword">import</strong> org.eclipse.draw2d.FigureUtilities;
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <strong class="jxr_keyword">import</strong> org.eclipse.draw2d.geometry.Dimension;
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <strong class="jxr_keyword">import</strong> org.eclipse.draw2d.geometry.Rectangle;
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <strong class="jxr_keyword">import</strong> org.eclipse.swt.SWT;
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <strong class="jxr_keyword">import</strong> org.eclipse.swt.graphics.Color;
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <strong class="jxr_keyword">import</strong> org.eclipse.swt.graphics.Font;
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_javadoccomment"> * Linear(straight) scale has the tick labels and tick marks on a straight line. </em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_javadoccomment"> * It can be used for any scale based widget, such as 2D plot, chart, graph, </em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_javadoccomment"> * thermometer or tank etc. &lt;br&gt;</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_javadoccomment"> * A scale is comprised of Margins, Scale line, tick labels and tick marks which include</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_javadoccomment"> * minor ticks and major ticks. &lt;br&gt;</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_javadoccomment"> * </em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_javadoccomment"> * Margin is half of the label's length(Horizontal Scale) or </em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  <em class="jxr_javadoccomment"> * height(Vertical scale), so that the label can be displayed correctly. </em>
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <em class="jxr_javadoccomment"> * So the range must be set before you can get the correct margin.&lt;br&gt;&lt;br&gt;</em>
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <em class="jxr_javadoccomment"> * </em>
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <em class="jxr_javadoccomment"> * |Margin|______|______|______|______|______|______|Margin| &lt;br&gt;</em>
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <em class="jxr_javadoccomment"> * </em>
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <em class="jxr_javadoccomment"> * @author Xihui Chen</em>
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <em class="jxr_javadoccomment"> *  </em>
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> LinearScale <strong class="jxr_keyword">extends</strong> AbstractScale {
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  	<em class="jxr_javadoccomment">/** scale direction */</em>
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>      <strong class="jxr_keyword">public</strong> enum Orientation {
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>          <em class="jxr_javadoccomment">/** the constant to represent horizontal scales */</em>
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>          HORIZONTAL,
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>          <em class="jxr_javadoccomment">/** the constant to represent vertical scales */</em>
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>          VERTICAL
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>      }
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  	<strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> SPACE_BTW_MARK_LABEL = 2;
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>      
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>      <em class="jxr_javadoccomment">/** scale direction, no meaning for round scale */</em>
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>      <strong class="jxr_keyword">private</strong> Orientation orientation = Orientation.HORIZONTAL;
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>      
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>      <em class="jxr_javadoccomment">/** the scale tick labels */</em>
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>      <strong class="jxr_keyword">private</strong> LinearScaleTickLabels tickLabels;
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>  
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>      <em class="jxr_javadoccomment">/** the scale tick marks */</em>
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>      <strong class="jxr_keyword">private</strong> LinearScaleTickMarks tickMarks;
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>  
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>      <em class="jxr_javadoccomment">/** the length of the whole scale */</em>
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">int</strong> length;
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>      
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">int</strong> margin;
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>      
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>   
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>      
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>      <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>  <em class="jxr_javadoccomment">     * Constructor.</em>
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>  <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>      <strong class="jxr_keyword">public</strong> LinearScale() {      
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>      	
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>          tickLabels = <strong class="jxr_keyword">new</strong> LinearScaleTickLabels(<strong class="jxr_keyword">this</strong>);        
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>          tickMarks = <strong class="jxr_keyword">new</strong> LinearScaleTickMarks(<strong class="jxr_keyword">this</strong>);                  
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>          add(tickMarks);        
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>          add(tickLabels);    
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>  <em class="jxr_comment">//        setFont(XYGraphMediaFactory.getInstance().getFont(</em>
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>  <em class="jxr_comment">//        		XYGraphMediaFactory.FONT_ARIAL));</em>
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>   
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>      }
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>  	
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>  	<strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> calcMargin() {
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>  		<strong class="jxr_keyword">if</strong>(isHorizontal()) {			
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>  			margin = (<strong class="jxr_keyword">int</strong>) Math.ceil(Math.max(FigureUtilities.getTextExtents(
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>  					format(getRange().getLower(), <strong class="jxr_keyword">true</strong>),getFont()).width, 
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>  					FigureUtilities.getTextExtents(format(getRange().getUpper(), <strong class="jxr_keyword">true</strong>), getFont()).width)/2.0);
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>  		}<strong class="jxr_keyword">else</strong>
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>  			margin = (<strong class="jxr_keyword">int</strong>) Math.ceil(Math.max(FigureUtilities.getTextExtents(
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>  					format(getRange().getLower(), <strong class="jxr_keyword">true</strong>), getFont()).height, 
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>  					FigureUtilities.getTextExtents(format(getRange().getUpper(), <strong class="jxr_keyword">true</strong>), getFont()).height)/2.0);
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>  	}
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>  	
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>  	<em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>  <em class="jxr_javadoccomment">	 * @return the length of the whole scale (include margin)</em>
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>  <em class="jxr_javadoccomment">	 */</em>
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>  	<strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">int</strong> getLength() {
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>  		<strong class="jxr_keyword">return</strong> length;
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>  	}
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>  
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>      <em class="jxr_javadoccomment">/**Margin is half of the label's length(Horizontal Scale) or </em>
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>  <em class="jxr_javadoccomment">     * height(Vertical scale), so that the label can be displayed correctly. </em>
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>  <em class="jxr_javadoccomment">     * So the range and format pattern must be set correctly</em>
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>  <em class="jxr_javadoccomment">     * before you can get the correct margin.</em>
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>  <em class="jxr_javadoccomment">     * @return the margin</em>
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>  <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">int</strong> getMargin() {
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>  		<strong class="jxr_keyword">if</strong>(isDirty())
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>  			calcMargin();
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>  		<strong class="jxr_keyword">return</strong> margin;
+<a class="jxr_linenumber" name="L100" href="#L100">100</a> 	}
+<a class="jxr_linenumber" name="L101" href="#L101">101</a> 	<em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L102" href="#L102">102</a> <em class="jxr_javadoccomment">	 * @return the orientation</em>
+<a class="jxr_linenumber" name="L103" href="#L103">103</a> <em class="jxr_javadoccomment">	 */</em>
+<a class="jxr_linenumber" name="L104" href="#L104">104</a> 	<strong class="jxr_keyword">public</strong> Orientation getOrientation() {
+<a class="jxr_linenumber" name="L105" href="#L105">105</a> 		<strong class="jxr_keyword">return</strong> orientation;
+<a class="jxr_linenumber" name="L106" href="#L106">106</a> 	}
+<a class="jxr_linenumber" name="L107" href="#L107">107</a> 	@Override
+<a class="jxr_linenumber" name="L108" href="#L108">108</a> 	<strong class="jxr_keyword">public</strong> Dimension getPreferredSize(<strong class="jxr_keyword">int</strong> wHint, <strong class="jxr_keyword">int</strong> hHint) {
+<a class="jxr_linenumber" name="L109" href="#L109">109</a> 		
+<a class="jxr_linenumber" name="L110" href="#L110">110</a> 		Dimension size = <strong class="jxr_keyword">new</strong> Dimension(wHint, hHint);
+<a class="jxr_linenumber" name="L111" href="#L111">111</a> 		LinearScaleTickLabels fakeTickLabels = <strong class="jxr_keyword">new</strong> LinearScaleTickLabels(<strong class="jxr_keyword">this</strong>);
+<a class="jxr_linenumber" name="L112" href="#L112">112</a> 
+<a class="jxr_linenumber" name="L113" href="#L113">113</a> 		<strong class="jxr_keyword">if</strong>(isHorizontal()) {
+<a class="jxr_linenumber" name="L114" href="#L114">114</a> 			<em class="jxr_comment">//length = wHint;</em>
+<a class="jxr_linenumber" name="L115" href="#L115">115</a> 			fakeTickLabels.update(wHint-2*getMargin());
+<a class="jxr_linenumber" name="L116" href="#L116">116</a> 			size.height = (<strong class="jxr_keyword">int</strong>)fakeTickLabels.getTickLabelMaxHeight() 
+<a class="jxr_linenumber" name="L117" href="#L117">117</a> 							+ SPACE_BTW_MARK_LABEL + LinearScaleTickMarks.MAJOR_TICK_LENGTH;
+<a class="jxr_linenumber" name="L118" href="#L118">118</a> 		} <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L119" href="#L119">119</a> 			<em class="jxr_comment">//length = hHint;</em>
+<a class="jxr_linenumber" name="L120" href="#L120">120</a> 			fakeTickLabels.update(hHint-2*getMargin());
+<a class="jxr_linenumber" name="L121" href="#L121">121</a> 			size.width = (<strong class="jxr_keyword">int</strong>)fakeTickLabels.getTickLabelMaxLength() 
+<a class="jxr_linenumber" name="L122" href="#L122">122</a> 							+ SPACE_BTW_MARK_LABEL + LinearScaleTickMarks.MAJOR_TICK_LENGTH;
+<a class="jxr_linenumber" name="L123" href="#L123">123</a> 		
+<a class="jxr_linenumber" name="L124" href="#L124">124</a> 		}
+<a class="jxr_linenumber" name="L125" href="#L125">125</a> 			
+<a class="jxr_linenumber" name="L126" href="#L126">126</a> 		<strong class="jxr_keyword">return</strong> size;
+<a class="jxr_linenumber" name="L127" href="#L127">127</a> 		
+<a class="jxr_linenumber" name="L128" href="#L128">128</a> 	}
+<a class="jxr_linenumber" name="L129" href="#L129">129</a> 
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L131" href="#L131">131</a> <em class="jxr_javadoccomment">     * Gets the scale tick labels.</em>
+<a class="jxr_linenumber" name="L132" href="#L132">132</a> <em class="jxr_javadoccomment">     * </em>
+<a class="jxr_linenumber" name="L133" href="#L133">133</a> <em class="jxr_javadoccomment">     * @return the scale tick labels</em>
+<a class="jxr_linenumber" name="L134" href="#L134">134</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>     <strong class="jxr_keyword">public</strong> LinearScaleTickLabels getScaleTickLabels() {
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>         <strong class="jxr_keyword">return</strong> tickLabels;
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>     }
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L139" href="#L139">139</a> <em class="jxr_javadoccomment">     * Gets the scale tick marks.</em>
+<a class="jxr_linenumber" name="L140" href="#L140">140</a> <em class="jxr_javadoccomment">     * </em>
+<a class="jxr_linenumber" name="L141" href="#L141">141</a> <em class="jxr_javadoccomment">     * @return the scale tick marks</em>
+<a class="jxr_linenumber" name="L142" href="#L142">142</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>     <strong class="jxr_keyword">public</strong> LinearScaleTickMarks getScaleTickMarks() {
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>         <strong class="jxr_keyword">return</strong> tickMarks;
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>     }
+<a class="jxr_linenumber" name="L146" href="#L146">146</a> 
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L148" href="#L148">148</a> <em class="jxr_javadoccomment">	 * @return the length of the tick part (without margin)</em>
+<a class="jxr_linenumber" name="L149" href="#L149">149</a> <em class="jxr_javadoccomment">	 */</em>
+<a class="jxr_linenumber" name="L150" href="#L150">150</a> 	<strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">int</strong> getTickLength() {
+<a class="jxr_linenumber" name="L151" href="#L151">151</a> 		<strong class="jxr_keyword">return</strong> length - 2*getMargin();
+<a class="jxr_linenumber" name="L152" href="#L152">152</a> 	}
+<a class="jxr_linenumber" name="L153" href="#L153">153</a> 
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L155" href="#L155">155</a> <em class="jxr_javadoccomment">	 * Get the position of the value based on scale. </em>
+<a class="jxr_linenumber" name="L156" href="#L156">156</a> <em class="jxr_javadoccomment">	 * @param value the value to find its position. Support value out of range.</em>
+<a class="jxr_linenumber" name="L157" href="#L157">157</a> <em class="jxr_javadoccomment">	 * @param relative return the position relative to the left/bottom bound of the scale if true. </em>
+<a class="jxr_linenumber" name="L158" href="#L158">158</a> <em class="jxr_javadoccomment">	 * If false, return the absolute position which has the scale bounds counted.</em>
+<a class="jxr_linenumber" name="L159" href="#L159">159</a> <em class="jxr_javadoccomment">	 * @return position in pixels</em>
+<a class="jxr_linenumber" name="L160" href="#L160">160</a> <em class="jxr_javadoccomment">	 */</em>
+<a class="jxr_linenumber" name="L161" href="#L161">161</a> 	<strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">int</strong> getValuePosition(<strong class="jxr_keyword">double</strong> value, <strong class="jxr_keyword">boolean</strong> relative) {		
+<a class="jxr_linenumber" name="L162" href="#L162">162</a> 		<strong class="jxr_keyword">if</strong>(dirty)
+<a class="jxr_linenumber" name="L163" href="#L163">163</a> 			updateTick();
+<a class="jxr_linenumber" name="L164" href="#L164">164</a> 		<em class="jxr_comment">//coerce to range		</em>
+<a class="jxr_linenumber" name="L165" href="#L165">165</a> 		<em class="jxr_comment">//value = value &lt; min ? min : (value &gt; max ? max : value);</em>
+<a class="jxr_linenumber" name="L166" href="#L166">166</a> 		<strong class="jxr_keyword">int</strong> pixelsToStart =0;
+<a class="jxr_linenumber" name="L167" href="#L167">167</a> 		<strong class="jxr_keyword">if</strong>(logScaleEnabled){
+<a class="jxr_linenumber" name="L168" href="#L168">168</a> 			<strong class="jxr_keyword">if</strong>(value &lt;=0)
+<a class="jxr_linenumber" name="L169" href="#L169">169</a> 				value = min;
+<a class="jxr_linenumber" name="L170" href="#L170">170</a> 			<em class="jxr_comment">//	throw new IllegalArgumentException(</em>
+<a class="jxr_linenumber" name="L171" href="#L171">171</a> 			<em class="jxr_comment">//			"Invalid value: value must be greater than 0");</em>
+<a class="jxr_linenumber" name="L172" href="#L172">172</a> 			pixelsToStart = (<strong class="jxr_keyword">int</strong>) ((Math.log10(value) - Math.log10(min))/
+<a class="jxr_linenumber" name="L173" href="#L173">173</a> 							(Math.log10(max) - Math.log10(min)) * (length - 2*margin)) + margin;
+<a class="jxr_linenumber" name="L174" href="#L174">174</a> 		}<strong class="jxr_keyword">else</strong>			
+<a class="jxr_linenumber" name="L175" href="#L175">175</a> 			pixelsToStart = (<strong class="jxr_keyword">int</strong>) ((value - min)/(max-min)*(length-2*margin)) + margin;
+<a class="jxr_linenumber" name="L176" href="#L176">176</a> 		
+<a class="jxr_linenumber" name="L177" href="#L177">177</a> 		<strong class="jxr_keyword">if</strong>(relative) {
+<a class="jxr_linenumber" name="L178" href="#L178">178</a> 			<strong class="jxr_keyword">if</strong>(orientation == Orientation.HORIZONTAL)
+<a class="jxr_linenumber" name="L179" href="#L179">179</a> 				<strong class="jxr_keyword">return</strong> pixelsToStart;
+<a class="jxr_linenumber" name="L180" href="#L180">180</a> 			<strong class="jxr_keyword">else</strong>
+<a class="jxr_linenumber" name="L181" href="#L181">181</a> 				<strong class="jxr_keyword">return</strong> length - pixelsToStart;
+<a class="jxr_linenumber" name="L182" href="#L182">182</a> 		} <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L183" href="#L183">183</a> 			<strong class="jxr_keyword">if</strong>(orientation == Orientation.HORIZONTAL)
+<a class="jxr_linenumber" name="L184" href="#L184">184</a> 				<strong class="jxr_keyword">return</strong> pixelsToStart + bounds.x;
+<a class="jxr_linenumber" name="L185" href="#L185">185</a> 			<strong class="jxr_keyword">else</strong>
+<a class="jxr_linenumber" name="L186" href="#L186">186</a> 				<strong class="jxr_keyword">return</strong> length - pixelsToStart + bounds.y;
+<a class="jxr_linenumber" name="L187" href="#L187">187</a> 		}		
+<a class="jxr_linenumber" name="L188" href="#L188">188</a> 	}
+<a class="jxr_linenumber" name="L189" href="#L189">189</a> 
+<a class="jxr_linenumber" name="L190" href="#L190">190</a> 	 <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L191" href="#L191">191</a> <em class="jxr_javadoccomment">	 * Get the corresponding value on the position of the scale. </em>
+<a class="jxr_linenumber" name="L192" href="#L192">192</a> <em class="jxr_javadoccomment">	 * @param the position.</em>
+<a class="jxr_linenumber" name="L193" href="#L193">193</a> <em class="jxr_javadoccomment">	 * @param true if the position is relative to the left/bottom bound of the scale; </em>
+<a class="jxr_linenumber" name="L194" href="#L194">194</a> <em class="jxr_javadoccomment">	 * False if it is the absolute position.</em>
+<a class="jxr_linenumber" name="L195" href="#L195">195</a> <em class="jxr_javadoccomment">	 * @return the value corresponding to the position.</em>
+<a class="jxr_linenumber" name="L196" href="#L196">196</a> <em class="jxr_javadoccomment">	 */</em>
+<a class="jxr_linenumber" name="L197" href="#L197">197</a> 	<strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">double</strong> getPositionValue(<strong class="jxr_keyword">int</strong> position, <strong class="jxr_keyword">boolean</strong> relative) {
+<a class="jxr_linenumber" name="L198" href="#L198">198</a> 		updateTick();
+<a class="jxr_linenumber" name="L199" href="#L199">199</a> 		<em class="jxr_comment">//coerce to range</em>
+<a class="jxr_linenumber" name="L200" href="#L200">200</a> 		<strong class="jxr_keyword">double</strong> min = getRange().getLower();
+<a class="jxr_linenumber" name="L201" href="#L201">201</a>         <strong class="jxr_keyword">double</strong> max = getRange().getUpper();
+<a class="jxr_linenumber" name="L202" href="#L202">202</a>         <strong class="jxr_keyword">int</strong> pixelsToStart;
+<a class="jxr_linenumber" name="L203" href="#L203">203</a>         <strong class="jxr_keyword">double</strong> value;
+<a class="jxr_linenumber" name="L204" href="#L204">204</a>         <strong class="jxr_keyword">if</strong>(relative){
+<a class="jxr_linenumber" name="L205" href="#L205">205</a>         	<strong class="jxr_keyword">if</strong>(isHorizontal())
+<a class="jxr_linenumber" name="L206" href="#L206">206</a>         		pixelsToStart = position;
+<a class="jxr_linenumber" name="L207" href="#L207">207</a>         	<strong class="jxr_keyword">else</strong>
+<a class="jxr_linenumber" name="L208" href="#L208">208</a>         		pixelsToStart = length - position;
+<a class="jxr_linenumber" name="L209" href="#L209">209</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L210" href="#L210">210</a>         	<strong class="jxr_keyword">if</strong>(isHorizontal())
+<a class="jxr_linenumber" name="L211" href="#L211">211</a>         		pixelsToStart = position - bounds.x;
+<a class="jxr_linenumber" name="L212" href="#L212">212</a>         	<strong class="jxr_keyword">else</strong>
+<a class="jxr_linenumber" name="L213" href="#L213">213</a>         		pixelsToStart = length + bounds.y - position;
+<a class="jxr_linenumber" name="L214" href="#L214">214</a>         }
+<a class="jxr_linenumber" name="L215" href="#L215">215</a>         	
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>         <strong class="jxr_keyword">if</strong>(isLogScaleEnabled())
+<a class="jxr_linenumber" name="L217" href="#L217">217</a>         	value = Math.pow(10, 
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>         			(pixelsToStart - margin)*(Math.log10(max)-Math.log10(min))/(length - 2*margin) + Math.log10(min));
+<a class="jxr_linenumber" name="L219" href="#L219">219</a>         <strong class="jxr_keyword">else</strong>
+<a class="jxr_linenumber" name="L220" href="#L220">220</a>         	value = (pixelsToStart - margin)*(max - min)/(length - 2*margin) + min;
+<a class="jxr_linenumber" name="L221" href="#L221">221</a>         
+<a class="jxr_linenumber" name="L222" href="#L222">222</a> 		<strong class="jxr_keyword">return</strong> value;
+<a class="jxr_linenumber" name="L223" href="#L223">223</a> 	}
+<a class="jxr_linenumber" name="L224" href="#L224">224</a> 	
+<a class="jxr_linenumber" name="L225" href="#L225">225</a> 
+<a class="jxr_linenumber" name="L226" href="#L226">226</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> isHorizontal() {
+<a class="jxr_linenumber" name="L227" href="#L227">227</a> 		<strong class="jxr_keyword">return</strong> orientation == Orientation.HORIZONTAL;
+<a class="jxr_linenumber" name="L228" href="#L228">228</a> 	}
+<a class="jxr_linenumber" name="L229" href="#L229">229</a> 
+<a class="jxr_linenumber" name="L230" href="#L230">230</a> 
+<a class="jxr_linenumber" name="L231" href="#L231">231</a>     @Override
+<a class="jxr_linenumber" name="L232" href="#L232">232</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">void</strong> layout() {
+<a class="jxr_linenumber" name="L233" href="#L233">233</a>     	<strong class="jxr_keyword">super</strong>.layout();
+<a class="jxr_linenumber" name="L234" href="#L234">234</a>     	updateTick();
+<a class="jxr_linenumber" name="L235" href="#L235">235</a>       	Rectangle area = getClientArea();
+<a class="jxr_linenumber" name="L236" href="#L236">236</a>       	<strong class="jxr_keyword">if</strong>(isHorizontal() &amp;&amp; getTickLablesSide() == LabelSide.Primary) {
+<a class="jxr_linenumber" name="L237" href="#L237">237</a>       		tickLabels.setBounds(<strong class="jxr_keyword">new</strong> Rectangle(area.x, 
+<a class="jxr_linenumber" name="L238" href="#L238">238</a>       				area.y + LinearScaleTickMarks.MAJOR_TICK_LENGTH + SPACE_BTW_MARK_LABEL,
+<a class="jxr_linenumber" name="L239" href="#L239">239</a>       				area.width, area.height - LinearScaleTickMarks.MAJOR_TICK_LENGTH
+<a class="jxr_linenumber" name="L240" href="#L240">240</a>       				));
+<a class="jxr_linenumber" name="L241" href="#L241">241</a>       		tickMarks.setBounds(area);      		
+<a class="jxr_linenumber" name="L242" href="#L242">242</a>       	}<strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong>(isHorizontal() &amp;&amp; getTickLablesSide() == LabelSide.Secondary) {
+<a class="jxr_linenumber" name="L243" href="#L243">243</a>       		tickLabels.setBounds(<strong class="jxr_keyword">new</strong> Rectangle(area.x, 
+<a class="jxr_linenumber" name="L244" href="#L244">244</a>       				area.y + area.height -LinearScaleTickMarks.MAJOR_TICK_LENGTH - 
+<a class="jxr_linenumber" name="L245" href="#L245">245</a>       				tickLabels.getTickLabelMaxHeight() - SPACE_BTW_MARK_LABEL,
+<a class="jxr_linenumber" name="L246" href="#L246">246</a>       				area.width,
+<a class="jxr_linenumber" name="L247" href="#L247">247</a>       				tickLabels.getTickLabelMaxHeight()
+<a class="jxr_linenumber" name="L248" href="#L248">248</a>       				));
+<a class="jxr_linenumber" name="L249" href="#L249">249</a>       		tickMarks.setBounds(<strong class="jxr_keyword">new</strong> Rectangle(area.x, 
+<a class="jxr_linenumber" name="L250" href="#L250">250</a>       				area.y + area.height - LinearScaleTickMarks.MAJOR_TICK_LENGTH,
+<a class="jxr_linenumber" name="L251" href="#L251">251</a>       				area.width,
+<a class="jxr_linenumber" name="L252" href="#L252">252</a>       				LinearScaleTickMarks.MAJOR_TICK_LENGTH
+<a class="jxr_linenumber" name="L253" href="#L253">253</a>       				));  
+<a class="jxr_linenumber" name="L254" href="#L254">254</a>       	}<strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong>(getTickLablesSide() == LabelSide.Primary) {
+<a class="jxr_linenumber" name="L255" href="#L255">255</a>       		tickLabels.setBounds(<strong class="jxr_keyword">new</strong> Rectangle(area.x + area.width 
+<a class="jxr_linenumber" name="L256" href="#L256">256</a>       				- LinearScaleTickMarks.MAJOR_TICK_LENGTH - tickLabels.getTickLabelMaxLength()
+<a class="jxr_linenumber" name="L257" href="#L257">257</a>       				-SPACE_BTW_MARK_LABEL, 
+<a class="jxr_linenumber" name="L258" href="#L258">258</a>       				area.y, 
+<a class="jxr_linenumber" name="L259" href="#L259">259</a>       				tickLabels.getTickLabelMaxLength(),
+<a class="jxr_linenumber" name="L260" href="#L260">260</a>       				area.height));
+<a class="jxr_linenumber" name="L261" href="#L261">261</a>       		tickMarks.setBounds(<strong class="jxr_keyword">new</strong> Rectangle(area.x + area.width 
+<a class="jxr_linenumber" name="L262" href="#L262">262</a>       				- LinearScaleTickMarks.MAJOR_TICK_LENGTH, 
+<a class="jxr_linenumber" name="L263" href="#L263">263</a>       				area.y,
+<a class="jxr_linenumber" name="L264" href="#L264">264</a>       				LinearScaleTickMarks.MAJOR_TICK_LENGTH,
+<a class="jxr_linenumber" name="L265" href="#L265">265</a>       				area.height));  
+<a class="jxr_linenumber" name="L266" href="#L266">266</a>       	}<strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L267" href="#L267">267</a>       		tickLabels.setBounds(<strong class="jxr_keyword">new</strong> Rectangle(area.x+ LinearScaleTickMarks.MAJOR_TICK_LENGTH 
+<a class="jxr_linenumber" name="L268" href="#L268">268</a>       				+SPACE_BTW_MARK_LABEL, 
+<a class="jxr_linenumber" name="L269" href="#L269">269</a>       				area.y, 
+<a class="jxr_linenumber" name="L270" href="#L270">270</a>       				tickLabels.getTickLabelMaxLength(),
+<a class="jxr_linenumber" name="L271" href="#L271">271</a>       				area.height));
+<a class="jxr_linenumber" name="L272" href="#L272">272</a>       		tickMarks.setBounds(<strong class="jxr_keyword">new</strong> Rectangle(area.x, 
+<a class="jxr_linenumber" name="L273" href="#L273">273</a>       				area.y,
+<a class="jxr_linenumber" name="L274" href="#L274">274</a>       				LinearScaleTickMarks.MAJOR_TICK_LENGTH,
+<a class="jxr_linenumber" name="L275" href="#L275">275</a>       				area.height));  
+<a class="jxr_linenumber" name="L276" href="#L276">276</a>       	}    	
+<a class="jxr_linenumber" name="L277" href="#L277">277</a>     } 
+<a class="jxr_linenumber" name="L278" href="#L278">278</a> 
+<a class="jxr_linenumber" name="L279" href="#L279">279</a>     @Override
+<a class="jxr_linenumber" name="L280" href="#L280">280</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> setBounds(Rectangle rect) {
+<a class="jxr_linenumber" name="L281" href="#L281">281</a>     	<strong class="jxr_keyword">if</strong>(!bounds.equals(rect)){
+<a class="jxr_linenumber" name="L282" href="#L282">282</a>     		setDirty(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L283" href="#L283">283</a>     		<strong class="jxr_keyword">if</strong>(isHorizontal())
+<a class="jxr_linenumber" name="L284" href="#L284">284</a>     			length = rect.width - getInsets().getWidth();
+<a class="jxr_linenumber" name="L285" href="#L285">285</a>     		<strong class="jxr_keyword">else</strong>
+<a class="jxr_linenumber" name="L286" href="#L286">286</a>     			length = rect.height - getInsets().getHeight();
+<a class="jxr_linenumber" name="L287" href="#L287">287</a>     	}
+<a class="jxr_linenumber" name="L288" href="#L288">288</a>     	<strong class="jxr_keyword">super</strong>.setBounds(rect);   
+<a class="jxr_linenumber" name="L289" href="#L289">289</a>     	
+<a class="jxr_linenumber" name="L290" href="#L290">290</a>     }
+<a class="jxr_linenumber" name="L291" href="#L291">291</a>     <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L292" href="#L292">292</a> <em class="jxr_comment">     * @see IAxisTick#setFont(Font)</em>
+<a class="jxr_linenumber" name="L293" href="#L293">293</a> <em class="jxr_comment">     */</em>
+<a class="jxr_linenumber" name="L294" href="#L294">294</a>     @Override
+<a class="jxr_linenumber" name="L295" href="#L295">295</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> setFont(Font font) {
+<a class="jxr_linenumber" name="L296" href="#L296">296</a>         <strong class="jxr_keyword">if</strong> (font != <strong class="jxr_keyword">null</strong> &amp;&amp; font.isDisposed()) {
+<a class="jxr_linenumber" name="L297" href="#L297">297</a>             SWT.error(SWT.ERROR_INVALID_ARGUMENT);
+<a class="jxr_linenumber" name="L298" href="#L298">298</a>         }
+<a class="jxr_linenumber" name="L299" href="#L299">299</a>         tickLabels.setFont(font);
+<a class="jxr_linenumber" name="L300" href="#L300">300</a>         <strong class="jxr_keyword">super</strong>.setFont(font);
+<a class="jxr_linenumber" name="L301" href="#L301">301</a>         
+<a class="jxr_linenumber" name="L302" href="#L302">302</a>     }
+<a class="jxr_linenumber" name="L303" href="#L303">303</a> 
+<a class="jxr_linenumber" name="L304" href="#L304">304</a> 	<em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L305" href="#L305">305</a> <em class="jxr_comment">     * @see IAxisTick#setForeground(Color)</em>
+<a class="jxr_linenumber" name="L306" href="#L306">306</a> <em class="jxr_comment">     */</em>
+<a class="jxr_linenumber" name="L307" href="#L307">307</a>     @Override
+<a class="jxr_linenumber" name="L308" href="#L308">308</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> setForegroundColor(Color color) {
+<a class="jxr_linenumber" name="L309" href="#L309">309</a>     	tickMarks.setForegroundColor(color);
+<a class="jxr_linenumber" name="L310" href="#L310">310</a>         tickLabels.setForegroundColor(color);
+<a class="jxr_linenumber" name="L311" href="#L311">311</a>     	<strong class="jxr_keyword">super</strong>.setForegroundColor(color);        
+<a class="jxr_linenumber" name="L312" href="#L312">312</a>     }
+<a class="jxr_linenumber" name="L313" href="#L313">313</a> 	
+<a class="jxr_linenumber" name="L314" href="#L314">314</a> 	<em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L315" href="#L315">315</a> <em class="jxr_javadoccomment">	 * @param orientation the orientation to set</em>
+<a class="jxr_linenumber" name="L316" href="#L316">316</a> <em class="jxr_javadoccomment">	 */</em>
+<a class="jxr_linenumber" name="L317" href="#L317">317</a> 	<strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> setOrientation(Orientation orientation) {
+<a class="jxr_linenumber" name="L318" href="#L318">318</a> 		<strong class="jxr_keyword">this</strong>.orientation = orientation;
+<a class="jxr_linenumber" name="L319" href="#L319">319</a>         setDirty(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L320" href="#L320">320</a>         revalidate();
+<a class="jxr_linenumber" name="L321" href="#L321">321</a> 
+<a class="jxr_linenumber" name="L322" href="#L322">322</a> 	}
+<a class="jxr_linenumber" name="L323" href="#L323">323</a> 	
+<a class="jxr_linenumber" name="L324" href="#L324">324</a> 
+<a class="jxr_linenumber" name="L325" href="#L325">325</a> 	<em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L326" href="#L326">326</a> <em class="jxr_javadoccomment">     * Updates the tick, recalculate all parameters, such as margin, length...</em>
+<a class="jxr_linenumber" name="L327" href="#L327">327</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L328" href="#L328">328</a>     @Override
+<a class="jxr_linenumber" name="L329" href="#L329">329</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> updateTick() {
+<a class="jxr_linenumber" name="L330" href="#L330">330</a>     	<strong class="jxr_keyword">if</strong>(isDirty()){
+<a class="jxr_linenumber" name="L331" href="#L331">331</a> 	    	length = isHorizontal() ? 
+<a class="jxr_linenumber" name="L332" href="#L332">332</a> 	    			getClientArea().width: getClientArea().height;    		
+<a class="jxr_linenumber" name="L333" href="#L333">333</a> 	    	<strong class="jxr_keyword">if</strong>(length &gt; 2*getMargin())
+<a class="jxr_linenumber" name="L334" href="#L334">334</a> 	    		tickLabels.update(length-2*getMargin());    
+<a class="jxr_linenumber" name="L335" href="#L335">335</a> 	    	setDirty(false);
+<a class="jxr_linenumber" name="L336" href="#L336">336</a>     	}    	
+<a class="jxr_linenumber" name="L337" href="#L337">337</a>     }	
+<a class="jxr_linenumber" name="L338" href="#L338">338</a> 
+<a class="jxr_linenumber" name="L339" href="#L339">339</a> 	
+<a class="jxr_linenumber" name="L340" href="#L340">340</a> 	@Override
+<a class="jxr_linenumber" name="L341" href="#L341">341</a> 	<strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">boolean</strong> useLocalCoordinates() {
+<a class="jxr_linenumber" name="L342" href="#L342">342</a> 		<strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L343" href="#L343">343</a> 	}
+<a class="jxr_linenumber" name="L344" href="#L344">344</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

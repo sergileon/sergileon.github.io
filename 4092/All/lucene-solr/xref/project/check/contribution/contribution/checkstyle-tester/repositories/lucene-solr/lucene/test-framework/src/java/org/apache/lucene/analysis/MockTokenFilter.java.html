@@ -1,0 +1,116 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>MockTokenFilter xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.lucene.analysis;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.apache.lucene.util.automaton.Automata.makeEmpty;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.apache.lucene.util.automaton.Automata.makeString;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> java.io.IOException;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> java.util.Arrays;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.automaton.Operations;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.automaton.CharacterRunAutomaton;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <em class="jxr_javadoccomment"> * A tokenfilter for testing that removes terms accepted by a DFA.</em>
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <em class="jxr_javadoccomment"> * &lt;ul&gt;</em>
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <em class="jxr_javadoccomment"> *  &lt;li&gt;Union a list of singletons to act like a stopfilter.</em>
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <em class="jxr_javadoccomment"> *  &lt;li&gt;Use the complement to act like a keepwordfilter</em>
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <em class="jxr_javadoccomment"> *  &lt;li&gt;Use a regex like &lt;code&gt;.{12,}&lt;/code&gt; to act like a lengthfilter</em>
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <em class="jxr_javadoccomment"> * &lt;/ul&gt;</em>
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">class</strong> MockTokenFilter <strong class="jxr_keyword">extends</strong> TokenFilter {
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>    <em class="jxr_javadoccomment">/** Empty set of stopwords */</em>
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> CharacterRunAutomaton EMPTY_STOPSET =
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>      <strong class="jxr_keyword">new</strong> CharacterRunAutomaton(makeEmpty());
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>    
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>    <em class="jxr_javadoccomment">/** Set of common english stopwords */</em>
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> CharacterRunAutomaton ENGLISH_STOPSET = 
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>      <strong class="jxr_keyword">new</strong> CharacterRunAutomaton(Operations.union(Arrays.asList(
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>        makeString(<span class="jxr_string">"a"</span>), makeString(<span class="jxr_string">"an"</span>), makeString(<span class="jxr_string">"and"</span>), makeString(<span class="jxr_string">"are"</span>),
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>        makeString(<span class="jxr_string">"as"</span>), makeString(<span class="jxr_string">"at"</span>), makeString(<span class="jxr_string">"be"</span>), makeString(<span class="jxr_string">"but"</span>), 
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>        makeString(<span class="jxr_string">"by"</span>), makeString(<span class="jxr_string">"for"</span>), makeString(<span class="jxr_string">"if"</span>), makeString(<span class="jxr_string">"in"</span>), 
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>        makeString(<span class="jxr_string">"into"</span>), makeString(<span class="jxr_string">"is"</span>), makeString(<span class="jxr_string">"it"</span>), makeString(<span class="jxr_string">"no"</span>),
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>        makeString(<span class="jxr_string">"not"</span>), makeString(<span class="jxr_string">"of"</span>), makeString(<span class="jxr_string">"on"</span>), makeString(<span class="jxr_string">"or"</span>), 
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>        makeString(<span class="jxr_string">"such"</span>), makeString(<span class="jxr_string">"that"</span>), makeString(<span class="jxr_string">"the"</span>), makeString(<span class="jxr_string">"their"</span>), 
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>        makeString(<span class="jxr_string">"then"</span>), makeString(<span class="jxr_string">"there"</span>), makeString(<span class="jxr_string">"these"</span>), makeString(<span class="jxr_string">"they"</span>), 
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>        makeString(<span class="jxr_string">"this"</span>), makeString(<span class="jxr_string">"to"</span>), makeString(<span class="jxr_string">"was"</span>), makeString(<span class="jxr_string">"will"</span>), 
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>        makeString(<span class="jxr_string">"with"</span>))));
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>    
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> CharacterRunAutomaton filter;
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>  
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> CharTermAttribute termAtt = addAttribute(CharTermAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> PositionIncrementAttribute posIncrAtt = addAttribute(PositionIncrementAttribute.<strong class="jxr_keyword">class</strong>);
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">int</strong> skippedPositions;
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>  
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>    <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>  <em class="jxr_javadoccomment">   * Create a new MockTokenFilter.</em>
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>  <em class="jxr_javadoccomment">   * </em>
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>  <em class="jxr_javadoccomment">   * @param input TokenStream to filter</em>
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>  <em class="jxr_javadoccomment">   * @param filter DFA representing the terms that should be removed.</em>
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>  <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>    <strong class="jxr_keyword">public</strong> MockTokenFilter(TokenStream input, CharacterRunAutomaton filter) {
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>      <strong class="jxr_keyword">super</strong>(input);
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>      <strong class="jxr_keyword">this</strong>.filter = filter;
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>    }
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>    
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>    @Override
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> incrementToken() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>      <em class="jxr_comment">// TODO: fix me when posInc=false, to work like FilteringTokenFilter in that case and not return</em>
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>      <em class="jxr_comment">// initial token with posInc=0 ever</em>
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>      
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>      <em class="jxr_comment">// return the first non-stop word found</em>
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>      skippedPositions = 0;
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>      <strong class="jxr_keyword">while</strong> (input.incrementToken()) {
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>        <strong class="jxr_keyword">if</strong> (!filter.run(termAtt.buffer(), 0, termAtt.length())) {
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>          posIncrAtt.setPositionIncrement(posIncrAtt.getPositionIncrement() + skippedPositions);
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>          <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>        }
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>        skippedPositions += posIncrAtt.getPositionIncrement();
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>      }
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>      <em class="jxr_comment">// reached EOS -- return false</em>
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>      <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>    }
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>  
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>    @Override
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> end() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>      <strong class="jxr_keyword">super</strong>.end();
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>      posIncrAtt.setPositionIncrement(posIncrAtt.getPositionIncrement() + skippedPositions);
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>    }
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>  
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>    @Override
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> reset() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>     <strong class="jxr_keyword">super</strong>.reset();
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>     skippedPositions = 0;
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>   }
+<a class="jxr_linenumber" name="L103" href="#L103">103</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

@@ -1,0 +1,494 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>TestLithuanianStemming xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.lucene.analysis.lt;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> java.io.IOException;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.Analyzer;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.BaseTokenStreamTestCase;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.MockTokenizer;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.Tokenizer;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.snowball.SnowballFilter;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.tartarus.snowball.ext.LithuanianStemmer;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <em class="jxr_javadoccomment"> * Basic tests for {@link LithuanianStemmer}.</em>
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <em class="jxr_javadoccomment"> * We test some n/adj templates from wikipedia and some high frequency</em>
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <em class="jxr_javadoccomment"> * terms from mixed corpora.</em>
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> TestLithuanianStemming <strong class="jxr_keyword">extends</strong> BaseTokenStreamTestCase {
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>    <strong class="jxr_keyword">private</strong> Analyzer a;
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>    
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>    @Override
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> setUp() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>      <strong class="jxr_keyword">super</strong>.setUp();
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>      a = <strong class="jxr_keyword">new</strong> Analyzer() {
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>        @Override
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>        <strong class="jxr_keyword">protected</strong> TokenStreamComponents createComponents(String fieldName) {
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>          Tokenizer tokenizer = <strong class="jxr_keyword">new</strong> MockTokenizer(MockTokenizer.WHITESPACE, false);
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>          <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> TokenStreamComponents(tokenizer, <strong class="jxr_keyword">new</strong> SnowballFilter(tokenizer, <strong class="jxr_keyword">new</strong> LithuanianStemmer()));
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>        }
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>      };
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>    }
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>    
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>    @Override
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> tearDown() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>      a.close();
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>      <strong class="jxr_keyword">super</strong>.tearDown();
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>    }
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>    
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testNounsI() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>      <em class="jxr_comment">// n. decl. I (-as)</em>
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>      checkOneTerm(a, <span class="jxr_string">"vaikas"</span>,    <span class="jxr_string">"vaik"</span>); <em class="jxr_comment">// nom. sing.</em>
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>      checkOneTerm(a, <span class="jxr_string">"vaikai"</span>,    <span class="jxr_string">"vaik"</span>); <em class="jxr_comment">// nom. pl.</em>
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>      checkOneTerm(a, <span class="jxr_string">"vaiko"</span>,     <span class="jxr_string">"vaik"</span>); <em class="jxr_comment">// gen. sg.</em>
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>      checkOneTerm(a, <span class="jxr_string">"vaikų"</span>,     <span class="jxr_string">"vaik"</span>); <em class="jxr_comment">// gen. pl.</em>
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>      checkOneTerm(a, <span class="jxr_string">"vaikui"</span>,    <span class="jxr_string">"vaik"</span>); <em class="jxr_comment">// dat. sg.</em>
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>      checkOneTerm(a, <span class="jxr_string">"vaikams"</span>,   <span class="jxr_string">"vaik"</span>); <em class="jxr_comment">// dat. pl.</em>
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>      checkOneTerm(a, <span class="jxr_string">"vaiką"</span>,     <span class="jxr_string">"vaik"</span>); <em class="jxr_comment">// acc. sg.</em>
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>      checkOneTerm(a, <span class="jxr_string">"vaikus"</span>,    <span class="jxr_string">"vaik"</span>); <em class="jxr_comment">// acc. pl.</em>
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>      checkOneTerm(a, <span class="jxr_string">"vaiku"</span>,     <span class="jxr_string">"vaik"</span>); <em class="jxr_comment">// ins. sg.</em>
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>      checkOneTerm(a, <span class="jxr_string">"vaikais"</span>,   <span class="jxr_string">"vaik"</span>); <em class="jxr_comment">// ins. pl.</em>
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>      checkOneTerm(a, <span class="jxr_string">"vaike"</span>,     <span class="jxr_string">"vaik"</span>); <em class="jxr_comment">// loc. sg.</em>
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>      checkOneTerm(a, <span class="jxr_string">"vaikuose"</span>,  <span class="jxr_string">"vaik"</span>); <em class="jxr_comment">// loc. pl.</em>
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>      checkOneTerm(a, <span class="jxr_string">"vaike"</span>,     <span class="jxr_string">"vaik"</span>); <em class="jxr_comment">// voc. sg.</em>
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>      checkOneTerm(a, <span class="jxr_string">"vaikai"</span>,    <span class="jxr_string">"vaik"</span>); <em class="jxr_comment">// voc. pl.</em>
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>      
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>      <em class="jxr_comment">// n. decl. I (-is)</em>
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>      checkOneTerm(a, <span class="jxr_string">"brolis"</span>,    <span class="jxr_string">"brol"</span>); <em class="jxr_comment">// nom. sing.</em>
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>      checkOneTerm(a, <span class="jxr_string">"broliai"</span>,   <span class="jxr_string">"brol"</span>); <em class="jxr_comment">// nom. pl.</em>
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>      checkOneTerm(a, <span class="jxr_string">"brolio"</span>,    <span class="jxr_string">"brol"</span>); <em class="jxr_comment">// gen. sg.</em>
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>      checkOneTerm(a, <span class="jxr_string">"brolių"</span>,    <span class="jxr_string">"brol"</span>); <em class="jxr_comment">// gen. pl.</em>
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>      checkOneTerm(a, <span class="jxr_string">"broliui"</span>,   <span class="jxr_string">"brol"</span>); <em class="jxr_comment">// dat. sg.</em>
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>      checkOneTerm(a, <span class="jxr_string">"broliams"</span>,  <span class="jxr_string">"brol"</span>); <em class="jxr_comment">// dat. pl.</em>
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>      checkOneTerm(a, <span class="jxr_string">"brolį"</span>,     <span class="jxr_string">"brol"</span>); <em class="jxr_comment">// acc. sg.</em>
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>      checkOneTerm(a, <span class="jxr_string">"brolius"</span>,   <span class="jxr_string">"brol"</span>); <em class="jxr_comment">// acc. pl.</em>
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>      checkOneTerm(a, <span class="jxr_string">"broliu"</span>,    <span class="jxr_string">"brol"</span>); <em class="jxr_comment">// ins. sg.</em>
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>      checkOneTerm(a, <span class="jxr_string">"broliais"</span>,  <span class="jxr_string">"brol"</span>); <em class="jxr_comment">// ins. pl.</em>
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>      checkOneTerm(a, <span class="jxr_string">"brolyje"</span>,   <span class="jxr_string">"brol"</span>); <em class="jxr_comment">// loc. sg.</em>
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>      checkOneTerm(a, <span class="jxr_string">"broliuose"</span>, <span class="jxr_string">"brol"</span>); <em class="jxr_comment">// loc. pl.</em>
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>      checkOneTerm(a, <span class="jxr_string">"broli"</span>,     <span class="jxr_string">"brol"</span>); <em class="jxr_comment">// voc. sg.</em>
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>      checkOneTerm(a, <span class="jxr_string">"broliai"</span>,   <span class="jxr_string">"brol"</span>); <em class="jxr_comment">// voc. pl.</em>
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>      
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>      <em class="jxr_comment">// n. decl. I (-ys)</em>
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>      <em class="jxr_comment">// note: some forms don't conflate</em>
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>      checkOneTerm(a, <span class="jxr_string">"arklys"</span>,    <span class="jxr_string">"arkl"</span>);     <em class="jxr_comment">// nom. sing.</em>
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>      checkOneTerm(a, <span class="jxr_string">"arkliai"</span>,   <span class="jxr_string">"arkliai"</span>);  <em class="jxr_comment">// nom. pl.</em>
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>      checkOneTerm(a, <span class="jxr_string">"arklio"</span>,    <span class="jxr_string">"arkl"</span>);     <em class="jxr_comment">// gen. sg.</em>
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>      checkOneTerm(a, <span class="jxr_string">"arklių"</span>,    <span class="jxr_string">"arkl"</span>);     <em class="jxr_comment">// gen. pl.</em>
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>      checkOneTerm(a, <span class="jxr_string">"arkliui"</span>,   <span class="jxr_string">"arkliui"</span>);  <em class="jxr_comment">// dat. sg.</em>
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>      checkOneTerm(a, <span class="jxr_string">"arkliams"</span>,  <span class="jxr_string">"arkliam"</span>);  <em class="jxr_comment">// dat. pl.</em>
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>      checkOneTerm(a, <span class="jxr_string">"arklį"</span>,     <span class="jxr_string">"arkl"</span>);     <em class="jxr_comment">// acc. sg.</em>
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>      checkOneTerm(a, <span class="jxr_string">"arklius"</span>,   <span class="jxr_string">"arklius"</span>);  <em class="jxr_comment">// acc. pl.</em>
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>      checkOneTerm(a, <span class="jxr_string">"arkliu"</span>,    <span class="jxr_string">"arkl"</span>);     <em class="jxr_comment">// ins. sg.</em>
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>      checkOneTerm(a, <span class="jxr_string">"arkliais"</span>,  <span class="jxr_string">"arkliais"</span>); <em class="jxr_comment">// ins. pl.</em>
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>     checkOneTerm(a, <span class="jxr_string">"arklyje"</span>,   <span class="jxr_string">"arklyj"</span>);   <em class="jxr_comment">// loc. sg.</em>
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>     checkOneTerm(a, <span class="jxr_string">"arkliuose"</span>, <span class="jxr_string">"arkliuos"</span>); <em class="jxr_comment">// loc. pl.</em>
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>     checkOneTerm(a, <span class="jxr_string">"arkly"</span>,     <span class="jxr_string">"arkl"</span>);     <em class="jxr_comment">// voc. sg.</em>
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>     checkOneTerm(a, <span class="jxr_string">"arkliai"</span>,   <span class="jxr_string">"arkliai"</span>);  <em class="jxr_comment">// voc. pl.</em>
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>   }
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>   
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testNounsII() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>     <em class="jxr_comment">// n. decl II (-a)</em>
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>     checkOneTerm(a, <span class="jxr_string">"motina"</span>,    <span class="jxr_string">"motin"</span>); <em class="jxr_comment">// nom. sing.</em>
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>     checkOneTerm(a, <span class="jxr_string">"motinos"</span>,   <span class="jxr_string">"motin"</span>); <em class="jxr_comment">// nom. pl.</em>
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>     checkOneTerm(a, <span class="jxr_string">"motinos"</span>,   <span class="jxr_string">"motin"</span>); <em class="jxr_comment">// gen. sg.</em>
+<a class="jxr_linenumber" name="L111" href="#L111">111</a>     checkOneTerm(a, <span class="jxr_string">"motinų"</span>,    <span class="jxr_string">"motin"</span>); <em class="jxr_comment">// gen. pl.</em>
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>     checkOneTerm(a, <span class="jxr_string">"motinai"</span>,   <span class="jxr_string">"motin"</span>); <em class="jxr_comment">// dat. sg.</em>
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>     checkOneTerm(a, <span class="jxr_string">"motinoms"</span>,  <span class="jxr_string">"motin"</span>); <em class="jxr_comment">// dat. pl.</em>
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>     checkOneTerm(a, <span class="jxr_string">"motiną"</span>,    <span class="jxr_string">"motin"</span>); <em class="jxr_comment">// acc. sg.</em>
+<a class="jxr_linenumber" name="L115" href="#L115">115</a>     checkOneTerm(a, <span class="jxr_string">"motinas"</span>,   <span class="jxr_string">"motin"</span>); <em class="jxr_comment">// acc. pl.</em>
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>     checkOneTerm(a, <span class="jxr_string">"motina"</span>,    <span class="jxr_string">"motin"</span>); <em class="jxr_comment">// ins. sg.</em>
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>     checkOneTerm(a, <span class="jxr_string">"motinomis"</span>, <span class="jxr_string">"motin"</span>); <em class="jxr_comment">// ins. pl.</em>
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>     checkOneTerm(a, <span class="jxr_string">"motinoje"</span>,  <span class="jxr_string">"motin"</span>); <em class="jxr_comment">// loc. sg.</em>
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>     checkOneTerm(a, <span class="jxr_string">"motinose"</span>,  <span class="jxr_string">"motin"</span>); <em class="jxr_comment">// loc. pl.</em>
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>     checkOneTerm(a, <span class="jxr_string">"motina"</span>,    <span class="jxr_string">"motin"</span>); <em class="jxr_comment">// voc. sg.</em>
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>     checkOneTerm(a, <span class="jxr_string">"motinos"</span>,   <span class="jxr_string">"motin"</span>); <em class="jxr_comment">// voc. pl.</em>
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>     
+<a class="jxr_linenumber" name="L123" href="#L123">123</a>     <em class="jxr_comment">// n. decl II (-ė)</em>
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>     checkOneTerm(a, <span class="jxr_string">"katė"</span>,    <span class="jxr_string">"kat"</span>); <em class="jxr_comment">// nom. sing.</em>
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>     checkOneTerm(a, <span class="jxr_string">"katės"</span>,   <span class="jxr_string">"kat"</span>); <em class="jxr_comment">// nom. pl.</em>
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>     checkOneTerm(a, <span class="jxr_string">"katės"</span>,   <span class="jxr_string">"kat"</span>); <em class="jxr_comment">// gen. sg.</em>
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>     checkOneTerm(a, <span class="jxr_string">"kačių"</span>,   <span class="jxr_string">"kat"</span>); <em class="jxr_comment">// gen. pl.</em>
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>     checkOneTerm(a, <span class="jxr_string">"katei"</span>,   <span class="jxr_string">"kat"</span>); <em class="jxr_comment">// dat. sg.</em>
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>     checkOneTerm(a, <span class="jxr_string">"katėms"</span>,  <span class="jxr_string">"kat"</span>); <em class="jxr_comment">// dat. pl.</em>
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>     checkOneTerm(a, <span class="jxr_string">"katę"</span>,    <span class="jxr_string">"kat"</span>); <em class="jxr_comment">// acc. sg.</em>
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>     checkOneTerm(a, <span class="jxr_string">"kates"</span>,   <span class="jxr_string">"kat"</span>); <em class="jxr_comment">// acc. pl.</em>
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>     checkOneTerm(a, <span class="jxr_string">"kate"</span>,    <span class="jxr_string">"kat"</span>); <em class="jxr_comment">// ins. sg.</em>
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>     checkOneTerm(a, <span class="jxr_string">"katėmis"</span>, <span class="jxr_string">"kat"</span>); <em class="jxr_comment">// ins. pl.</em>
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>     checkOneTerm(a, <span class="jxr_string">"katėje"</span>,  <span class="jxr_string">"kat"</span>); <em class="jxr_comment">// loc. sg.</em>
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>     checkOneTerm(a, <span class="jxr_string">"katėse"</span>,  <span class="jxr_string">"kat"</span>); <em class="jxr_comment">// loc. pl.</em>
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>     checkOneTerm(a, <span class="jxr_string">"kate"</span>,    <span class="jxr_string">"kat"</span>); <em class="jxr_comment">// voc. sg.</em>
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>     checkOneTerm(a, <span class="jxr_string">"katės"</span>,   <span class="jxr_string">"kat"</span>); <em class="jxr_comment">// voc. pl.</em>
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>     
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>     <em class="jxr_comment">// n. decl II (-ti)</em>
+<a class="jxr_linenumber" name="L140" href="#L140">140</a>     checkOneTerm(a, <span class="jxr_string">"pati"</span>,     <span class="jxr_string">"pat"</span>); <em class="jxr_comment">// nom. sing.</em>
+<a class="jxr_linenumber" name="L141" href="#L141">141</a>     checkOneTerm(a, <span class="jxr_string">"pačios"</span>,   <span class="jxr_string">"pat"</span>); <em class="jxr_comment">// nom. pl.</em>
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>     checkOneTerm(a, <span class="jxr_string">"pačios"</span>,   <span class="jxr_string">"pat"</span>); <em class="jxr_comment">// gen. sg.</em>
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>     checkOneTerm(a, <span class="jxr_string">"pačių"</span>,    <span class="jxr_string">"pat"</span>); <em class="jxr_comment">// gen. pl.</em>
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>     checkOneTerm(a, <span class="jxr_string">"pačiai"</span>,   <span class="jxr_string">"pat"</span>); <em class="jxr_comment">// dat. sg.</em>
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>     checkOneTerm(a, <span class="jxr_string">"pačioms"</span>,  <span class="jxr_string">"pat"</span>); <em class="jxr_comment">// dat. pl.</em>
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>     checkOneTerm(a, <span class="jxr_string">"pačią"</span>,    <span class="jxr_string">"pat"</span>); <em class="jxr_comment">// acc. sg.</em>
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>     checkOneTerm(a, <span class="jxr_string">"pačias"</span>,   <span class="jxr_string">"pat"</span>); <em class="jxr_comment">// acc. pl.</em>
+<a class="jxr_linenumber" name="L148" href="#L148">148</a>     checkOneTerm(a, <span class="jxr_string">"pačia"</span>,    <span class="jxr_string">"pat"</span>); <em class="jxr_comment">// ins. sg.</em>
+<a class="jxr_linenumber" name="L149" href="#L149">149</a>     checkOneTerm(a, <span class="jxr_string">"pačiomis"</span>, <span class="jxr_string">"pat"</span>); <em class="jxr_comment">// ins. pl.</em>
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>     checkOneTerm(a, <span class="jxr_string">"pačioje"</span>,  <span class="jxr_string">"pat"</span>); <em class="jxr_comment">// loc. sg.</em>
+<a class="jxr_linenumber" name="L151" href="#L151">151</a>     checkOneTerm(a, <span class="jxr_string">"pačiose"</span>,  <span class="jxr_string">"pat"</span>); <em class="jxr_comment">// loc. pl.</em>
+<a class="jxr_linenumber" name="L152" href="#L152">152</a>     checkOneTerm(a, <span class="jxr_string">"pati"</span>,     <span class="jxr_string">"pat"</span>); <em class="jxr_comment">// voc. sg.</em>
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>     checkOneTerm(a, <span class="jxr_string">"pačios"</span>,   <span class="jxr_string">"pat"</span>); <em class="jxr_comment">// voc. pl.</em>
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>   }
+<a class="jxr_linenumber" name="L155" href="#L155">155</a>   
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testNounsIII() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L157" href="#L157">157</a>     <em class="jxr_comment">// n. decl III-m</em>
+<a class="jxr_linenumber" name="L158" href="#L158">158</a>     checkOneTerm(a, <span class="jxr_string">"vagis"</span>,   <span class="jxr_string">"vag"</span>); <em class="jxr_comment">// nom. sing.</em>
+<a class="jxr_linenumber" name="L159" href="#L159">159</a>     checkOneTerm(a, <span class="jxr_string">"vagys"</span>,   <span class="jxr_string">"vag"</span>); <em class="jxr_comment">// nom. pl.</em>
+<a class="jxr_linenumber" name="L160" href="#L160">160</a>     checkOneTerm(a, <span class="jxr_string">"vagies"</span>,  <span class="jxr_string">"vag"</span>); <em class="jxr_comment">// gen. sg.</em>
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>     checkOneTerm(a, <span class="jxr_string">"vagių"</span>,   <span class="jxr_string">"vag"</span>); <em class="jxr_comment">// gen. pl.</em>
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>     checkOneTerm(a, <span class="jxr_string">"vagiui"</span>,  <span class="jxr_string">"vag"</span>); <em class="jxr_comment">// dat. sg.</em>
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>     checkOneTerm(a, <span class="jxr_string">"vagims"</span>,  <span class="jxr_string">"vag"</span>); <em class="jxr_comment">// dat. pl.</em>
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>     checkOneTerm(a, <span class="jxr_string">"vagį"</span>,    <span class="jxr_string">"vag"</span>); <em class="jxr_comment">// acc. sg.</em>
+<a class="jxr_linenumber" name="L165" href="#L165">165</a>     checkOneTerm(a, <span class="jxr_string">"vagis"</span>,   <span class="jxr_string">"vag"</span>); <em class="jxr_comment">// acc. pl.</em>
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>     checkOneTerm(a, <span class="jxr_string">"vagimi"</span>,  <span class="jxr_string">"vag"</span>); <em class="jxr_comment">// ins. sg.</em>
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>     checkOneTerm(a, <span class="jxr_string">"vagimis"</span>, <span class="jxr_string">"vag"</span>); <em class="jxr_comment">// ins. pl.</em>
+<a class="jxr_linenumber" name="L168" href="#L168">168</a>     checkOneTerm(a, <span class="jxr_string">"vagyje"</span>,  <span class="jxr_string">"vag"</span>); <em class="jxr_comment">// loc. sg.</em>
+<a class="jxr_linenumber" name="L169" href="#L169">169</a>     checkOneTerm(a, <span class="jxr_string">"vagyse"</span>,  <span class="jxr_string">"vag"</span>); <em class="jxr_comment">// loc. pl.</em>
+<a class="jxr_linenumber" name="L170" href="#L170">170</a>     checkOneTerm(a, <span class="jxr_string">"vagie"</span>,   <span class="jxr_string">"vag"</span>); <em class="jxr_comment">// voc. sg.</em>
+<a class="jxr_linenumber" name="L171" href="#L171">171</a>     checkOneTerm(a, <span class="jxr_string">"vagys"</span>,   <span class="jxr_string">"vag"</span>); <em class="jxr_comment">// voc. pl.</em>
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>     
+<a class="jxr_linenumber" name="L173" href="#L173">173</a>     <em class="jxr_comment">// n. decl III-f</em>
+<a class="jxr_linenumber" name="L174" href="#L174">174</a>     checkOneTerm(a, <span class="jxr_string">"akis"</span>,   <span class="jxr_string">"ak"</span>); <em class="jxr_comment">// nom. sing.</em>
+<a class="jxr_linenumber" name="L175" href="#L175">175</a>     checkOneTerm(a, <span class="jxr_string">"akys"</span>,   <span class="jxr_string">"ak"</span>); <em class="jxr_comment">// nom. pl.</em>
+<a class="jxr_linenumber" name="L176" href="#L176">176</a>     checkOneTerm(a, <span class="jxr_string">"akies"</span>,  <span class="jxr_string">"ak"</span>); <em class="jxr_comment">// gen. sg.</em>
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>     checkOneTerm(a, <span class="jxr_string">"akių"</span>,   <span class="jxr_string">"ak"</span>); <em class="jxr_comment">// gen. pl.</em>
+<a class="jxr_linenumber" name="L178" href="#L178">178</a>     checkOneTerm(a, <span class="jxr_string">"akiai"</span>,  <span class="jxr_string">"ak"</span>); <em class="jxr_comment">// dat. sg.</em>
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>     checkOneTerm(a, <span class="jxr_string">"akims"</span>,  <span class="jxr_string">"ak"</span>); <em class="jxr_comment">// dat. pl.</em>
+<a class="jxr_linenumber" name="L180" href="#L180">180</a>     checkOneTerm(a, <span class="jxr_string">"akį"</span>,    <span class="jxr_string">"ak"</span>); <em class="jxr_comment">// acc. sg.</em>
+<a class="jxr_linenumber" name="L181" href="#L181">181</a>     checkOneTerm(a, <span class="jxr_string">"akis"</span>,   <span class="jxr_string">"ak"</span>); <em class="jxr_comment">// acc. pl.</em>
+<a class="jxr_linenumber" name="L182" href="#L182">182</a>     checkOneTerm(a, <span class="jxr_string">"akimi"</span>,  <span class="jxr_string">"ak"</span>); <em class="jxr_comment">// ins. sg.</em>
+<a class="jxr_linenumber" name="L183" href="#L183">183</a>     checkOneTerm(a, <span class="jxr_string">"akimis"</span>, <span class="jxr_string">"ak"</span>); <em class="jxr_comment">// ins. pl.</em>
+<a class="jxr_linenumber" name="L184" href="#L184">184</a>     checkOneTerm(a, <span class="jxr_string">"akyje"</span>,  <span class="jxr_string">"ak"</span>); <em class="jxr_comment">// loc. sg.</em>
+<a class="jxr_linenumber" name="L185" href="#L185">185</a>     checkOneTerm(a, <span class="jxr_string">"akyse"</span>,  <span class="jxr_string">"ak"</span>); <em class="jxr_comment">// loc. pl.</em>
+<a class="jxr_linenumber" name="L186" href="#L186">186</a>     checkOneTerm(a, <span class="jxr_string">"akie"</span>,   <span class="jxr_string">"ak"</span>); <em class="jxr_comment">// voc. sg.</em>
+<a class="jxr_linenumber" name="L187" href="#L187">187</a>     checkOneTerm(a, <span class="jxr_string">"akys"</span>,   <span class="jxr_string">"ak"</span>); <em class="jxr_comment">// voc. pl.</em>
+<a class="jxr_linenumber" name="L188" href="#L188">188</a>   }
+<a class="jxr_linenumber" name="L189" href="#L189">189</a>    
+<a class="jxr_linenumber" name="L190" href="#L190">190</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testNounsIV() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L191" href="#L191">191</a>     <em class="jxr_comment">// n. decl IV (-us)</em>
+<a class="jxr_linenumber" name="L192" href="#L192">192</a>     checkOneTerm(a, <span class="jxr_string">"sūnus"</span>,   <span class="jxr_string">"sūn"</span>); <em class="jxr_comment">// nom. sing.</em>
+<a class="jxr_linenumber" name="L193" href="#L193">193</a>     checkOneTerm(a, <span class="jxr_string">"sūnūs"</span>,   <span class="jxr_string">"sūn"</span>); <em class="jxr_comment">// nom. pl.</em>
+<a class="jxr_linenumber" name="L194" href="#L194">194</a>     checkOneTerm(a, <span class="jxr_string">"sūnaus"</span>,  <span class="jxr_string">"sūn"</span>); <em class="jxr_comment">// gen. sg.</em>
+<a class="jxr_linenumber" name="L195" href="#L195">195</a>     checkOneTerm(a, <span class="jxr_string">"sūnų"</span>,    <span class="jxr_string">"sūn"</span>); <em class="jxr_comment">// gen. pl.</em>
+<a class="jxr_linenumber" name="L196" href="#L196">196</a>     checkOneTerm(a, <span class="jxr_string">"sūnui"</span>,   <span class="jxr_string">"sūn"</span>); <em class="jxr_comment">// dat. sg.</em>
+<a class="jxr_linenumber" name="L197" href="#L197">197</a>     checkOneTerm(a, <span class="jxr_string">"sūnums"</span>,  <span class="jxr_string">"sūn"</span>); <em class="jxr_comment">// dat. pl.</em>
+<a class="jxr_linenumber" name="L198" href="#L198">198</a>     checkOneTerm(a, <span class="jxr_string">"sūnų"</span>,    <span class="jxr_string">"sūn"</span>); <em class="jxr_comment">// acc. sg.</em>
+<a class="jxr_linenumber" name="L199" href="#L199">199</a>     checkOneTerm(a, <span class="jxr_string">"sūnus"</span>,   <span class="jxr_string">"sūn"</span>); <em class="jxr_comment">// acc. pl.</em>
+<a class="jxr_linenumber" name="L200" href="#L200">200</a>     checkOneTerm(a, <span class="jxr_string">"sūnumi"</span>,  <span class="jxr_string">"sūn"</span>); <em class="jxr_comment">// ins. sg.</em>
+<a class="jxr_linenumber" name="L201" href="#L201">201</a>     checkOneTerm(a, <span class="jxr_string">"sūnumis"</span>, <span class="jxr_string">"sūn"</span>); <em class="jxr_comment">// ins. pl.</em>
+<a class="jxr_linenumber" name="L202" href="#L202">202</a>     checkOneTerm(a, <span class="jxr_string">"sūnuje"</span>,  <span class="jxr_string">"sūn"</span>); <em class="jxr_comment">// loc. sg.</em>
+<a class="jxr_linenumber" name="L203" href="#L203">203</a>     checkOneTerm(a, <span class="jxr_string">"sūnuose"</span>, <span class="jxr_string">"sūn"</span>); <em class="jxr_comment">// loc. pl.</em>
+<a class="jxr_linenumber" name="L204" href="#L204">204</a>     checkOneTerm(a, <span class="jxr_string">"sūnau"</span>,   <span class="jxr_string">"sūn"</span>); <em class="jxr_comment">// voc. sg.</em>
+<a class="jxr_linenumber" name="L205" href="#L205">205</a>     checkOneTerm(a, <span class="jxr_string">"sūnūs"</span>,   <span class="jxr_string">"sūn"</span>); <em class="jxr_comment">// voc. pl.</em>
+<a class="jxr_linenumber" name="L206" href="#L206">206</a>     
+<a class="jxr_linenumber" name="L207" href="#L207">207</a>     <em class="jxr_comment">// n. decl IV (-ius)</em>
+<a class="jxr_linenumber" name="L208" href="#L208">208</a>     checkOneTerm(a, <span class="jxr_string">"profesorius"</span>,   <span class="jxr_string">"profesor"</span>); <em class="jxr_comment">// nom. sing.</em>
+<a class="jxr_linenumber" name="L209" href="#L209">209</a>     checkOneTerm(a, <span class="jxr_string">"profesoriai"</span>,   <span class="jxr_string">"profesor"</span>); <em class="jxr_comment">// nom. pl.</em>
+<a class="jxr_linenumber" name="L210" href="#L210">210</a>     checkOneTerm(a, <span class="jxr_string">"profesoriaus"</span>,  <span class="jxr_string">"profesor"</span>); <em class="jxr_comment">// gen. sg.</em>
+<a class="jxr_linenumber" name="L211" href="#L211">211</a>     checkOneTerm(a, <span class="jxr_string">"profesorių"</span>,    <span class="jxr_string">"profesor"</span>); <em class="jxr_comment">// gen. pl.</em>
+<a class="jxr_linenumber" name="L212" href="#L212">212</a>     checkOneTerm(a, <span class="jxr_string">"profesoriui"</span>,   <span class="jxr_string">"profesor"</span>); <em class="jxr_comment">// dat. sg.</em>
+<a class="jxr_linenumber" name="L213" href="#L213">213</a>     checkOneTerm(a, <span class="jxr_string">"profesoriams"</span>,  <span class="jxr_string">"profesor"</span>); <em class="jxr_comment">// dat. pl.</em>
+<a class="jxr_linenumber" name="L214" href="#L214">214</a>     checkOneTerm(a, <span class="jxr_string">"profesorių"</span>,    <span class="jxr_string">"profesor"</span>); <em class="jxr_comment">// acc. sg.</em>
+<a class="jxr_linenumber" name="L215" href="#L215">215</a>     checkOneTerm(a, <span class="jxr_string">"profesorius"</span>,   <span class="jxr_string">"profesor"</span>); <em class="jxr_comment">// acc. pl.</em>
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>     checkOneTerm(a, <span class="jxr_string">"profesoriumi"</span>,  <span class="jxr_string">"profesor"</span>); <em class="jxr_comment">// ins. sg.</em>
+<a class="jxr_linenumber" name="L217" href="#L217">217</a>     checkOneTerm(a, <span class="jxr_string">"profesoriais"</span>,  <span class="jxr_string">"profesor"</span>); <em class="jxr_comment">// ins. pl.</em>
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>     checkOneTerm(a, <span class="jxr_string">"profesoriuje"</span>,  <span class="jxr_string">"profesor"</span>); <em class="jxr_comment">// loc. sg.</em>
+<a class="jxr_linenumber" name="L219" href="#L219">219</a>     checkOneTerm(a, <span class="jxr_string">"profesoriuose"</span>, <span class="jxr_string">"profesor"</span>); <em class="jxr_comment">// loc. pl.</em>
+<a class="jxr_linenumber" name="L220" href="#L220">220</a>     checkOneTerm(a, <span class="jxr_string">"profesoriau"</span>,   <span class="jxr_string">"profesor"</span>); <em class="jxr_comment">// voc. sg.</em>
+<a class="jxr_linenumber" name="L221" href="#L221">221</a>     checkOneTerm(a, <span class="jxr_string">"profesoriai"</span>,   <span class="jxr_string">"profesor"</span>); <em class="jxr_comment">// voc. pl.</em>
+<a class="jxr_linenumber" name="L222" href="#L222">222</a>   }
+<a class="jxr_linenumber" name="L223" href="#L223">223</a>   
+<a class="jxr_linenumber" name="L224" href="#L224">224</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testNounsV() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L225" href="#L225">225</a>     <em class="jxr_comment">// n. decl V</em>
+<a class="jxr_linenumber" name="L226" href="#L226">226</a>     <em class="jxr_comment">// note: gen.pl. doesn't conflate</em>
+<a class="jxr_linenumber" name="L227" href="#L227">227</a>     checkOneTerm(a, <span class="jxr_string">"vanduo"</span>,     <span class="jxr_string">"vand"</span>);   <em class="jxr_comment">// nom. sing.</em>
+<a class="jxr_linenumber" name="L228" href="#L228">228</a>     checkOneTerm(a, <span class="jxr_string">"vandenys"</span>,   <span class="jxr_string">"vand"</span>);   <em class="jxr_comment">// nom. pl.</em>
+<a class="jxr_linenumber" name="L229" href="#L229">229</a>     checkOneTerm(a, <span class="jxr_string">"vandens"</span>,    <span class="jxr_string">"vand"</span>);   <em class="jxr_comment">// gen. sg.</em>
+<a class="jxr_linenumber" name="L230" href="#L230">230</a>     checkOneTerm(a, <span class="jxr_string">"vandenų"</span>,    <span class="jxr_string">"vanden"</span>); <em class="jxr_comment">// gen. pl.</em>
+<a class="jxr_linenumber" name="L231" href="#L231">231</a>     checkOneTerm(a, <span class="jxr_string">"vandeniui"</span>,  <span class="jxr_string">"vand"</span>);   <em class="jxr_comment">// dat. sg.</em>
+<a class="jxr_linenumber" name="L232" href="#L232">232</a>     checkOneTerm(a, <span class="jxr_string">"vandenims"</span>,  <span class="jxr_string">"vand"</span>);   <em class="jxr_comment">// dat. pl.</em>
+<a class="jxr_linenumber" name="L233" href="#L233">233</a>     checkOneTerm(a, <span class="jxr_string">"vandenį"</span>,    <span class="jxr_string">"vand"</span>);   <em class="jxr_comment">// acc. sg.</em>
+<a class="jxr_linenumber" name="L234" href="#L234">234</a>     checkOneTerm(a, <span class="jxr_string">"vandenis"</span>,   <span class="jxr_string">"vand"</span>);   <em class="jxr_comment">// acc. pl.</em>
+<a class="jxr_linenumber" name="L235" href="#L235">235</a>     checkOneTerm(a, <span class="jxr_string">"vandeniu"</span>,   <span class="jxr_string">"vand"</span>);   <em class="jxr_comment">// ins. sg.</em>
+<a class="jxr_linenumber" name="L236" href="#L236">236</a>     checkOneTerm(a, <span class="jxr_string">"vandenimis"</span>, <span class="jxr_string">"vand"</span>);   <em class="jxr_comment">// ins. pl.</em>
+<a class="jxr_linenumber" name="L237" href="#L237">237</a>     checkOneTerm(a, <span class="jxr_string">"vandenyje"</span>,  <span class="jxr_string">"vand"</span>);   <em class="jxr_comment">// loc. sg.</em>
+<a class="jxr_linenumber" name="L238" href="#L238">238</a>     checkOneTerm(a, <span class="jxr_string">"vandenyse"</span>,  <span class="jxr_string">"vand"</span>);   <em class="jxr_comment">// loc. pl.</em>
+<a class="jxr_linenumber" name="L239" href="#L239">239</a>     checkOneTerm(a, <span class="jxr_string">"vandenie"</span>,   <span class="jxr_string">"vand"</span>);   <em class="jxr_comment">// voc. sg.</em>
+<a class="jxr_linenumber" name="L240" href="#L240">240</a>     checkOneTerm(a, <span class="jxr_string">"vandenys"</span>,   <span class="jxr_string">"vand"</span>);   <em class="jxr_comment">// voc. pl.</em>
+<a class="jxr_linenumber" name="L241" href="#L241">241</a>   }
+<a class="jxr_linenumber" name="L242" href="#L242">242</a>   
+<a class="jxr_linenumber" name="L243" href="#L243">243</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testAdjI() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L244" href="#L244">244</a>     <em class="jxr_comment">// adj. decl I</em>
+<a class="jxr_linenumber" name="L245" href="#L245">245</a>     checkOneTerm(a, <span class="jxr_string">"geras"</span>,   <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// m. nom. sing.</em>
+<a class="jxr_linenumber" name="L246" href="#L246">246</a>     checkOneTerm(a, <span class="jxr_string">"geri"</span>,    <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// m. nom. pl.</em>
+<a class="jxr_linenumber" name="L247" href="#L247">247</a>     checkOneTerm(a, <span class="jxr_string">"gero"</span>,    <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// m. gen. sg.</em>
+<a class="jxr_linenumber" name="L248" href="#L248">248</a>     checkOneTerm(a, <span class="jxr_string">"gerų"</span>,    <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// m. gen. pl.</em>
+<a class="jxr_linenumber" name="L249" href="#L249">249</a>     checkOneTerm(a, <span class="jxr_string">"geram"</span>,   <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// m. dat. sg.</em>
+<a class="jxr_linenumber" name="L250" href="#L250">250</a>     checkOneTerm(a, <span class="jxr_string">"geriems"</span>, <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// m. dat. pl.</em>
+<a class="jxr_linenumber" name="L251" href="#L251">251</a>     checkOneTerm(a, <span class="jxr_string">"gerą"</span>,    <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// m. acc. sg.</em>
+<a class="jxr_linenumber" name="L252" href="#L252">252</a>     checkOneTerm(a, <span class="jxr_string">"gerus"</span>,   <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// m. acc. pl.</em>
+<a class="jxr_linenumber" name="L253" href="#L253">253</a>     checkOneTerm(a, <span class="jxr_string">"geru"</span>,    <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// m. ins. sg.</em>
+<a class="jxr_linenumber" name="L254" href="#L254">254</a>     checkOneTerm(a, <span class="jxr_string">"gerais"</span>,  <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// m. ins. pl.</em>
+<a class="jxr_linenumber" name="L255" href="#L255">255</a>     checkOneTerm(a, <span class="jxr_string">"gerame"</span>,  <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// m. loc. sg.</em>
+<a class="jxr_linenumber" name="L256" href="#L256">256</a>     checkOneTerm(a, <span class="jxr_string">"geruose"</span>, <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// m. loc. pl.</em>
+<a class="jxr_linenumber" name="L257" href="#L257">257</a> 
+<a class="jxr_linenumber" name="L258" href="#L258">258</a>     checkOneTerm(a, <span class="jxr_string">"gera"</span>,    <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// f. nom. sing.</em>
+<a class="jxr_linenumber" name="L259" href="#L259">259</a>     checkOneTerm(a, <span class="jxr_string">"geros"</span>,   <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// f. nom. pl.</em>
+<a class="jxr_linenumber" name="L260" href="#L260">260</a>     checkOneTerm(a, <span class="jxr_string">"geros"</span>,   <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// f. gen. sg.</em>
+<a class="jxr_linenumber" name="L261" href="#L261">261</a>     checkOneTerm(a, <span class="jxr_string">"gerų"</span>,    <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// f. gen. pl.</em>
+<a class="jxr_linenumber" name="L262" href="#L262">262</a>     checkOneTerm(a, <span class="jxr_string">"gerai"</span>,   <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// f. dat. sg.</em>
+<a class="jxr_linenumber" name="L263" href="#L263">263</a>     checkOneTerm(a, <span class="jxr_string">"geroms"</span>,  <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// f. dat. pl.</em>
+<a class="jxr_linenumber" name="L264" href="#L264">264</a>     checkOneTerm(a, <span class="jxr_string">"gerą"</span>,    <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// f. acc. sg.</em>
+<a class="jxr_linenumber" name="L265" href="#L265">265</a>     checkOneTerm(a, <span class="jxr_string">"geras"</span>,   <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// f. acc. pl.</em>
+<a class="jxr_linenumber" name="L266" href="#L266">266</a>     checkOneTerm(a, <span class="jxr_string">"gera"</span>,    <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// f. ins. sg.</em>
+<a class="jxr_linenumber" name="L267" href="#L267">267</a>     checkOneTerm(a, <span class="jxr_string">"geromis"</span>, <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// f. ins. pl.</em>
+<a class="jxr_linenumber" name="L268" href="#L268">268</a>     checkOneTerm(a, <span class="jxr_string">"geroje"</span>,  <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// f. loc. sg.</em>
+<a class="jxr_linenumber" name="L269" href="#L269">269</a>     checkOneTerm(a, <span class="jxr_string">"gerose"</span>,  <span class="jxr_string">"ger"</span>); <em class="jxr_comment">// f. loc. pl.</em>
+<a class="jxr_linenumber" name="L270" href="#L270">270</a>   }
+<a class="jxr_linenumber" name="L271" href="#L271">271</a>   
+<a class="jxr_linenumber" name="L272" href="#L272">272</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testAdjII() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L273" href="#L273">273</a>     <em class="jxr_comment">// adj. decl II</em>
+<a class="jxr_linenumber" name="L274" href="#L274">274</a>     checkOneTerm(a, <span class="jxr_string">"gražus"</span>,    <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// m. nom. sing.</em>
+<a class="jxr_linenumber" name="L275" href="#L275">275</a>     checkOneTerm(a, <span class="jxr_string">"gražūs"</span>,    <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// m. nom. pl.</em>
+<a class="jxr_linenumber" name="L276" href="#L276">276</a>     checkOneTerm(a, <span class="jxr_string">"gražaus"</span>,   <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// m. gen. sg.</em>
+<a class="jxr_linenumber" name="L277" href="#L277">277</a>     checkOneTerm(a, <span class="jxr_string">"gražių"</span>,    <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// m. gen. pl.</em>
+<a class="jxr_linenumber" name="L278" href="#L278">278</a>     checkOneTerm(a, <span class="jxr_string">"gražiam"</span>,   <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// m. dat. sg.</em>
+<a class="jxr_linenumber" name="L279" href="#L279">279</a>     checkOneTerm(a, <span class="jxr_string">"gražiems"</span>,  <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// m. dat. pl.</em>
+<a class="jxr_linenumber" name="L280" href="#L280">280</a>     checkOneTerm(a, <span class="jxr_string">"gražų"</span>,     <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// m. acc. sg.</em>
+<a class="jxr_linenumber" name="L281" href="#L281">281</a>     checkOneTerm(a, <span class="jxr_string">"gražius"</span>,   <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// m. acc. pl.</em>
+<a class="jxr_linenumber" name="L282" href="#L282">282</a>     checkOneTerm(a, <span class="jxr_string">"gražiu"</span>,    <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// m. ins. sg.</em>
+<a class="jxr_linenumber" name="L283" href="#L283">283</a>     checkOneTerm(a, <span class="jxr_string">"gražiais"</span>,  <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// m. ins. pl.</em>
+<a class="jxr_linenumber" name="L284" href="#L284">284</a>     checkOneTerm(a, <span class="jxr_string">"gražiame"</span>,  <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// m. loc. sg.</em>
+<a class="jxr_linenumber" name="L285" href="#L285">285</a>     checkOneTerm(a, <span class="jxr_string">"gražiuose"</span>, <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// m. loc. pl.</em>
+<a class="jxr_linenumber" name="L286" href="#L286">286</a> 
+<a class="jxr_linenumber" name="L287" href="#L287">287</a>     checkOneTerm(a, <span class="jxr_string">"graži"</span>,     <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// f. nom. sing.</em>
+<a class="jxr_linenumber" name="L288" href="#L288">288</a>     checkOneTerm(a, <span class="jxr_string">"gražios"</span>,   <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// f. nom. pl.</em>
+<a class="jxr_linenumber" name="L289" href="#L289">289</a>     checkOneTerm(a, <span class="jxr_string">"gražios"</span>,   <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// f. gen. sg.</em>
+<a class="jxr_linenumber" name="L290" href="#L290">290</a>     checkOneTerm(a, <span class="jxr_string">"gražių"</span>,    <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// f. gen. pl.</em>
+<a class="jxr_linenumber" name="L291" href="#L291">291</a>     checkOneTerm(a, <span class="jxr_string">"gražiai"</span>,   <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// f. dat. sg.</em>
+<a class="jxr_linenumber" name="L292" href="#L292">292</a>     checkOneTerm(a, <span class="jxr_string">"gražioms"</span>,  <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// f. dat. pl.</em>
+<a class="jxr_linenumber" name="L293" href="#L293">293</a>     checkOneTerm(a, <span class="jxr_string">"gražią"</span>,    <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// f. acc. sg.</em>
+<a class="jxr_linenumber" name="L294" href="#L294">294</a>     checkOneTerm(a, <span class="jxr_string">"gražias"</span>,   <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// f. acc. pl.</em>
+<a class="jxr_linenumber" name="L295" href="#L295">295</a>     checkOneTerm(a, <span class="jxr_string">"gražia"</span>,    <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// f. ins. sg.</em>
+<a class="jxr_linenumber" name="L296" href="#L296">296</a>     checkOneTerm(a, <span class="jxr_string">"gražiomis"</span>, <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// f. ins. pl.</em>
+<a class="jxr_linenumber" name="L297" href="#L297">297</a>     checkOneTerm(a, <span class="jxr_string">"gražioje"</span>,  <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// f. loc. sg.</em>
+<a class="jxr_linenumber" name="L298" href="#L298">298</a>     checkOneTerm(a, <span class="jxr_string">"gražiose"</span>,  <span class="jxr_string">"graž"</span>); <em class="jxr_comment">// f. loc. pl.</em>
+<a class="jxr_linenumber" name="L299" href="#L299">299</a>   }
+<a class="jxr_linenumber" name="L300" href="#L300">300</a>   
+<a class="jxr_linenumber" name="L301" href="#L301">301</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testAdjIII() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L302" href="#L302">302</a>     <em class="jxr_comment">// adj. decl III</em>
+<a class="jxr_linenumber" name="L303" href="#L303">303</a>     checkOneTerm(a, <span class="jxr_string">"vidutinis"</span>,    <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// m. nom. sing.</em>
+<a class="jxr_linenumber" name="L304" href="#L304">304</a>     checkOneTerm(a, <span class="jxr_string">"vidutiniai"</span>,   <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// m. nom. pl.</em>
+<a class="jxr_linenumber" name="L305" href="#L305">305</a>     checkOneTerm(a, <span class="jxr_string">"vidutinio"</span>,    <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// m. gen. sg.</em>
+<a class="jxr_linenumber" name="L306" href="#L306">306</a>     checkOneTerm(a, <span class="jxr_string">"vidutinių"</span>,    <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// m. gen. pl.</em>
+<a class="jxr_linenumber" name="L307" href="#L307">307</a>     checkOneTerm(a, <span class="jxr_string">"vidutiniam"</span>,   <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// m. dat. sg.</em>
+<a class="jxr_linenumber" name="L308" href="#L308">308</a>     checkOneTerm(a, <span class="jxr_string">"vidutiniams"</span>,  <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// m. dat. pl.</em>
+<a class="jxr_linenumber" name="L309" href="#L309">309</a>     checkOneTerm(a, <span class="jxr_string">"vidutinį"</span>,     <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// m. acc. sg.</em>
+<a class="jxr_linenumber" name="L310" href="#L310">310</a>     checkOneTerm(a, <span class="jxr_string">"vidutinius"</span>,   <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// m. acc. pl.</em>
+<a class="jxr_linenumber" name="L311" href="#L311">311</a>     checkOneTerm(a, <span class="jxr_string">"vidutiniu"</span>,    <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// m. ins. sg.</em>
+<a class="jxr_linenumber" name="L312" href="#L312">312</a>     checkOneTerm(a, <span class="jxr_string">"vidutiniais"</span>,  <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// m. ins. pl.</em>
+<a class="jxr_linenumber" name="L313" href="#L313">313</a>     checkOneTerm(a, <span class="jxr_string">"vidutiniame"</span>,  <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// m. loc. sg.</em>
+<a class="jxr_linenumber" name="L314" href="#L314">314</a>     checkOneTerm(a, <span class="jxr_string">"vidutiniuose"</span>, <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// m. loc. pl.</em>
+<a class="jxr_linenumber" name="L315" href="#L315">315</a> 
+<a class="jxr_linenumber" name="L316" href="#L316">316</a>     checkOneTerm(a, <span class="jxr_string">"vidutinė"</span>,     <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// f. nom. sing.</em>
+<a class="jxr_linenumber" name="L317" href="#L317">317</a>     checkOneTerm(a, <span class="jxr_string">"vidutinės"</span>,    <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// f. nom. pl.</em>
+<a class="jxr_linenumber" name="L318" href="#L318">318</a>     checkOneTerm(a, <span class="jxr_string">"vidutinės"</span>,    <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// f. gen. sg.</em>
+<a class="jxr_linenumber" name="L319" href="#L319">319</a>     checkOneTerm(a, <span class="jxr_string">"vidutinių"</span>,    <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// f. gen. pl.</em>
+<a class="jxr_linenumber" name="L320" href="#L320">320</a>     checkOneTerm(a, <span class="jxr_string">"vidutinei"</span>,    <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// f. dat. sg.</em>
+<a class="jxr_linenumber" name="L321" href="#L321">321</a>     checkOneTerm(a, <span class="jxr_string">"vidutinėms"</span>,   <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// f. dat. pl.</em>
+<a class="jxr_linenumber" name="L322" href="#L322">322</a>     checkOneTerm(a, <span class="jxr_string">"vidutinę"</span>,     <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// f. acc. sg.</em>
+<a class="jxr_linenumber" name="L323" href="#L323">323</a>     checkOneTerm(a, <span class="jxr_string">"vidutines"</span>,    <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// f. acc. pl.</em>
+<a class="jxr_linenumber" name="L324" href="#L324">324</a>     checkOneTerm(a, <span class="jxr_string">"vidutine"</span>,     <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// f. ins. sg.</em>
+<a class="jxr_linenumber" name="L325" href="#L325">325</a>     checkOneTerm(a, <span class="jxr_string">"vidutinėmis"</span>,  <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// f. ins. pl.</em>
+<a class="jxr_linenumber" name="L326" href="#L326">326</a>     checkOneTerm(a, <span class="jxr_string">"vidutinėje"</span>,   <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// f. loc. sg.</em>
+<a class="jxr_linenumber" name="L327" href="#L327">327</a>     checkOneTerm(a, <span class="jxr_string">"vidutinėse"</span>,   <span class="jxr_string">"vidutin"</span>); <em class="jxr_comment">// f. loc. pl.</em>
+<a class="jxr_linenumber" name="L328" href="#L328">328</a>   }
+<a class="jxr_linenumber" name="L329" href="#L329">329</a>   
+<a class="jxr_linenumber" name="L330" href="#L330">330</a>   <em class="jxr_javadoccomment">/** </em>
+<a class="jxr_linenumber" name="L331" href="#L331">331</a> <em class="jxr_javadoccomment">   * test some high frequency terms from corpora to look for anything crazy </em>
+<a class="jxr_linenumber" name="L332" href="#L332">332</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L333" href="#L333">333</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testHighFrequencyTerms() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L334" href="#L334">334</a>     checkOneTerm(a, <span class="jxr_string">"ir"</span>,          <span class="jxr_string">"ir"</span>);
+<a class="jxr_linenumber" name="L335" href="#L335">335</a>     checkOneTerm(a, <span class="jxr_string">"kad"</span>,         <span class="jxr_string">"kad"</span>);
+<a class="jxr_linenumber" name="L336" href="#L336">336</a>     checkOneTerm(a, <span class="jxr_string">"į"</span>,           <span class="jxr_string">"į"</span>);
+<a class="jxr_linenumber" name="L337" href="#L337">337</a>     checkOneTerm(a, <span class="jxr_string">"tai"</span>,         <span class="jxr_string">"tai"</span>);
+<a class="jxr_linenumber" name="L338" href="#L338">338</a>     checkOneTerm(a, <span class="jxr_string">"su"</span>,          <span class="jxr_string">"su"</span>);
+<a class="jxr_linenumber" name="L339" href="#L339">339</a>     checkOneTerm(a, <span class="jxr_string">"o"</span>,           <span class="jxr_string">"o"</span>);
+<a class="jxr_linenumber" name="L340" href="#L340">340</a>     checkOneTerm(a, <span class="jxr_string">"iš"</span>,          <span class="jxr_string">"iš"</span>);
+<a class="jxr_linenumber" name="L341" href="#L341">341</a>     checkOneTerm(a, <span class="jxr_string">"kaip"</span>,        <span class="jxr_string">"kaip"</span>);
+<a class="jxr_linenumber" name="L342" href="#L342">342</a>     checkOneTerm(a, <span class="jxr_string">"bet"</span>,         <span class="jxr_string">"bet"</span>);
+<a class="jxr_linenumber" name="L343" href="#L343">343</a>     checkOneTerm(a, <span class="jxr_string">"yra"</span>,         <span class="jxr_string">"yr"</span>);
+<a class="jxr_linenumber" name="L344" href="#L344">344</a>     checkOneTerm(a, <span class="jxr_string">"buvo"</span>,        <span class="jxr_string">"buv"</span>);
+<a class="jxr_linenumber" name="L345" href="#L345">345</a>     checkOneTerm(a, <span class="jxr_string">"tik"</span>,         <span class="jxr_string">"tik"</span>);
+<a class="jxr_linenumber" name="L346" href="#L346">346</a>     checkOneTerm(a, <span class="jxr_string">"ne"</span>,          <span class="jxr_string">"ne"</span>);
+<a class="jxr_linenumber" name="L347" href="#L347">347</a>     checkOneTerm(a, <span class="jxr_string">"taip"</span>,        <span class="jxr_string">"taip"</span>);
+<a class="jxr_linenumber" name="L348" href="#L348">348</a>     checkOneTerm(a, <span class="jxr_string">"ar"</span>,          <span class="jxr_string">"ar"</span>);
+<a class="jxr_linenumber" name="L349" href="#L349">349</a>     checkOneTerm(a, <span class="jxr_string">"dar"</span>,         <span class="jxr_string">"dar"</span>);
+<a class="jxr_linenumber" name="L350" href="#L350">350</a>     checkOneTerm(a, <span class="jxr_string">"jau"</span>,         <span class="jxr_string">"jau"</span>);
+<a class="jxr_linenumber" name="L351" href="#L351">351</a>     checkOneTerm(a, <span class="jxr_string">"savo"</span>,        <span class="jxr_string">"sav"</span>);
+<a class="jxr_linenumber" name="L352" href="#L352">352</a>     checkOneTerm(a, <span class="jxr_string">"apie"</span>,        <span class="jxr_string">"ap"</span>);
+<a class="jxr_linenumber" name="L353" href="#L353">353</a>     checkOneTerm(a, <span class="jxr_string">"kai"</span>,         <span class="jxr_string">"kai"</span>);
+<a class="jxr_linenumber" name="L354" href="#L354">354</a>     checkOneTerm(a, <span class="jxr_string">"aš"</span>,          <span class="jxr_string">"aš"</span>);
+<a class="jxr_linenumber" name="L355" href="#L355">355</a>     checkOneTerm(a, <span class="jxr_string">"per"</span>,         <span class="jxr_string">"per"</span>);
+<a class="jxr_linenumber" name="L356" href="#L356">356</a>     checkOneTerm(a, <span class="jxr_string">"nuo"</span>,         <span class="jxr_string">"nuo"</span>);
+<a class="jxr_linenumber" name="L357" href="#L357">357</a>     checkOneTerm(a, <span class="jxr_string">"po"</span>,          <span class="jxr_string">"po"</span>);
+<a class="jxr_linenumber" name="L358" href="#L358">358</a>     checkOneTerm(a, <span class="jxr_string">"jis"</span>,         <span class="jxr_string">"jis"</span>);
+<a class="jxr_linenumber" name="L359" href="#L359">359</a>     checkOneTerm(a, <span class="jxr_string">"kas"</span>,         <span class="jxr_string">"kas"</span>);
+<a class="jxr_linenumber" name="L360" href="#L360">360</a>     checkOneTerm(a, <span class="jxr_string">"d"</span>,           <span class="jxr_string">"d"</span>);
+<a class="jxr_linenumber" name="L361" href="#L361">361</a>     checkOneTerm(a, <span class="jxr_string">"labai"</span>,       <span class="jxr_string">"lab"</span>);
+<a class="jxr_linenumber" name="L362" href="#L362">362</a>     checkOneTerm(a, <span class="jxr_string">"man"</span>,         <span class="jxr_string">"man"</span>);
+<a class="jxr_linenumber" name="L363" href="#L363">363</a>     checkOneTerm(a, <span class="jxr_string">"dėl"</span>,         <span class="jxr_string">"dėl"</span>);
+<a class="jxr_linenumber" name="L364" href="#L364">364</a>     checkOneTerm(a, <span class="jxr_string">"tačiau"</span>,      <span class="jxr_string">"tat"</span>);
+<a class="jxr_linenumber" name="L365" href="#L365">365</a>     checkOneTerm(a, <span class="jxr_string">"nes"</span>,         <span class="jxr_string">"nes"</span>);
+<a class="jxr_linenumber" name="L366" href="#L366">366</a>     checkOneTerm(a, <span class="jxr_string">"už"</span>,          <span class="jxr_string">"už"</span>);
+<a class="jxr_linenumber" name="L367" href="#L367">367</a>     checkOneTerm(a, <span class="jxr_string">"to"</span>,          <span class="jxr_string">"to"</span>);
+<a class="jxr_linenumber" name="L368" href="#L368">368</a>     checkOneTerm(a, <span class="jxr_string">"jo"</span>,          <span class="jxr_string">"jo"</span>);
+<a class="jxr_linenumber" name="L369" href="#L369">369</a>     checkOneTerm(a, <span class="jxr_string">"iki"</span>,         <span class="jxr_string">"ik"</span>);
+<a class="jxr_linenumber" name="L370" href="#L370">370</a>     checkOneTerm(a, <span class="jxr_string">"ką"</span>,          <span class="jxr_string">"ką"</span>);
+<a class="jxr_linenumber" name="L371" href="#L371">371</a>     checkOneTerm(a, <span class="jxr_string">"mano"</span>,        <span class="jxr_string">"man"</span>);
+<a class="jxr_linenumber" name="L372" href="#L372">372</a>     checkOneTerm(a, <span class="jxr_string">"metų"</span>,        <span class="jxr_string">"met"</span>);
+<a class="jxr_linenumber" name="L373" href="#L373">373</a>     checkOneTerm(a, <span class="jxr_string">"nors"</span>,        <span class="jxr_string">"nor"</span>);
+<a class="jxr_linenumber" name="L374" href="#L374">374</a>     checkOneTerm(a, <span class="jxr_string">"jei"</span>,         <span class="jxr_string">"jei"</span>);
+<a class="jxr_linenumber" name="L375" href="#L375">375</a>     checkOneTerm(a, <span class="jxr_string">"bus"</span>,         <span class="jxr_string">"bus"</span>);
+<a class="jxr_linenumber" name="L376" href="#L376">376</a>     checkOneTerm(a, <span class="jxr_string">"jų"</span>,          <span class="jxr_string">"jų"</span>);
+<a class="jxr_linenumber" name="L377" href="#L377">377</a>     checkOneTerm(a, <span class="jxr_string">"čia"</span>,         <span class="jxr_string">"čia"</span>);
+<a class="jxr_linenumber" name="L378" href="#L378">378</a>     checkOneTerm(a, <span class="jxr_string">"dabar"</span>,       <span class="jxr_string">"dabar"</span>);
+<a class="jxr_linenumber" name="L379" href="#L379">379</a>     checkOneTerm(a, <span class="jxr_string">"Lietuvos"</span>,    <span class="jxr_string">"Lietuv"</span>);
+<a class="jxr_linenumber" name="L380" href="#L380">380</a>     checkOneTerm(a, <span class="jxr_string">"net"</span>,         <span class="jxr_string">"net"</span>);
+<a class="jxr_linenumber" name="L381" href="#L381">381</a>     checkOneTerm(a, <span class="jxr_string">"nei"</span>,         <span class="jxr_string">"nei"</span>);
+<a class="jxr_linenumber" name="L382" href="#L382">382</a>     checkOneTerm(a, <span class="jxr_string">"gali"</span>,        <span class="jxr_string">"gal"</span>);
+<a class="jxr_linenumber" name="L383" href="#L383">383</a>     checkOneTerm(a, <span class="jxr_string">"daug"</span>,        <span class="jxr_string">"daug"</span>);
+<a class="jxr_linenumber" name="L384" href="#L384">384</a>     checkOneTerm(a, <span class="jxr_string">"prie"</span>,        <span class="jxr_string">"prie"</span>);
+<a class="jxr_linenumber" name="L385" href="#L385">385</a>     checkOneTerm(a, <span class="jxr_string">"ji"</span>,          <span class="jxr_string">"ji"</span>);
+<a class="jxr_linenumber" name="L386" href="#L386">386</a>     checkOneTerm(a, <span class="jxr_string">"jos"</span>,         <span class="jxr_string">"jos"</span>);
+<a class="jxr_linenumber" name="L387" href="#L387">387</a>     checkOneTerm(a, <span class="jxr_string">"pat"</span>,         <span class="jxr_string">"pat"</span>);
+<a class="jxr_linenumber" name="L388" href="#L388">388</a>     checkOneTerm(a, <span class="jxr_string">"jie"</span>,         <span class="jxr_string">"jie"</span>);
+<a class="jxr_linenumber" name="L389" href="#L389">389</a>     checkOneTerm(a, <span class="jxr_string">"kur"</span>,         <span class="jxr_string">"kur"</span>);
+<a class="jxr_linenumber" name="L390" href="#L390">390</a>     checkOneTerm(a, <span class="jxr_string">"gal"</span>,         <span class="jxr_string">"gal"</span>);
+<a class="jxr_linenumber" name="L391" href="#L391">391</a>     checkOneTerm(a, <span class="jxr_string">"ant"</span>,         <span class="jxr_string">"ant"</span>);
+<a class="jxr_linenumber" name="L392" href="#L392">392</a>     checkOneTerm(a, <span class="jxr_string">"tiek"</span>,        <span class="jxr_string">"tiek"</span>);
+<a class="jxr_linenumber" name="L393" href="#L393">393</a>     checkOneTerm(a, <span class="jxr_string">"be"</span>,          <span class="jxr_string">"be"</span>);
+<a class="jxr_linenumber" name="L394" href="#L394">394</a>     checkOneTerm(a, <span class="jxr_string">"būti"</span>,        <span class="jxr_string">"būt"</span>);
+<a class="jxr_linenumber" name="L395" href="#L395">395</a>     checkOneTerm(a, <span class="jxr_string">"bei"</span>,         <span class="jxr_string">"bei"</span>);
+<a class="jxr_linenumber" name="L396" href="#L396">396</a>     checkOneTerm(a, <span class="jxr_string">"daugiau"</span>,     <span class="jxr_string">"daug"</span>);
+<a class="jxr_linenumber" name="L397" href="#L397">397</a>     checkOneTerm(a, <span class="jxr_string">"turi"</span>,        <span class="jxr_string">"tur"</span>);
+<a class="jxr_linenumber" name="L398" href="#L398">398</a>     checkOneTerm(a, <span class="jxr_string">"prieš"</span>,       <span class="jxr_string">"prieš"</span>);
+<a class="jxr_linenumber" name="L399" href="#L399">399</a>     checkOneTerm(a, <span class="jxr_string">"vis"</span>,         <span class="jxr_string">"vis"</span>);
+<a class="jxr_linenumber" name="L400" href="#L400">400</a>     checkOneTerm(a, <span class="jxr_string">"būtų"</span>,        <span class="jxr_string">"būt"</span>);
+<a class="jxr_linenumber" name="L401" href="#L401">401</a>     checkOneTerm(a, <span class="jxr_string">"jog"</span>,         <span class="jxr_string">"jog"</span>);
+<a class="jxr_linenumber" name="L402" href="#L402">402</a>     checkOneTerm(a, <span class="jxr_string">"reikia"</span>,      <span class="jxr_string">"reik"</span>);
+<a class="jxr_linenumber" name="L403" href="#L403">403</a>     checkOneTerm(a, <span class="jxr_string">"mūsų"</span>,        <span class="jxr_string">"mūs"</span>);
+<a class="jxr_linenumber" name="L404" href="#L404">404</a>     checkOneTerm(a, <span class="jxr_string">"metu"</span>,        <span class="jxr_string">"met"</span>);
+<a class="jxr_linenumber" name="L405" href="#L405">405</a>     checkOneTerm(a, <span class="jxr_string">"galima"</span>,      <span class="jxr_string">"galim"</span>);
+<a class="jxr_linenumber" name="L406" href="#L406">406</a>     checkOneTerm(a, <span class="jxr_string">"nėra"</span>,        <span class="jxr_string">"nėr"</span>);
+<a class="jxr_linenumber" name="L407" href="#L407">407</a>     checkOneTerm(a, <span class="jxr_string">"arba"</span>,        <span class="jxr_string">"arb"</span>);
+<a class="jxr_linenumber" name="L408" href="#L408">408</a>     checkOneTerm(a, <span class="jxr_string">"mes"</span>,         <span class="jxr_string">"mes"</span>);
+<a class="jxr_linenumber" name="L409" href="#L409">409</a>     checkOneTerm(a, <span class="jxr_string">"kurie"</span>,       <span class="jxr_string">"kur"</span>);
+<a class="jxr_linenumber" name="L410" href="#L410">410</a>     checkOneTerm(a, <span class="jxr_string">"tikrai"</span>,      <span class="jxr_string">"tikr"</span>);
+<a class="jxr_linenumber" name="L411" href="#L411">411</a>     checkOneTerm(a, <span class="jxr_string">"todėl"</span>,       <span class="jxr_string">"tod"</span>);
+<a class="jxr_linenumber" name="L412" href="#L412">412</a>     checkOneTerm(a, <span class="jxr_string">"ten"</span>,         <span class="jxr_string">"ten"</span>);
+<a class="jxr_linenumber" name="L413" href="#L413">413</a>     checkOneTerm(a, <span class="jxr_string">"šiandien"</span>,    <span class="jxr_string">"šiandien"</span>);
+<a class="jxr_linenumber" name="L414" href="#L414">414</a>     checkOneTerm(a, <span class="jxr_string">"vienas"</span>,      <span class="jxr_string">"vien"</span>);
+<a class="jxr_linenumber" name="L415" href="#L415">415</a>     checkOneTerm(a, <span class="jxr_string">"visi"</span>,        <span class="jxr_string">"vis"</span>);
+<a class="jxr_linenumber" name="L416" href="#L416">416</a>     checkOneTerm(a, <span class="jxr_string">"kuris"</span>,       <span class="jxr_string">"kur"</span>);
+<a class="jxr_linenumber" name="L417" href="#L417">417</a>     checkOneTerm(a, <span class="jxr_string">"tada"</span>,        <span class="jxr_string">"tad"</span>);
+<a class="jxr_linenumber" name="L418" href="#L418">418</a>     checkOneTerm(a, <span class="jxr_string">"kiek"</span>,        <span class="jxr_string">"kiek"</span>);
+<a class="jxr_linenumber" name="L419" href="#L419">419</a>     checkOneTerm(a, <span class="jxr_string">"tuo"</span>,         <span class="jxr_string">"tuo"</span>);
+<a class="jxr_linenumber" name="L420" href="#L420">420</a>     checkOneTerm(a, <span class="jxr_string">"gerai"</span>,       <span class="jxr_string">"ger"</span>);
+<a class="jxr_linenumber" name="L421" href="#L421">421</a>     checkOneTerm(a, <span class="jxr_string">"nieko"</span>,       <span class="jxr_string">"niek"</span>);
+<a class="jxr_linenumber" name="L422" href="#L422">422</a>     checkOneTerm(a, <span class="jxr_string">"jį"</span>,          <span class="jxr_string">"jį"</span>);
+<a class="jxr_linenumber" name="L423" href="#L423">423</a>     checkOneTerm(a, <span class="jxr_string">"kol"</span>,         <span class="jxr_string">"kol"</span>);
+<a class="jxr_linenumber" name="L424" href="#L424">424</a>     checkOneTerm(a, <span class="jxr_string">"viskas"</span>,      <span class="jxr_string">"visk"</span>);
+<a class="jxr_linenumber" name="L425" href="#L425">425</a>     checkOneTerm(a, <span class="jxr_string">"mane"</span>,        <span class="jxr_string">"man"</span>);
+<a class="jxr_linenumber" name="L426" href="#L426">426</a>     checkOneTerm(a, <span class="jxr_string">"kartą"</span>,       <span class="jxr_string">"kart"</span>);
+<a class="jxr_linenumber" name="L427" href="#L427">427</a>     checkOneTerm(a, <span class="jxr_string">"m"</span>,           <span class="jxr_string">"m"</span>);
+<a class="jxr_linenumber" name="L428" href="#L428">428</a>     checkOneTerm(a, <span class="jxr_string">"tas"</span>,         <span class="jxr_string">"tas"</span>);
+<a class="jxr_linenumber" name="L429" href="#L429">429</a>     checkOneTerm(a, <span class="jxr_string">"sakė"</span>,        <span class="jxr_string">"sak"</span>);
+<a class="jxr_linenumber" name="L430" href="#L430">430</a>     checkOneTerm(a, <span class="jxr_string">"žmonių"</span>,      <span class="jxr_string">"žmon"</span>);
+<a class="jxr_linenumber" name="L431" href="#L431">431</a>     checkOneTerm(a, <span class="jxr_string">"tu"</span>,          <span class="jxr_string">"tu"</span>);
+<a class="jxr_linenumber" name="L432" href="#L432">432</a>     checkOneTerm(a, <span class="jxr_string">"dieną"</span>,       <span class="jxr_string">"dien"</span>);
+<a class="jxr_linenumber" name="L433" href="#L433">433</a>     checkOneTerm(a, <span class="jxr_string">"žmonės"</span>,      <span class="jxr_string">"žmon"</span>);
+<a class="jxr_linenumber" name="L434" href="#L434">434</a>     checkOneTerm(a, <span class="jxr_string">"metais"</span>,      <span class="jxr_string">"met"</span>);
+<a class="jxr_linenumber" name="L435" href="#L435">435</a>     checkOneTerm(a, <span class="jxr_string">"vieną"</span>,       <span class="jxr_string">"vien"</span>);
+<a class="jxr_linenumber" name="L436" href="#L436">436</a>     checkOneTerm(a, <span class="jxr_string">"vėl"</span>,         <span class="jxr_string">"vėl"</span>);
+<a class="jxr_linenumber" name="L437" href="#L437">437</a>     checkOneTerm(a, <span class="jxr_string">"na"</span>,          <span class="jxr_string">"na"</span>);
+<a class="jxr_linenumber" name="L438" href="#L438">438</a>     checkOneTerm(a, <span class="jxr_string">"tą"</span>,          <span class="jxr_string">"tą"</span>);
+<a class="jxr_linenumber" name="L439" href="#L439">439</a>     checkOneTerm(a, <span class="jxr_string">"tiesiog"</span>,     <span class="jxr_string">"tiesiog"</span>);
+<a class="jxr_linenumber" name="L440" href="#L440">440</a>     checkOneTerm(a, <span class="jxr_string">"toks"</span>,        <span class="jxr_string">"tok"</span>);
+<a class="jxr_linenumber" name="L441" href="#L441">441</a>     checkOneTerm(a, <span class="jxr_string">"pats"</span>,        <span class="jxr_string">"pat"</span>);
+<a class="jxr_linenumber" name="L442" href="#L442">442</a>     checkOneTerm(a, <span class="jxr_string">"ko"</span>,          <span class="jxr_string">"ko"</span>);
+<a class="jxr_linenumber" name="L443" href="#L443">443</a>     checkOneTerm(a, <span class="jxr_string">"Lietuvoje"</span>,   <span class="jxr_string">"Lietuv"</span>);
+<a class="jxr_linenumber" name="L444" href="#L444">444</a>     checkOneTerm(a, <span class="jxr_string">"pagal"</span>,       <span class="jxr_string">"pagal"</span>);
+<a class="jxr_linenumber" name="L445" href="#L445">445</a>     checkOneTerm(a, <span class="jxr_string">"jeigu"</span>,       <span class="jxr_string">"jeig"</span>);
+<a class="jxr_linenumber" name="L446" href="#L446">446</a>     checkOneTerm(a, <span class="jxr_string">"visai"</span>,       <span class="jxr_string">"vis"</span>);
+<a class="jxr_linenumber" name="L447" href="#L447">447</a>     checkOneTerm(a, <span class="jxr_string">"viena"</span>,       <span class="jxr_string">"vien"</span>);
+<a class="jxr_linenumber" name="L448" href="#L448">448</a>     checkOneTerm(a, <span class="jxr_string">"šį"</span>,          <span class="jxr_string">"šį"</span>);
+<a class="jxr_linenumber" name="L449" href="#L449">449</a>     checkOneTerm(a, <span class="jxr_string">"metus"</span>,       <span class="jxr_string">"met"</span>);
+<a class="jxr_linenumber" name="L450" href="#L450">450</a>     checkOneTerm(a, <span class="jxr_string">"jam"</span>,         <span class="jxr_string">"jam"</span>);
+<a class="jxr_linenumber" name="L451" href="#L451">451</a>     checkOneTerm(a, <span class="jxr_string">"kodėl"</span>,       <span class="jxr_string">"kod"</span>);
+<a class="jxr_linenumber" name="L452" href="#L452">452</a>     checkOneTerm(a, <span class="jxr_string">"litų"</span>,        <span class="jxr_string">"lit"</span>);
+<a class="jxr_linenumber" name="L453" href="#L453">453</a>     checkOneTerm(a, <span class="jxr_string">"ją"</span>,          <span class="jxr_string">"ją"</span>);
+<a class="jxr_linenumber" name="L454" href="#L454">454</a>     checkOneTerm(a, <span class="jxr_string">"kuri"</span>,        <span class="jxr_string">"kur"</span>);
+<a class="jxr_linenumber" name="L455" href="#L455">455</a>     checkOneTerm(a, <span class="jxr_string">"darbo"</span>,       <span class="jxr_string">"darb"</span>);
+<a class="jxr_linenumber" name="L456" href="#L456">456</a>     checkOneTerm(a, <span class="jxr_string">"tarp"</span>,        <span class="jxr_string">"tarp"</span>);
+<a class="jxr_linenumber" name="L457" href="#L457">457</a>     checkOneTerm(a, <span class="jxr_string">"juk"</span>,         <span class="jxr_string">"juk"</span>);
+<a class="jxr_linenumber" name="L458" href="#L458">458</a>     checkOneTerm(a, <span class="jxr_string">"laiko"</span>,       <span class="jxr_string">"laik"</span>);
+<a class="jxr_linenumber" name="L459" href="#L459">459</a>     checkOneTerm(a, <span class="jxr_string">"juos"</span>,        <span class="jxr_string">"juos"</span>);
+<a class="jxr_linenumber" name="L460" href="#L460">460</a>     checkOneTerm(a, <span class="jxr_string">"visą"</span>,        <span class="jxr_string">"vis"</span>);
+<a class="jxr_linenumber" name="L461" href="#L461">461</a>     checkOneTerm(a, <span class="jxr_string">"kurios"</span>,      <span class="jxr_string">"kur"</span>);
+<a class="jxr_linenumber" name="L462" href="#L462">462</a>     checkOneTerm(a, <span class="jxr_string">"tam"</span>,         <span class="jxr_string">"tam"</span>);
+<a class="jxr_linenumber" name="L463" href="#L463">463</a>     checkOneTerm(a, <span class="jxr_string">"pas"</span>,         <span class="jxr_string">"pas"</span>);
+<a class="jxr_linenumber" name="L464" href="#L464">464</a>     checkOneTerm(a, <span class="jxr_string">"viską"</span>,       <span class="jxr_string">"visk"</span>);
+<a class="jxr_linenumber" name="L465" href="#L465">465</a>     checkOneTerm(a, <span class="jxr_string">"Europos"</span>,     <span class="jxr_string">"Eur"</span>);
+<a class="jxr_linenumber" name="L466" href="#L466">466</a>     checkOneTerm(a, <span class="jxr_string">"atrodo"</span>,      <span class="jxr_string">"atrod"</span>);
+<a class="jxr_linenumber" name="L467" href="#L467">467</a>     checkOneTerm(a, <span class="jxr_string">"tad"</span>,         <span class="jxr_string">"tad"</span>);
+<a class="jxr_linenumber" name="L468" href="#L468">468</a>     checkOneTerm(a, <span class="jxr_string">"bent"</span>,        <span class="jxr_string">"bent"</span>);
+<a class="jxr_linenumber" name="L469" href="#L469">469</a>     checkOneTerm(a, <span class="jxr_string">"kitų"</span>,        <span class="jxr_string">"kit"</span>);
+<a class="jxr_linenumber" name="L470" href="#L470">470</a>     checkOneTerm(a, <span class="jxr_string">"šis"</span>,         <span class="jxr_string">"šis"</span>);
+<a class="jxr_linenumber" name="L471" href="#L471">471</a>     checkOneTerm(a, <span class="jxr_string">"Vilniaus"</span>,    <span class="jxr_string">"Viln"</span>);
+<a class="jxr_linenumber" name="L472" href="#L472">472</a>     checkOneTerm(a, <span class="jxr_string">"beveik"</span>,      <span class="jxr_string">"bevei"</span>);
+<a class="jxr_linenumber" name="L473" href="#L473">473</a>     checkOneTerm(a, <span class="jxr_string">"proc"</span>,        <span class="jxr_string">"proc"</span>);
+<a class="jxr_linenumber" name="L474" href="#L474">474</a>     checkOneTerm(a, <span class="jxr_string">"tokia"</span>,       <span class="jxr_string">"tok"</span>);
+<a class="jxr_linenumber" name="L475" href="#L475">475</a>     checkOneTerm(a, <span class="jxr_string">"šiuo"</span>,        <span class="jxr_string">"šiuo"</span>);
+<a class="jxr_linenumber" name="L476" href="#L476">476</a>     checkOneTerm(a, <span class="jxr_string">"du"</span>,          <span class="jxr_string">"du"</span>);
+<a class="jxr_linenumber" name="L477" href="#L477">477</a>     checkOneTerm(a, <span class="jxr_string">"kartu"</span>,       <span class="jxr_string">"kart"</span>);
+<a class="jxr_linenumber" name="L478" href="#L478">478</a>     checkOneTerm(a, <span class="jxr_string">"visada"</span>,      <span class="jxr_string">"visad"</span>);
+<a class="jxr_linenumber" name="L479" href="#L479">479</a>     checkOneTerm(a, <span class="jxr_string">"kuo"</span>,         <span class="jxr_string">"kuo"</span>);
+<a class="jxr_linenumber" name="L480" href="#L480">480</a>   }
+<a class="jxr_linenumber" name="L481" href="#L481">481</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

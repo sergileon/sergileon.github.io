@@ -1,0 +1,1237 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>SimplePostTool xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.solr.util;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> org.w3c.dom.Document;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> org.w3c.dom.Node;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> org.w3c.dom.NodeList;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> org.xml.sax.SAXException;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> javax.xml.bind.DatatypeConverter;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> javax.xml.parsers.DocumentBuilderFactory;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> javax.xml.parsers.ParserConfigurationException;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> javax.xml.xpath.XPath;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> javax.xml.xpath.XPathConstants;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> javax.xml.xpath.XPathExpression;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> javax.xml.xpath.XPathExpressionException;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> javax.xml.xpath.XPathFactory;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> java.io.BufferedReader;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <strong class="jxr_keyword">import</strong> java.io.ByteArrayInputStream;
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">import</strong> java.io.ByteArrayOutputStream;
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <strong class="jxr_keyword">import</strong> java.io.File;
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <strong class="jxr_keyword">import</strong> java.io.FileFilter;
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <strong class="jxr_keyword">import</strong> java.io.FileInputStream;
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <strong class="jxr_keyword">import</strong> java.io.IOException;
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <strong class="jxr_keyword">import</strong> java.io.InputStream;
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  <strong class="jxr_keyword">import</strong> java.io.InputStreamReader;
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  <strong class="jxr_keyword">import</strong> java.io.OutputStream;
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>  <strong class="jxr_keyword">import</strong> java.net.HttpURLConnection;
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>  <strong class="jxr_keyword">import</strong> java.net.MalformedURLException;
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>  <strong class="jxr_keyword">import</strong> java.net.ProtocolException;
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>  <strong class="jxr_keyword">import</strong> java.net.URL;
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>  <strong class="jxr_keyword">import</strong> java.net.URLEncoder;
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>  <strong class="jxr_keyword">import</strong> java.nio.BufferOverflowException;
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>  <strong class="jxr_keyword">import</strong> java.nio.ByteBuffer;
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>  <strong class="jxr_keyword">import</strong> java.nio.charset.Charset;
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>  <strong class="jxr_keyword">import</strong> java.nio.charset.StandardCharsets;
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>  <strong class="jxr_keyword">import</strong> java.text.SimpleDateFormat;
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>  <strong class="jxr_keyword">import</strong> java.util.ArrayList;
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>  <strong class="jxr_keyword">import</strong> java.util.Date;
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>  <strong class="jxr_keyword">import</strong> java.util.HashMap;
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>  <strong class="jxr_keyword">import</strong> java.util.HashSet;
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>  <strong class="jxr_keyword">import</strong> java.util.LinkedHashSet;
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>  <strong class="jxr_keyword">import</strong> java.util.List;
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>  <strong class="jxr_keyword">import</strong> java.util.Locale;
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>  <strong class="jxr_keyword">import</strong> java.util.Map;
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>  <strong class="jxr_keyword">import</strong> java.util.Set;
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>  <strong class="jxr_keyword">import</strong> java.util.TimeZone;
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>  <strong class="jxr_keyword">import</strong> java.util.concurrent.TimeUnit;
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>  <strong class="jxr_keyword">import</strong> java.util.regex.Pattern;
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>  <strong class="jxr_keyword">import</strong> java.util.regex.PatternSyntaxException;
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>  <strong class="jxr_keyword">import</strong> java.util.zip.GZIPInputStream;
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>  <strong class="jxr_keyword">import</strong> java.util.zip.Inflater;
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>  <strong class="jxr_keyword">import</strong> java.util.zip.InflaterInputStream;
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>  
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>  <em class="jxr_javadoccomment"> * A simple utility class for posting raw updates to a Solr server, </em>
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>  <em class="jxr_javadoccomment"> * has a main method so it can be run on the command line.</em>
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>  <em class="jxr_javadoccomment"> * View this not as a best-practice code example, but as a standalone </em>
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>  <em class="jxr_javadoccomment"> * example built with an explicit purpose of not having external</em>
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>  <em class="jxr_javadoccomment"> * jar dependencies.</em>
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> SimplePostTool {
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DEFAULT_POST_HOST = <span class="jxr_string">"localhost"</span>;
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DEFAULT_POST_PORT = <span class="jxr_string">"8983"</span>;
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String VERSION_OF_THIS_TOOL = <span class="jxr_string">"5.0.0"</span>;  <em class="jxr_comment">// TODO: hardcoded for now, but eventually to sync with actual Solr version</em>
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>  
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DEFAULT_COMMIT = <span class="jxr_string">"yes"</span>;
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DEFAULT_OPTIMIZE = <span class="jxr_string">"no"</span>;
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DEFAULT_OUT = <span class="jxr_string">"no"</span>;
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DEFAULT_AUTO = <span class="jxr_string">"no"</span>;
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DEFAULT_RECURSIVE = <span class="jxr_string">"0"</span>;
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> DEFAULT_WEB_DELAY = 10;
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> MAX_WEB_DEPTH = 10;
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DEFAULT_CONTENT_TYPE = <span class="jxr_string">"application/xml"</span>;
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DEFAULT_FILE_TYPES = <span class="jxr_string">"xml,json,csv,pdf,doc,docx,ppt,pptx,xls,xlsx,odt,odp,ods,ott,otp,ots,rtf,htm,html,txt,log"</span>; 
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>  
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>    <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DATA_MODE_FILES = <span class="jxr_string">"files"</span>;
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>    <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DATA_MODE_ARGS = <span class="jxr_string">"args"</span>;
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>    <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DATA_MODE_STDIN = <span class="jxr_string">"stdin"</span>;
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>    <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DATA_MODE_WEB = <span class="jxr_string">"web"</span>;
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>    <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DEFAULT_DATA_MODE = DATA_MODE_FILES;
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>  
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>    <em class="jxr_comment">// Input args</em>
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>    <strong class="jxr_keyword">boolean</strong> auto = false;
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>   <strong class="jxr_keyword">int</strong> recursive = 0;
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>   <strong class="jxr_keyword">int</strong> delay = 0;
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>   String fileTypes;
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>   URL solrUrl;
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>   OutputStream out = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>   String type;
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>   String mode;
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>   <strong class="jxr_keyword">boolean</strong> commit;
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>   <strong class="jxr_keyword">boolean</strong> optimize;
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>   String[] args;
+<a class="jxr_linenumber" name="L110" href="#L110">110</a> 
+<a class="jxr_linenumber" name="L111" href="#L111">111</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">int</strong> currentDepth;
+<a class="jxr_linenumber" name="L112" href="#L112">112</a> 
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>   <strong class="jxr_keyword">static</strong> HashMap&lt;String,String&gt; mimeMap;
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>   FileFilter fileFilter;
+<a class="jxr_linenumber" name="L115" href="#L115">115</a>   <em class="jxr_comment">// Backlog for crawling</em>
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>   List&lt;LinkedHashSet&lt;URL&gt;&gt; backlog = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>   Set&lt;URL&gt; visited = <strong class="jxr_keyword">new</strong> HashSet&lt;&gt;();
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>   
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>   <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Set&lt;String&gt; DATA_MODES = <strong class="jxr_keyword">new</strong> HashSet&lt;&gt;();
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>   <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String USAGE_STRING_SHORT =
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>       <span class="jxr_string">"Usage: java [SystemProperties] -jar post.jar [-h|-] [&lt;file|folder|url|arg&gt; [&lt;file|folder|url|arg&gt;...]]"</span>;
+<a class="jxr_linenumber" name="L122" href="#L122">122</a> 
+<a class="jxr_linenumber" name="L123" href="#L123">123</a>   <em class="jxr_comment">// Used in tests to avoid doing actual network traffic</em>
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>   <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">boolean</strong> mockMode = false;
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>   <strong class="jxr_keyword">static</strong> PageFetcher pageFetcher;
+<a class="jxr_linenumber" name="L126" href="#L126">126</a> 
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>   <strong class="jxr_keyword">static</strong> {
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>     DATA_MODES.add(DATA_MODE_FILES);
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>     DATA_MODES.add(DATA_MODE_ARGS);
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>     DATA_MODES.add(DATA_MODE_STDIN);
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>     DATA_MODES.add(DATA_MODE_WEB);
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>     
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>     mimeMap = <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;();
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>     mimeMap.put(<span class="jxr_string">"xml"</span>, <span class="jxr_string">"application/xml"</span>);
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>     mimeMap.put(<span class="jxr_string">"csv"</span>, <span class="jxr_string">"text/csv"</span>);
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>     mimeMap.put(<span class="jxr_string">"json"</span>, <span class="jxr_string">"application/json"</span>);
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>     mimeMap.put(<span class="jxr_string">"pdf"</span>, <span class="jxr_string">"application/pdf"</span>);
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>     mimeMap.put(<span class="jxr_string">"rtf"</span>, <span class="jxr_string">"text/rtf"</span>);
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>     mimeMap.put(<span class="jxr_string">"html"</span>, <span class="jxr_string">"text/html"</span>);
+<a class="jxr_linenumber" name="L140" href="#L140">140</a>     mimeMap.put(<span class="jxr_string">"htm"</span>, <span class="jxr_string">"text/html"</span>);
+<a class="jxr_linenumber" name="L141" href="#L141">141</a>     mimeMap.put(<span class="jxr_string">"doc"</span>, <span class="jxr_string">"application/msword"</span>);
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>     mimeMap.put(<span class="jxr_string">"docx"</span>, <span class="jxr_string">"application/vnd.openxmlformats-officedocument.wordprocessingml.document"</span>);
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>     mimeMap.put(<span class="jxr_string">"ppt"</span>, <span class="jxr_string">"application/vnd.ms-powerpoint"</span>);
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>     mimeMap.put(<span class="jxr_string">"pptx"</span>, <span class="jxr_string">"application/vnd.openxmlformats-officedocument.presentationml.presentation"</span>);
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>     mimeMap.put(<span class="jxr_string">"xls"</span>, <span class="jxr_string">"application/vnd.ms-excel"</span>);
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>     mimeMap.put(<span class="jxr_string">"xlsx"</span>, <span class="jxr_string">"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"</span>);
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>     mimeMap.put(<span class="jxr_string">"odt"</span>, <span class="jxr_string">"application/vnd.oasis.opendocument.text"</span>);
+<a class="jxr_linenumber" name="L148" href="#L148">148</a>     mimeMap.put(<span class="jxr_string">"ott"</span>, <span class="jxr_string">"application/vnd.oasis.opendocument.text"</span>);
+<a class="jxr_linenumber" name="L149" href="#L149">149</a>     mimeMap.put(<span class="jxr_string">"odp"</span>, <span class="jxr_string">"application/vnd.oasis.opendocument.presentation"</span>);
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>     mimeMap.put(<span class="jxr_string">"otp"</span>, <span class="jxr_string">"application/vnd.oasis.opendocument.presentation"</span>);
+<a class="jxr_linenumber" name="L151" href="#L151">151</a>     mimeMap.put(<span class="jxr_string">"ods"</span>, <span class="jxr_string">"application/vnd.oasis.opendocument.spreadsheet"</span>);
+<a class="jxr_linenumber" name="L152" href="#L152">152</a>     mimeMap.put(<span class="jxr_string">"ots"</span>, <span class="jxr_string">"application/vnd.oasis.opendocument.spreadsheet"</span>);
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>     mimeMap.put(<span class="jxr_string">"txt"</span>, <span class="jxr_string">"text/plain"</span>);
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>     mimeMap.put(<span class="jxr_string">"log"</span>, <span class="jxr_string">"text/plain"</span>);
+<a class="jxr_linenumber" name="L155" href="#L155">155</a>   }
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>   
+<a class="jxr_linenumber" name="L157" href="#L157">157</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L158" href="#L158">158</a> <em class="jxr_javadoccomment">   * See usage() for valid command line usage</em>
+<a class="jxr_linenumber" name="L159" href="#L159">159</a> <em class="jxr_javadoccomment">   * @param args the params on the command line</em>
+<a class="jxr_linenumber" name="L160" href="#L160">160</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> main(String[] args) {
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>     info(<span class="jxr_string">"SimplePostTool version "</span> + VERSION_OF_THIS_TOOL);
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>     <strong class="jxr_keyword">if</strong> (0 &lt; args.length &amp;&amp; (<span class="jxr_string">"-help"</span>.equals(args[0]) || <span class="jxr_string">"--help"</span>.equals(args[0]) || <span class="jxr_string">"-h"</span>.equals(args[0]))) {
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>       usage();
+<a class="jxr_linenumber" name="L165" href="#L165">165</a>     } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>       <strong class="jxr_keyword">final</strong> SimplePostTool t = parseArgsAndInit(args);
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>       t.execute();
+<a class="jxr_linenumber" name="L168" href="#L168">168</a>     }
+<a class="jxr_linenumber" name="L169" href="#L169">169</a>   }
+<a class="jxr_linenumber" name="L170" href="#L170">170</a> 
+<a class="jxr_linenumber" name="L171" href="#L171">171</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L172" href="#L172">172</a> <em class="jxr_javadoccomment">   * After initialization, call execute to start the post job.</em>
+<a class="jxr_linenumber" name="L173" href="#L173">173</a> <em class="jxr_javadoccomment">   * This method delegates to the correct mode method.</em>
+<a class="jxr_linenumber" name="L174" href="#L174">174</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L175" href="#L175">175</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> execute() {
+<a class="jxr_linenumber" name="L176" href="#L176">176</a>     <strong class="jxr_keyword">final</strong> RTimer timer = <strong class="jxr_keyword">new</strong> RTimer();
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>     <strong class="jxr_keyword">if</strong> (DATA_MODE_FILES.equals(mode) &amp;&amp; args.length &gt; 0) {
+<a class="jxr_linenumber" name="L178" href="#L178">178</a>       doFilesMode();
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>     } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong>(DATA_MODE_ARGS.equals(mode) &amp;&amp; args.length &gt; 0) {
+<a class="jxr_linenumber" name="L180" href="#L180">180</a>       doArgsMode();
+<a class="jxr_linenumber" name="L181" href="#L181">181</a>     } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong>(DATA_MODE_WEB.equals(mode) &amp;&amp; args.length &gt; 0) {
+<a class="jxr_linenumber" name="L182" href="#L182">182</a>       doWebMode();
+<a class="jxr_linenumber" name="L183" href="#L183">183</a>     } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong>(DATA_MODE_STDIN.equals(mode)) {
+<a class="jxr_linenumber" name="L184" href="#L184">184</a>       doStdinMode();
+<a class="jxr_linenumber" name="L185" href="#L185">185</a>     } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L186" href="#L186">186</a>       usageShort();
+<a class="jxr_linenumber" name="L187" href="#L187">187</a>       <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L188" href="#L188">188</a>     }
+<a class="jxr_linenumber" name="L189" href="#L189">189</a>     
+<a class="jxr_linenumber" name="L190" href="#L190">190</a>     <strong class="jxr_keyword">if</strong> (commit)   commit();
+<a class="jxr_linenumber" name="L191" href="#L191">191</a>     <strong class="jxr_keyword">if</strong> (optimize) optimize();
+<a class="jxr_linenumber" name="L192" href="#L192">192</a>     displayTiming((<strong class="jxr_keyword">long</strong>) timer.getTime());
+<a class="jxr_linenumber" name="L193" href="#L193">193</a>   }
+<a class="jxr_linenumber" name="L194" href="#L194">194</a>   
+<a class="jxr_linenumber" name="L195" href="#L195">195</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L196" href="#L196">196</a> <em class="jxr_javadoccomment">   * Pretty prints the number of milliseconds taken to post the content to Solr</em>
+<a class="jxr_linenumber" name="L197" href="#L197">197</a> <em class="jxr_javadoccomment">   * @param millis the time in milliseconds</em>
+<a class="jxr_linenumber" name="L198" href="#L198">198</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L199" href="#L199">199</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> displayTiming(<strong class="jxr_keyword">long</strong> millis) {
+<a class="jxr_linenumber" name="L200" href="#L200">200</a>     SimpleDateFormat df = <strong class="jxr_keyword">new</strong> SimpleDateFormat(<span class="jxr_string">"H:mm:ss.SSS"</span>, Locale.getDefault());
+<a class="jxr_linenumber" name="L201" href="#L201">201</a>     df.setTimeZone(TimeZone.getTimeZone(<span class="jxr_string">"UTC"</span>));
+<a class="jxr_linenumber" name="L202" href="#L202">202</a>     System.out.println(<span class="jxr_string">"Time spent: "</span>+df.format(<strong class="jxr_keyword">new</strong> Date(millis)));
+<a class="jxr_linenumber" name="L203" href="#L203">203</a>   }
+<a class="jxr_linenumber" name="L204" href="#L204">204</a> 
+<a class="jxr_linenumber" name="L205" href="#L205">205</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L206" href="#L206">206</a> <em class="jxr_javadoccomment">   * Parses incoming arguments and system params and initializes the tool</em>
+<a class="jxr_linenumber" name="L207" href="#L207">207</a> <em class="jxr_javadoccomment">   * @param args the incoming cmd line args</em>
+<a class="jxr_linenumber" name="L208" href="#L208">208</a> <em class="jxr_javadoccomment">   * @return an instance of SimplePostTool</em>
+<a class="jxr_linenumber" name="L209" href="#L209">209</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L210" href="#L210">210</a>   <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">static</strong> SimplePostTool parseArgsAndInit(String[] args) {
+<a class="jxr_linenumber" name="L211" href="#L211">211</a>     String urlStr = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L212" href="#L212">212</a>     <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L213" href="#L213">213</a>       <em class="jxr_comment">// Parse args</em>
+<a class="jxr_linenumber" name="L214" href="#L214">214</a>       <strong class="jxr_keyword">final</strong> String mode = System.getProperty(<span class="jxr_string">"data"</span>, DEFAULT_DATA_MODE);
+<a class="jxr_linenumber" name="L215" href="#L215">215</a>       <strong class="jxr_keyword">if</strong> (! DATA_MODES.contains(mode)) {
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>         fatal(<span class="jxr_string">"System Property 'data' is not valid for this tool: "</span> + mode);
+<a class="jxr_linenumber" name="L217" href="#L217">217</a>       }
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>       
+<a class="jxr_linenumber" name="L219" href="#L219">219</a>       String params = System.getProperty(<span class="jxr_string">"params"</span>, <span class="jxr_string">""</span>);
+<a class="jxr_linenumber" name="L220" href="#L220">220</a> 
+<a class="jxr_linenumber" name="L221" href="#L221">221</a>       String host = System.getProperty(<span class="jxr_string">"host"</span>, DEFAULT_POST_HOST);
+<a class="jxr_linenumber" name="L222" href="#L222">222</a>       String port = System.getProperty(<span class="jxr_string">"port"</span>, DEFAULT_POST_PORT);
+<a class="jxr_linenumber" name="L223" href="#L223">223</a>       String core = System.getProperty(<span class="jxr_string">"c"</span>);
+<a class="jxr_linenumber" name="L224" href="#L224">224</a>       
+<a class="jxr_linenumber" name="L225" href="#L225">225</a>       urlStr = System.getProperty(<span class="jxr_string">"url"</span>);
+<a class="jxr_linenumber" name="L226" href="#L226">226</a>       
+<a class="jxr_linenumber" name="L227" href="#L227">227</a>       <strong class="jxr_keyword">if</strong> (urlStr == <strong class="jxr_keyword">null</strong> &amp;&amp; core == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L228" href="#L228">228</a>         fatal(<span class="jxr_string">"Specifying either url or core/collection is mandatory.\n"</span> + USAGE_STRING_SHORT);
+<a class="jxr_linenumber" name="L229" href="#L229">229</a>       }
+<a class="jxr_linenumber" name="L230" href="#L230">230</a>       
+<a class="jxr_linenumber" name="L231" href="#L231">231</a>       <strong class="jxr_keyword">if</strong>(urlStr == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L232" href="#L232">232</a>         urlStr = String.format(Locale.ROOT, <span class="jxr_string">"http://%s:%s/solr/%s/update"</span>, host, port, core);
+<a class="jxr_linenumber" name="L233" href="#L233">233</a>       }
+<a class="jxr_linenumber" name="L234" href="#L234">234</a>       urlStr = SimplePostTool.appendParam(urlStr, params);
+<a class="jxr_linenumber" name="L235" href="#L235">235</a>       URL url = <strong class="jxr_keyword">new</strong> URL(urlStr);
+<a class="jxr_linenumber" name="L236" href="#L236">236</a>       <strong class="jxr_keyword">boolean</strong> auto = isOn(System.getProperty(<span class="jxr_string">"auto"</span>, DEFAULT_AUTO));
+<a class="jxr_linenumber" name="L237" href="#L237">237</a>       String type = System.getProperty(<span class="jxr_string">"type"</span>);
+<a class="jxr_linenumber" name="L238" href="#L238">238</a>       <em class="jxr_comment">// Recursive</em>
+<a class="jxr_linenumber" name="L239" href="#L239">239</a>       <strong class="jxr_keyword">int</strong> recursive = 0;
+<a class="jxr_linenumber" name="L240" href="#L240">240</a>       String r = System.getProperty(<span class="jxr_string">"recursive"</span>, DEFAULT_RECURSIVE);
+<a class="jxr_linenumber" name="L241" href="#L241">241</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L242" href="#L242">242</a>         recursive = Integer.parseInt(r);
+<a class="jxr_linenumber" name="L243" href="#L243">243</a>       } <strong class="jxr_keyword">catch</strong>(Exception e) {
+<a class="jxr_linenumber" name="L244" href="#L244">244</a>         <strong class="jxr_keyword">if</strong> (isOn(r))
+<a class="jxr_linenumber" name="L245" href="#L245">245</a>           recursive = DATA_MODE_WEB.equals(mode)?1:999;
+<a class="jxr_linenumber" name="L246" href="#L246">246</a>       }
+<a class="jxr_linenumber" name="L247" href="#L247">247</a>       <em class="jxr_comment">// Delay</em>
+<a class="jxr_linenumber" name="L248" href="#L248">248</a>       <strong class="jxr_keyword">int</strong> delay = DATA_MODE_WEB.equals(mode) ? DEFAULT_WEB_DELAY : 0;
+<a class="jxr_linenumber" name="L249" href="#L249">249</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L250" href="#L250">250</a>         delay = Integer.parseInt(System.getProperty(<span class="jxr_string">"delay"</span>, <span class="jxr_string">""</span>+delay));
+<a class="jxr_linenumber" name="L251" href="#L251">251</a>       } <strong class="jxr_keyword">catch</strong>(Exception e) { }
+<a class="jxr_linenumber" name="L252" href="#L252">252</a>       OutputStream out = isOn(System.getProperty(<span class="jxr_string">"out"</span>, DEFAULT_OUT)) ? System.out : <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L253" href="#L253">253</a>       String fileTypes = System.getProperty(<span class="jxr_string">"filetypes"</span>, DEFAULT_FILE_TYPES);
+<a class="jxr_linenumber" name="L254" href="#L254">254</a>       <strong class="jxr_keyword">boolean</strong> commit = isOn(System.getProperty(<span class="jxr_string">"commit"</span>,DEFAULT_COMMIT));
+<a class="jxr_linenumber" name="L255" href="#L255">255</a>       <strong class="jxr_keyword">boolean</strong> optimize = isOn(System.getProperty(<span class="jxr_string">"optimize"</span>,DEFAULT_OPTIMIZE));
+<a class="jxr_linenumber" name="L256" href="#L256">256</a>       
+<a class="jxr_linenumber" name="L257" href="#L257">257</a>       <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> SimplePostTool(mode, url, auto, type, recursive, delay, fileTypes, out, commit, optimize, args);
+<a class="jxr_linenumber" name="L258" href="#L258">258</a>     } <strong class="jxr_keyword">catch</strong> (MalformedURLException e) {
+<a class="jxr_linenumber" name="L259" href="#L259">259</a>       fatal(<span class="jxr_string">"System Property 'url' is not a valid URL: "</span> + urlStr);
+<a class="jxr_linenumber" name="L260" href="#L260">260</a>       <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L261" href="#L261">261</a>     }
+<a class="jxr_linenumber" name="L262" href="#L262">262</a>   }
+<a class="jxr_linenumber" name="L263" href="#L263">263</a> 
+<a class="jxr_linenumber" name="L264" href="#L264">264</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L265" href="#L265">265</a> <em class="jxr_javadoccomment">   * Constructor which takes in all mandatory input for the tool to work.</em>
+<a class="jxr_linenumber" name="L266" href="#L266">266</a> <em class="jxr_javadoccomment">   * Also see usage() for further explanation of the params.</em>
+<a class="jxr_linenumber" name="L267" href="#L267">267</a> <em class="jxr_javadoccomment">   * @param mode whether to post files, web pages, params or stdin</em>
+<a class="jxr_linenumber" name="L268" href="#L268">268</a> <em class="jxr_javadoccomment">   * @param url the Solr base Url to post to, should end with /update</em>
+<a class="jxr_linenumber" name="L269" href="#L269">269</a> <em class="jxr_javadoccomment">   * @param auto if true, we'll guess type and add resourcename/url</em>
+<a class="jxr_linenumber" name="L270" href="#L270">270</a> <em class="jxr_javadoccomment">   * @param type content-type of the data you are posting</em>
+<a class="jxr_linenumber" name="L271" href="#L271">271</a> <em class="jxr_javadoccomment">   * @param recursive number of levels for file/web mode, or 0 if one file only</em>
+<a class="jxr_linenumber" name="L272" href="#L272">272</a> <em class="jxr_javadoccomment">   * @param delay if recursive then delay will be the wait time between posts</em>
+<a class="jxr_linenumber" name="L273" href="#L273">273</a> <em class="jxr_javadoccomment">   * @param fileTypes a comma separated list of file-name endings to accept for file/web</em>
+<a class="jxr_linenumber" name="L274" href="#L274">274</a> <em class="jxr_javadoccomment">   * @param out an OutputStream to write output to, e.g. stdout to print to console</em>
+<a class="jxr_linenumber" name="L275" href="#L275">275</a> <em class="jxr_javadoccomment">   * @param commit if true, will commit at end of posting</em>
+<a class="jxr_linenumber" name="L276" href="#L276">276</a> <em class="jxr_javadoccomment">   * @param optimize if true, will optimize at end of posting</em>
+<a class="jxr_linenumber" name="L277" href="#L277">277</a> <em class="jxr_javadoccomment">   * @param args a String[] of arguments, varies between modes</em>
+<a class="jxr_linenumber" name="L278" href="#L278">278</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L279" href="#L279">279</a>   <strong class="jxr_keyword">public</strong> SimplePostTool(String mode, URL url, <strong class="jxr_keyword">boolean</strong> auto, String type,
+<a class="jxr_linenumber" name="L280" href="#L280">280</a>       <strong class="jxr_keyword">int</strong> recursive, <strong class="jxr_keyword">int</strong> delay, String fileTypes, OutputStream out, 
+<a class="jxr_linenumber" name="L281" href="#L281">281</a>       <strong class="jxr_keyword">boolean</strong> commit, <strong class="jxr_keyword">boolean</strong> optimize, String[] args) {
+<a class="jxr_linenumber" name="L282" href="#L282">282</a>     <strong class="jxr_keyword">this</strong>.mode = mode;
+<a class="jxr_linenumber" name="L283" href="#L283">283</a>     <strong class="jxr_keyword">this</strong>.solrUrl = url;
+<a class="jxr_linenumber" name="L284" href="#L284">284</a>     <strong class="jxr_keyword">this</strong>.auto = auto;
+<a class="jxr_linenumber" name="L285" href="#L285">285</a>     <strong class="jxr_keyword">this</strong>.type = type;
+<a class="jxr_linenumber" name="L286" href="#L286">286</a>     <strong class="jxr_keyword">this</strong>.recursive = recursive;
+<a class="jxr_linenumber" name="L287" href="#L287">287</a>     <strong class="jxr_keyword">this</strong>.delay = delay;
+<a class="jxr_linenumber" name="L288" href="#L288">288</a>     <strong class="jxr_keyword">this</strong>.fileTypes = fileTypes;
+<a class="jxr_linenumber" name="L289" href="#L289">289</a>     <strong class="jxr_keyword">this</strong>.fileFilter = getFileFilterFromFileTypes(fileTypes);
+<a class="jxr_linenumber" name="L290" href="#L290">290</a>     <strong class="jxr_keyword">this</strong>.out = out;
+<a class="jxr_linenumber" name="L291" href="#L291">291</a>     <strong class="jxr_keyword">this</strong>.commit = commit;
+<a class="jxr_linenumber" name="L292" href="#L292">292</a>     <strong class="jxr_keyword">this</strong>.optimize = optimize;
+<a class="jxr_linenumber" name="L293" href="#L293">293</a>     <strong class="jxr_keyword">this</strong>.args = args;
+<a class="jxr_linenumber" name="L294" href="#L294">294</a>     pageFetcher = <strong class="jxr_keyword">new</strong> PageFetcher();
+<a class="jxr_linenumber" name="L295" href="#L295">295</a>   }
+<a class="jxr_linenumber" name="L296" href="#L296">296</a> 
+<a class="jxr_linenumber" name="L297" href="#L297">297</a>   <strong class="jxr_keyword">public</strong> SimplePostTool() {}
+<a class="jxr_linenumber" name="L298" href="#L298">298</a>   
+<a class="jxr_linenumber" name="L299" href="#L299">299</a>   <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L300" href="#L300">300</a>   <em class="jxr_comment">// Do some action depending on which mode we have</em>
+<a class="jxr_linenumber" name="L301" href="#L301">301</a>   <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L302" href="#L302">302</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> doFilesMode() {
+<a class="jxr_linenumber" name="L303" href="#L303">303</a>     currentDepth = 0;
+<a class="jxr_linenumber" name="L304" href="#L304">304</a>     <em class="jxr_comment">// Skip posting files if special param "-" given  </em>
+<a class="jxr_linenumber" name="L305" href="#L305">305</a>     <strong class="jxr_keyword">if</strong> (!args[0].equals(<span class="jxr_string">"-"</span>)) {
+<a class="jxr_linenumber" name="L306" href="#L306">306</a>       info(<span class="jxr_string">"Posting files to [base] url "</span> + solrUrl + (!auto?<span class="jxr_string">" using content-type "</span>+(type==<strong class="jxr_keyword">null</strong>?DEFAULT_CONTENT_TYPE:type):<span class="jxr_string">""</span>)+<span class="jxr_string">"..."</span>);
+<a class="jxr_linenumber" name="L307" href="#L307">307</a>       <strong class="jxr_keyword">if</strong>(auto)
+<a class="jxr_linenumber" name="L308" href="#L308">308</a>         info(<span class="jxr_string">"Entering auto mode. File endings considered are "</span>+fileTypes);
+<a class="jxr_linenumber" name="L309" href="#L309">309</a>       <strong class="jxr_keyword">if</strong>(recursive &gt; 0)
+<a class="jxr_linenumber" name="L310" href="#L310">310</a>         info(<span class="jxr_string">"Entering recursive mode, max depth="</span>+recursive+<span class="jxr_string">", delay="</span>+delay+<span class="jxr_string">"s"</span>); 
+<a class="jxr_linenumber" name="L311" href="#L311">311</a>       <strong class="jxr_keyword">int</strong> numFilesPosted = postFiles(args, 0, out, type);
+<a class="jxr_linenumber" name="L312" href="#L312">312</a>       info(numFilesPosted + <span class="jxr_string">" files indexed."</span>);
+<a class="jxr_linenumber" name="L313" href="#L313">313</a>     }
+<a class="jxr_linenumber" name="L314" href="#L314">314</a>   }
+<a class="jxr_linenumber" name="L315" href="#L315">315</a> 
+<a class="jxr_linenumber" name="L316" href="#L316">316</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> doArgsMode() {
+<a class="jxr_linenumber" name="L317" href="#L317">317</a>     info(<span class="jxr_string">"POSTing args to "</span> + solrUrl + <span class="jxr_string">"..."</span>);
+<a class="jxr_linenumber" name="L318" href="#L318">318</a>     <strong class="jxr_keyword">for</strong> (String a : args) {
+<a class="jxr_linenumber" name="L319" href="#L319">319</a>       postData(stringToStream(a), <strong class="jxr_keyword">null</strong>, out, type, solrUrl);
+<a class="jxr_linenumber" name="L320" href="#L320">320</a>     }
+<a class="jxr_linenumber" name="L321" href="#L321">321</a>   }
+<a class="jxr_linenumber" name="L322" href="#L322">322</a> 
+<a class="jxr_linenumber" name="L323" href="#L323">323</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">int</strong> doWebMode() {
+<a class="jxr_linenumber" name="L324" href="#L324">324</a>     reset();
+<a class="jxr_linenumber" name="L325" href="#L325">325</a>     <strong class="jxr_keyword">int</strong> numPagesPosted = 0;
+<a class="jxr_linenumber" name="L326" href="#L326">326</a>     <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L327" href="#L327">327</a>       <strong class="jxr_keyword">if</strong>(type != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L328" href="#L328">328</a>         fatal(<span class="jxr_string">"Specifying content-type with \&quot;-Ddata=web\&quot; is not supported"</span>);
+<a class="jxr_linenumber" name="L329" href="#L329">329</a>       }
+<a class="jxr_linenumber" name="L330" href="#L330">330</a>       <strong class="jxr_keyword">if</strong> (args[0].equals(<span class="jxr_string">"-"</span>)) {
+<a class="jxr_linenumber" name="L331" href="#L331">331</a>         <em class="jxr_comment">// Skip posting url if special param "-" given  </em>
+<a class="jxr_linenumber" name="L332" href="#L332">332</a>         <strong class="jxr_keyword">return</strong> 0;
+<a class="jxr_linenumber" name="L333" href="#L333">333</a>       }
+<a class="jxr_linenumber" name="L334" href="#L334">334</a>       <em class="jxr_comment">// Set Extracting handler as default</em>
+<a class="jxr_linenumber" name="L335" href="#L335">335</a>       solrUrl = appendUrlPath(solrUrl, <span class="jxr_string">"/extract"</span>);
+<a class="jxr_linenumber" name="L336" href="#L336">336</a>       
+<a class="jxr_linenumber" name="L337" href="#L337">337</a>       info(<span class="jxr_string">"Posting web pages to Solr url "</span>+solrUrl);
+<a class="jxr_linenumber" name="L338" href="#L338">338</a>       auto=<strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L339" href="#L339">339</a>       info(<span class="jxr_string">"Entering auto mode. Indexing pages with content-types corresponding to file endings "</span>+fileTypes);
+<a class="jxr_linenumber" name="L340" href="#L340">340</a>       <strong class="jxr_keyword">if</strong>(recursive &gt; 0) {
+<a class="jxr_linenumber" name="L341" href="#L341">341</a>         <strong class="jxr_keyword">if</strong>(recursive &gt; MAX_WEB_DEPTH) {
+<a class="jxr_linenumber" name="L342" href="#L342">342</a>           recursive = MAX_WEB_DEPTH;
+<a class="jxr_linenumber" name="L343" href="#L343">343</a>           warn(<span class="jxr_string">"Too large recursion depth for web mode, limiting to "</span>+MAX_WEB_DEPTH+<span class="jxr_string">"..."</span>);
+<a class="jxr_linenumber" name="L344" href="#L344">344</a>         }
+<a class="jxr_linenumber" name="L345" href="#L345">345</a>         <strong class="jxr_keyword">if</strong>(delay &lt; DEFAULT_WEB_DELAY)
+<a class="jxr_linenumber" name="L346" href="#L346">346</a>           warn(<span class="jxr_string">"Never crawl an external web site faster than every 10 seconds, your IP will probably be blocked"</span>);
+<a class="jxr_linenumber" name="L347" href="#L347">347</a>         info(<span class="jxr_string">"Entering recursive mode, depth="</span>+recursive+<span class="jxr_string">", delay="</span>+delay+<span class="jxr_string">"s"</span>);
+<a class="jxr_linenumber" name="L348" href="#L348">348</a>       }
+<a class="jxr_linenumber" name="L349" href="#L349">349</a>       numPagesPosted = postWebPages(args, 0, out);
+<a class="jxr_linenumber" name="L350" href="#L350">350</a>       info(numPagesPosted + <span class="jxr_string">" web pages indexed."</span>);
+<a class="jxr_linenumber" name="L351" href="#L351">351</a>     } <strong class="jxr_keyword">catch</strong>(MalformedURLException e) {
+<a class="jxr_linenumber" name="L352" href="#L352">352</a>       fatal(<span class="jxr_string">"Wrong URL trying to append /extract to "</span>+solrUrl);
+<a class="jxr_linenumber" name="L353" href="#L353">353</a>     }
+<a class="jxr_linenumber" name="L354" href="#L354">354</a>     <strong class="jxr_keyword">return</strong> numPagesPosted;
+<a class="jxr_linenumber" name="L355" href="#L355">355</a>   }
+<a class="jxr_linenumber" name="L356" href="#L356">356</a> 
+<a class="jxr_linenumber" name="L357" href="#L357">357</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> doStdinMode() {
+<a class="jxr_linenumber" name="L358" href="#L358">358</a>     info(<span class="jxr_string">"POSTing stdin to "</span> + solrUrl + <span class="jxr_string">"..."</span>);
+<a class="jxr_linenumber" name="L359" href="#L359">359</a>     postData(System.in, <strong class="jxr_keyword">null</strong>, out, type, solrUrl);    
+<a class="jxr_linenumber" name="L360" href="#L360">360</a>   }
+<a class="jxr_linenumber" name="L361" href="#L361">361</a> 
+<a class="jxr_linenumber" name="L362" href="#L362">362</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> reset() {
+<a class="jxr_linenumber" name="L363" href="#L363">363</a>     backlog = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L364" href="#L364">364</a>     visited = <strong class="jxr_keyword">new</strong> HashSet&lt;&gt;();
+<a class="jxr_linenumber" name="L365" href="#L365">365</a>   }
+<a class="jxr_linenumber" name="L366" href="#L366">366</a> 
+<a class="jxr_linenumber" name="L367" href="#L367">367</a> 
+<a class="jxr_linenumber" name="L368" href="#L368">368</a>   <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L369" href="#L369">369</a>   <em class="jxr_comment">// USAGE</em>
+<a class="jxr_linenumber" name="L370" href="#L370">370</a>   <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L371" href="#L371">371</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> usageShort() {
+<a class="jxr_linenumber" name="L372" href="#L372">372</a>     System.out.println(USAGE_STRING_SHORT+<span class="jxr_string">"\n"</span>+
+<a class="jxr_linenumber" name="L373" href="#L373">373</a>         <span class="jxr_string">"       Please invoke with -h option for extended usage help."</span>);
+<a class="jxr_linenumber" name="L374" href="#L374">374</a>   }
+<a class="jxr_linenumber" name="L375" href="#L375">375</a> 
+<a class="jxr_linenumber" name="L376" href="#L376">376</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> usage() {
+<a class="jxr_linenumber" name="L377" href="#L377">377</a>     System.out.println
+<a class="jxr_linenumber" name="L378" href="#L378">378</a>     (USAGE_STRING_SHORT+<span class="jxr_string">"\n\n"</span> +
+<a class="jxr_linenumber" name="L379" href="#L379">379</a>      <span class="jxr_string">"Supported System Properties and their defaults:\n"</span>+
+<a class="jxr_linenumber" name="L380" href="#L380">380</a>      <span class="jxr_string">"  -Dc=&lt;core/collection&gt;\n"</span>+
+<a class="jxr_linenumber" name="L381" href="#L381">381</a>      <span class="jxr_string">"  -Durl=&lt;base Solr update URL&gt; (overrides -Dc option if specified)\n"</span>+
+<a class="jxr_linenumber" name="L382" href="#L382">382</a>      <span class="jxr_string">"  -Ddata=files|web|args|stdin (default="</span> + DEFAULT_DATA_MODE + <span class="jxr_string">")\n"</span>+
+<a class="jxr_linenumber" name="L383" href="#L383">383</a>      <span class="jxr_string">"  -Dtype=&lt;content-type&gt; (default="</span> + DEFAULT_CONTENT_TYPE + <span class="jxr_string">")\n"</span>+
+<a class="jxr_linenumber" name="L384" href="#L384">384</a>      <span class="jxr_string">"  -Dhost=&lt;host&gt; (default: "</span> + DEFAULT_POST_HOST+ <span class="jxr_string">")\n"</span>+
+<a class="jxr_linenumber" name="L385" href="#L385">385</a>      <span class="jxr_string">"  -Dport=&lt;port&gt; (default: "</span> + DEFAULT_POST_PORT+ <span class="jxr_string">")\n"</span>+
+<a class="jxr_linenumber" name="L386" href="#L386">386</a>      <span class="jxr_string">"  -Dauto=yes|no (default="</span> + DEFAULT_AUTO + <span class="jxr_string">")\n"</span>+
+<a class="jxr_linenumber" name="L387" href="#L387">387</a>      <span class="jxr_string">"  -Drecursive=yes|no|&lt;depth&gt; (default="</span> + DEFAULT_RECURSIVE + <span class="jxr_string">")\n"</span>+
+<a class="jxr_linenumber" name="L388" href="#L388">388</a>      <span class="jxr_string">"  -Ddelay=&lt;seconds&gt; (default=0 for files, 10 for web)\n"</span>+
+<a class="jxr_linenumber" name="L389" href="#L389">389</a>      <span class="jxr_string">"  -Dfiletypes=&lt;type&gt;[,&lt;type&gt;,...] (default="</span> + DEFAULT_FILE_TYPES + <span class="jxr_string">")\n"</span>+
+<a class="jxr_linenumber" name="L390" href="#L390">390</a>      <span class="jxr_string">"  -Dparams=\&quot;&lt;key&gt;=&lt;value&gt;[&amp;&lt;key&gt;=&lt;value&gt;...]\&quot; (values must be URL-encoded)\n"</span>+
+<a class="jxr_linenumber" name="L391" href="#L391">391</a>      <span class="jxr_string">"  -Dcommit=yes|no (default="</span> + DEFAULT_COMMIT + <span class="jxr_string">")\n"</span>+
+<a class="jxr_linenumber" name="L392" href="#L392">392</a>      <span class="jxr_string">"  -Doptimize=yes|no (default="</span> + DEFAULT_OPTIMIZE + <span class="jxr_string">")\n"</span>+
+<a class="jxr_linenumber" name="L393" href="#L393">393</a>      <span class="jxr_string">"  -Dout=yes|no (default="</span> + DEFAULT_OUT + <span class="jxr_string">")\n\n"</span>+
+<a class="jxr_linenumber" name="L394" href="#L394">394</a>      <span class="jxr_string">"This is a simple command line tool for POSTing raw data to a Solr port.\n"</span>+
+<a class="jxr_linenumber" name="L395" href="#L395">395</a>      <span class="jxr_string">"NOTE: Specifying the url/core/collection name is mandatory.\n"</span> +
+<a class="jxr_linenumber" name="L396" href="#L396">396</a>      <span class="jxr_string">"Data can be read from files specified as commandline args,\n"</span>+
+<a class="jxr_linenumber" name="L397" href="#L397">397</a>      <span class="jxr_string">"URLs specified as args, as raw commandline arg strings or via STDIN.\n"</span>+
+<a class="jxr_linenumber" name="L398" href="#L398">398</a>      <span class="jxr_string">"Examples:\n"</span>+
+<a class="jxr_linenumber" name="L399" href="#L399">399</a>      <span class="jxr_string">"  java -Dc=gettingstarted -jar post.jar *.xml\n"</span>+
+<a class="jxr_linenumber" name="L400" href="#L400">400</a>      <span class="jxr_string">"  java -Ddata=args -Dc=gettingstarted -jar post.jar '&lt;delete&gt;&lt;id&gt;42&lt;/id&gt;&lt;/delete&gt;'\n"</span>+
+<a class="jxr_linenumber" name="L401" href="#L401">401</a>      <span class="jxr_string">"  java -Ddata=stdin -Dc=gettingstarted -jar post.jar &lt; hd.xml\n"</span>+
+<a class="jxr_linenumber" name="L402" href="#L402">402</a>      <span class="jxr_string">"  java -Ddata=web -Dc=gettingstarted -jar post.jar http://example.com/\n"</span>+
+<a class="jxr_linenumber" name="L403" href="#L403">403</a>      <span class="jxr_string">"  java -Dtype=text/csv -Dc=gettingstarted -jar post.jar *.csv\n"</span>+
+<a class="jxr_linenumber" name="L404" href="#L404">404</a>      <span class="jxr_string">"  java -Dtype=application/json -Dc=gettingstarted -jar post.jar *.json\n"</span>+
+<a class="jxr_linenumber" name="L405" href="#L405">405</a>      <span class="jxr_string">"  java -Durl=http://localhost:8983/solr/techproducts/update/extract -Dparams=literal.id=pdf1 -jar post.jar solr-word.pdf\n"</span>+
+<a class="jxr_linenumber" name="L406" href="#L406">406</a>      <span class="jxr_string">"  java -Dauto -Dc=gettingstarted -jar post.jar *\n"</span>+
+<a class="jxr_linenumber" name="L407" href="#L407">407</a>      <span class="jxr_string">"  java -Dauto -Dc=gettingstarted -Drecursive -jar post.jar afolder\n"</span>+
+<a class="jxr_linenumber" name="L408" href="#L408">408</a>      <span class="jxr_string">"  java -Dauto -Dc=gettingstarted -Dfiletypes=ppt,html -jar post.jar afolder\n"</span>+
+<a class="jxr_linenumber" name="L409" href="#L409">409</a>      <span class="jxr_string">"The options controlled by System Properties include the Solr\n"</span>+
+<a class="jxr_linenumber" name="L410" href="#L410">410</a>      <span class="jxr_string">"URL to POST to, the Content-Type of the data, whether a commit\n"</span>+
+<a class="jxr_linenumber" name="L411" href="#L411">411</a>      <span class="jxr_string">"or optimize should be executed, and whether the response should\n"</span>+
+<a class="jxr_linenumber" name="L412" href="#L412">412</a>      <span class="jxr_string">"be written to STDOUT. If auto=yes the tool will try to set type\n"</span>+
+<a class="jxr_linenumber" name="L413" href="#L413">413</a>      <span class="jxr_string">"automatically from file name. When posting rich documents the\n"</span>+
+<a class="jxr_linenumber" name="L414" href="#L414">414</a>      <span class="jxr_string">"file name will be propagated as \&quot;resource.name\&quot; and also used\n"</span>+
+<a class="jxr_linenumber" name="L415" href="#L415">415</a>      <span class="jxr_string">"as \&quot;literal.id\&quot;. You may override these or any other request parameter\n"</span>+
+<a class="jxr_linenumber" name="L416" href="#L416">416</a>      <span class="jxr_string">"through the -Dparams property. To do a commit only, use \&quot;-\&quot; as argument.\n"</span>+
+<a class="jxr_linenumber" name="L417" href="#L417">417</a>      <span class="jxr_string">"The web mode is a simple crawler following links within domain, default delay=10s."</span>);
+<a class="jxr_linenumber" name="L418" href="#L418">418</a>   }
+<a class="jxr_linenumber" name="L419" href="#L419">419</a> 
+<a class="jxr_linenumber" name="L420" href="#L420">420</a>   <em class="jxr_javadoccomment">/** Post all filenames provided in args</em>
+<a class="jxr_linenumber" name="L421" href="#L421">421</a> <em class="jxr_javadoccomment">   * @param args array of file names</em>
+<a class="jxr_linenumber" name="L422" href="#L422">422</a> <em class="jxr_javadoccomment">   * @param startIndexInArgs offset to start</em>
+<a class="jxr_linenumber" name="L423" href="#L423">423</a> <em class="jxr_javadoccomment">   * @param out output stream to post data to</em>
+<a class="jxr_linenumber" name="L424" href="#L424">424</a> <em class="jxr_javadoccomment">   * @param type default content-type to use when posting (may be overridden in auto mode)</em>
+<a class="jxr_linenumber" name="L425" href="#L425">425</a> <em class="jxr_javadoccomment">   * @return number of files posted</em>
+<a class="jxr_linenumber" name="L426" href="#L426">426</a> <em class="jxr_javadoccomment">   * */</em>
+<a class="jxr_linenumber" name="L427" href="#L427">427</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">int</strong> postFiles(String [] args,<strong class="jxr_keyword">int</strong> startIndexInArgs, OutputStream out, String type) {
+<a class="jxr_linenumber" name="L428" href="#L428">428</a>     reset();
+<a class="jxr_linenumber" name="L429" href="#L429">429</a>     <strong class="jxr_keyword">int</strong> filesPosted = 0;
+<a class="jxr_linenumber" name="L430" href="#L430">430</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> j = startIndexInArgs; j &lt; args.length; j++) {
+<a class="jxr_linenumber" name="L431" href="#L431">431</a>       File srcFile = <strong class="jxr_keyword">new</strong> File(args[j]);
+<a class="jxr_linenumber" name="L432" href="#L432">432</a>       <strong class="jxr_keyword">if</strong>(srcFile.isDirectory() &amp;&amp; srcFile.canRead()) {
+<a class="jxr_linenumber" name="L433" href="#L433">433</a>         filesPosted += postDirectory(srcFile, out, type);
+<a class="jxr_linenumber" name="L434" href="#L434">434</a>       } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (srcFile.isFile() &amp;&amp; srcFile.canRead()) {
+<a class="jxr_linenumber" name="L435" href="#L435">435</a>         filesPosted += postFiles(<strong class="jxr_keyword">new</strong> File[] {srcFile}, out, type);
+<a class="jxr_linenumber" name="L436" href="#L436">436</a>       } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L437" href="#L437">437</a>         File parent = srcFile.getParentFile();
+<a class="jxr_linenumber" name="L438" href="#L438">438</a>         <strong class="jxr_keyword">if</strong>(parent == <strong class="jxr_keyword">null</strong>) parent = <strong class="jxr_keyword">new</strong> File(<span class="jxr_string">"."</span>);
+<a class="jxr_linenumber" name="L439" href="#L439">439</a>         String fileGlob = srcFile.getName();
+<a class="jxr_linenumber" name="L440" href="#L440">440</a>         GlobFileFilter ff = <strong class="jxr_keyword">new</strong> GlobFileFilter(fileGlob, false);
+<a class="jxr_linenumber" name="L441" href="#L441">441</a>         File[] files = parent.listFiles(ff);
+<a class="jxr_linenumber" name="L442" href="#L442">442</a>         <strong class="jxr_keyword">if</strong>(files == <strong class="jxr_keyword">null</strong> || files.length == 0) {
+<a class="jxr_linenumber" name="L443" href="#L443">443</a>           warn(<span class="jxr_string">"No files or directories matching "</span>+srcFile);
+<a class="jxr_linenumber" name="L444" href="#L444">444</a>           <strong class="jxr_keyword">continue</strong>;          
+<a class="jxr_linenumber" name="L445" href="#L445">445</a>         }
+<a class="jxr_linenumber" name="L446" href="#L446">446</a>         filesPosted += postFiles(parent.listFiles(ff), out, type);
+<a class="jxr_linenumber" name="L447" href="#L447">447</a>       }
+<a class="jxr_linenumber" name="L448" href="#L448">448</a>     }
+<a class="jxr_linenumber" name="L449" href="#L449">449</a>     <strong class="jxr_keyword">return</strong> filesPosted;
+<a class="jxr_linenumber" name="L450" href="#L450">450</a>   }
+<a class="jxr_linenumber" name="L451" href="#L451">451</a>   
+<a class="jxr_linenumber" name="L452" href="#L452">452</a>   <em class="jxr_javadoccomment">/** Post all filenames provided in args</em>
+<a class="jxr_linenumber" name="L453" href="#L453">453</a> <em class="jxr_javadoccomment">   * @param files array of Files</em>
+<a class="jxr_linenumber" name="L454" href="#L454">454</a> <em class="jxr_javadoccomment">   * @param startIndexInArgs offset to start</em>
+<a class="jxr_linenumber" name="L455" href="#L455">455</a> <em class="jxr_javadoccomment">   * @param out output stream to post data to</em>
+<a class="jxr_linenumber" name="L456" href="#L456">456</a> <em class="jxr_javadoccomment">   * @param type default content-type to use when posting (may be overridden in auto mode)</em>
+<a class="jxr_linenumber" name="L457" href="#L457">457</a> <em class="jxr_javadoccomment">   * @return number of files posted</em>
+<a class="jxr_linenumber" name="L458" href="#L458">458</a> <em class="jxr_javadoccomment">   * */</em>
+<a class="jxr_linenumber" name="L459" href="#L459">459</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">int</strong> postFiles(File[] files, <strong class="jxr_keyword">int</strong> startIndexInArgs, OutputStream out, String type) {
+<a class="jxr_linenumber" name="L460" href="#L460">460</a>     reset();
+<a class="jxr_linenumber" name="L461" href="#L461">461</a>     <strong class="jxr_keyword">int</strong> filesPosted = 0;
+<a class="jxr_linenumber" name="L462" href="#L462">462</a>     <strong class="jxr_keyword">for</strong> (File srcFile : files) {
+<a class="jxr_linenumber" name="L463" href="#L463">463</a>       <strong class="jxr_keyword">if</strong>(srcFile.isDirectory() &amp;&amp; srcFile.canRead()) {
+<a class="jxr_linenumber" name="L464" href="#L464">464</a>         filesPosted += postDirectory(srcFile, out, type);
+<a class="jxr_linenumber" name="L465" href="#L465">465</a>       } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (srcFile.isFile() &amp;&amp; srcFile.canRead()) {
+<a class="jxr_linenumber" name="L466" href="#L466">466</a>         filesPosted += postFiles(<strong class="jxr_keyword">new</strong> File[] {srcFile}, out, type);
+<a class="jxr_linenumber" name="L467" href="#L467">467</a>       } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L468" href="#L468">468</a>         File parent = srcFile.getParentFile();
+<a class="jxr_linenumber" name="L469" href="#L469">469</a>         <strong class="jxr_keyword">if</strong>(parent == <strong class="jxr_keyword">null</strong>) parent = <strong class="jxr_keyword">new</strong> File(<span class="jxr_string">"."</span>);
+<a class="jxr_linenumber" name="L470" href="#L470">470</a>         String fileGlob = srcFile.getName();
+<a class="jxr_linenumber" name="L471" href="#L471">471</a>         GlobFileFilter ff = <strong class="jxr_keyword">new</strong> GlobFileFilter(fileGlob, false);
+<a class="jxr_linenumber" name="L472" href="#L472">472</a>         File[] fileList = parent.listFiles(ff);
+<a class="jxr_linenumber" name="L473" href="#L473">473</a>         <strong class="jxr_keyword">if</strong>(fileList == <strong class="jxr_keyword">null</strong> || fileList.length == 0) {
+<a class="jxr_linenumber" name="L474" href="#L474">474</a>           warn(<span class="jxr_string">"No files or directories matching "</span>+srcFile);
+<a class="jxr_linenumber" name="L475" href="#L475">475</a>           <strong class="jxr_keyword">continue</strong>;          
+<a class="jxr_linenumber" name="L476" href="#L476">476</a>         }
+<a class="jxr_linenumber" name="L477" href="#L477">477</a>         filesPosted += postFiles(fileList, out, type);
+<a class="jxr_linenumber" name="L478" href="#L478">478</a>       }
+<a class="jxr_linenumber" name="L479" href="#L479">479</a>     }
+<a class="jxr_linenumber" name="L480" href="#L480">480</a>     <strong class="jxr_keyword">return</strong> filesPosted;
+<a class="jxr_linenumber" name="L481" href="#L481">481</a>   }
+<a class="jxr_linenumber" name="L482" href="#L482">482</a>   
+<a class="jxr_linenumber" name="L483" href="#L483">483</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L484" href="#L484">484</a> <em class="jxr_javadoccomment">   * Posts a whole directory</em>
+<a class="jxr_linenumber" name="L485" href="#L485">485</a> <em class="jxr_javadoccomment">   * @return number of files posted total</em>
+<a class="jxr_linenumber" name="L486" href="#L486">486</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L487" href="#L487">487</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">int</strong> postDirectory(File dir, OutputStream out, String type) {
+<a class="jxr_linenumber" name="L488" href="#L488">488</a>     <strong class="jxr_keyword">if</strong>(dir.isHidden() &amp;&amp; !dir.getName().equals(<span class="jxr_string">"."</span>))
+<a class="jxr_linenumber" name="L489" href="#L489">489</a>       <strong class="jxr_keyword">return</strong>(0);
+<a class="jxr_linenumber" name="L490" href="#L490">490</a>     info(<span class="jxr_string">"Indexing directory "</span>+dir.getPath()+<span class="jxr_string">" ("</span>+dir.listFiles(fileFilter).length+<span class="jxr_string">" files, depth="</span>+currentDepth+<span class="jxr_string">")"</span>);
+<a class="jxr_linenumber" name="L491" href="#L491">491</a>     <strong class="jxr_keyword">int</strong> posted = 0;
+<a class="jxr_linenumber" name="L492" href="#L492">492</a>     posted += postFiles(dir.listFiles(fileFilter), out, type);
+<a class="jxr_linenumber" name="L493" href="#L493">493</a>     <strong class="jxr_keyword">if</strong>(recursive &gt; currentDepth) {
+<a class="jxr_linenumber" name="L494" href="#L494">494</a>       <strong class="jxr_keyword">for</strong>(File d : dir.listFiles()) {
+<a class="jxr_linenumber" name="L495" href="#L495">495</a>         <strong class="jxr_keyword">if</strong>(d.isDirectory()) {
+<a class="jxr_linenumber" name="L496" href="#L496">496</a>           currentDepth++;
+<a class="jxr_linenumber" name="L497" href="#L497">497</a>           posted += postDirectory(d, out, type);
+<a class="jxr_linenumber" name="L498" href="#L498">498</a>           currentDepth--;
+<a class="jxr_linenumber" name="L499" href="#L499">499</a>         }
+<a class="jxr_linenumber" name="L500" href="#L500">500</a>       }
+<a class="jxr_linenumber" name="L501" href="#L501">501</a>     }
+<a class="jxr_linenumber" name="L502" href="#L502">502</a>     <strong class="jxr_keyword">return</strong> posted;
+<a class="jxr_linenumber" name="L503" href="#L503">503</a>   }
+<a class="jxr_linenumber" name="L504" href="#L504">504</a> 
+<a class="jxr_linenumber" name="L505" href="#L505">505</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L506" href="#L506">506</a> <em class="jxr_javadoccomment">   * Posts a list of file names</em>
+<a class="jxr_linenumber" name="L507" href="#L507">507</a> <em class="jxr_javadoccomment">   * @return number of files posted</em>
+<a class="jxr_linenumber" name="L508" href="#L508">508</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L509" href="#L509">509</a>   <strong class="jxr_keyword">int</strong> postFiles(File[] files, OutputStream out, String type) {
+<a class="jxr_linenumber" name="L510" href="#L510">510</a>     <strong class="jxr_keyword">int</strong> filesPosted = 0;
+<a class="jxr_linenumber" name="L511" href="#L511">511</a>     <strong class="jxr_keyword">for</strong>(File srcFile : files) {
+<a class="jxr_linenumber" name="L512" href="#L512">512</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L513" href="#L513">513</a>         <strong class="jxr_keyword">if</strong>(!srcFile.isFile() || srcFile.isHidden())
+<a class="jxr_linenumber" name="L514" href="#L514">514</a>           <strong class="jxr_keyword">continue</strong>;
+<a class="jxr_linenumber" name="L515" href="#L515">515</a>         postFile(srcFile, out, type);
+<a class="jxr_linenumber" name="L516" href="#L516">516</a>         Thread.sleep(delay * 1000);
+<a class="jxr_linenumber" name="L517" href="#L517">517</a>         filesPosted++;
+<a class="jxr_linenumber" name="L518" href="#L518">518</a>       } <strong class="jxr_keyword">catch</strong> (InterruptedException e) {
+<a class="jxr_linenumber" name="L519" href="#L519">519</a>         <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> RuntimeException(e);
+<a class="jxr_linenumber" name="L520" href="#L520">520</a>       }
+<a class="jxr_linenumber" name="L521" href="#L521">521</a>     }
+<a class="jxr_linenumber" name="L522" href="#L522">522</a>     <strong class="jxr_keyword">return</strong> filesPosted;
+<a class="jxr_linenumber" name="L523" href="#L523">523</a>   }
+<a class="jxr_linenumber" name="L524" href="#L524">524</a> 
+<a class="jxr_linenumber" name="L525" href="#L525">525</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L526" href="#L526">526</a> <em class="jxr_javadoccomment">   * This method takes as input a list of start URL strings for crawling,</em>
+<a class="jxr_linenumber" name="L527" href="#L527">527</a> <em class="jxr_javadoccomment">   * adds each one to a backlog and then starts crawling</em>
+<a class="jxr_linenumber" name="L528" href="#L528">528</a> <em class="jxr_javadoccomment">   * @param args the raw input args from main()</em>
+<a class="jxr_linenumber" name="L529" href="#L529">529</a> <em class="jxr_javadoccomment">   * @param startIndexInArgs offset for where to start</em>
+<a class="jxr_linenumber" name="L530" href="#L530">530</a> <em class="jxr_javadoccomment">   * @param out outputStream to write results to</em>
+<a class="jxr_linenumber" name="L531" href="#L531">531</a> <em class="jxr_javadoccomment">   * @return the number of web pages posted</em>
+<a class="jxr_linenumber" name="L532" href="#L532">532</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L533" href="#L533">533</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">int</strong> postWebPages(String[] args, <strong class="jxr_keyword">int</strong> startIndexInArgs, OutputStream out) {
+<a class="jxr_linenumber" name="L534" href="#L534">534</a>     reset();
+<a class="jxr_linenumber" name="L535" href="#L535">535</a>     LinkedHashSet&lt;URL&gt; s = <strong class="jxr_keyword">new</strong> LinkedHashSet&lt;&gt;();
+<a class="jxr_linenumber" name="L536" href="#L536">536</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> j = startIndexInArgs; j &lt; args.length; j++) {
+<a class="jxr_linenumber" name="L537" href="#L537">537</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L538" href="#L538">538</a>         URL u = <strong class="jxr_keyword">new</strong> URL(normalizeUrlEnding(args[j]));
+<a class="jxr_linenumber" name="L539" href="#L539">539</a>         s.add(u);
+<a class="jxr_linenumber" name="L540" href="#L540">540</a>       } <strong class="jxr_keyword">catch</strong>(MalformedURLException e) {
+<a class="jxr_linenumber" name="L541" href="#L541">541</a>         warn(<span class="jxr_string">"Skipping malformed input URL: "</span>+args[j]);
+<a class="jxr_linenumber" name="L542" href="#L542">542</a>       }
+<a class="jxr_linenumber" name="L543" href="#L543">543</a>     }
+<a class="jxr_linenumber" name="L544" href="#L544">544</a>     <em class="jxr_comment">// Add URLs to level 0 of the backlog and start recursive crawling</em>
+<a class="jxr_linenumber" name="L545" href="#L545">545</a>     backlog.add(s);
+<a class="jxr_linenumber" name="L546" href="#L546">546</a>     <strong class="jxr_keyword">return</strong> webCrawl(0, out);
+<a class="jxr_linenumber" name="L547" href="#L547">547</a>   }
+<a class="jxr_linenumber" name="L548" href="#L548">548</a> 
+<a class="jxr_linenumber" name="L549" href="#L549">549</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L550" href="#L550">550</a> <em class="jxr_javadoccomment">   * Normalizes a URL string by removing anchor part and trailing slash</em>
+<a class="jxr_linenumber" name="L551" href="#L551">551</a> <em class="jxr_javadoccomment">   * @return the normalized URL string</em>
+<a class="jxr_linenumber" name="L552" href="#L552">552</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L553" href="#L553">553</a>   <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">static</strong> String normalizeUrlEnding(String link) {
+<a class="jxr_linenumber" name="L554" href="#L554">554</a>     <strong class="jxr_keyword">if</strong>(link.indexOf(<span class="jxr_string">"#"</span>) &gt; -1)
+<a class="jxr_linenumber" name="L555" href="#L555">555</a>       link = link.substring(0,link.indexOf(<span class="jxr_string">"#"</span>));
+<a class="jxr_linenumber" name="L556" href="#L556">556</a>     <strong class="jxr_keyword">if</strong>(link.endsWith(<span class="jxr_string">"?"</span>))
+<a class="jxr_linenumber" name="L557" href="#L557">557</a>       link = link.substring(0,link.length()-1);
+<a class="jxr_linenumber" name="L558" href="#L558">558</a>     <strong class="jxr_keyword">if</strong>(link.endsWith(<span class="jxr_string">"/"</span>))
+<a class="jxr_linenumber" name="L559" href="#L559">559</a>       link = link.substring(0,link.length()-1);
+<a class="jxr_linenumber" name="L560" href="#L560">560</a>     <strong class="jxr_keyword">return</strong> link;
+<a class="jxr_linenumber" name="L561" href="#L561">561</a>   }
+<a class="jxr_linenumber" name="L562" href="#L562">562</a> 
+<a class="jxr_linenumber" name="L563" href="#L563">563</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L564" href="#L564">564</a> <em class="jxr_javadoccomment">   * A very simple crawler, pulling URLs to fetch from a backlog and then</em>
+<a class="jxr_linenumber" name="L565" href="#L565">565</a> <em class="jxr_javadoccomment">   * recurses N levels deep if recursive&amp;gt;0. Links are parsed from HTML</em>
+<a class="jxr_linenumber" name="L566" href="#L566">566</a> <em class="jxr_javadoccomment">   * through first getting an XHTML version using SolrCell with extractOnly,</em>
+<a class="jxr_linenumber" name="L567" href="#L567">567</a> <em class="jxr_javadoccomment">   * and followed if they are local. The crawler pauses for a default delay</em>
+<a class="jxr_linenumber" name="L568" href="#L568">568</a> <em class="jxr_javadoccomment">   * of 10 seconds between each fetch, this can be configured in the delay</em>
+<a class="jxr_linenumber" name="L569" href="#L569">569</a> <em class="jxr_javadoccomment">   * variable. This is only meant for test purposes, as it does not respect</em>
+<a class="jxr_linenumber" name="L570" href="#L570">570</a> <em class="jxr_javadoccomment">   * robots or anything else fancy :)</em>
+<a class="jxr_linenumber" name="L571" href="#L571">571</a> <em class="jxr_javadoccomment">   * @param level which level to crawl</em>
+<a class="jxr_linenumber" name="L572" href="#L572">572</a> <em class="jxr_javadoccomment">   * @param out output stream to write to</em>
+<a class="jxr_linenumber" name="L573" href="#L573">573</a> <em class="jxr_javadoccomment">   * @return number of pages crawled on this level and below</em>
+<a class="jxr_linenumber" name="L574" href="#L574">574</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L575" href="#L575">575</a>   <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">int</strong> webCrawl(<strong class="jxr_keyword">int</strong> level, OutputStream out) {
+<a class="jxr_linenumber" name="L576" href="#L576">576</a>     <strong class="jxr_keyword">int</strong> numPages = 0;
+<a class="jxr_linenumber" name="L577" href="#L577">577</a>     LinkedHashSet&lt;URL&gt; stack = backlog.get(level);
+<a class="jxr_linenumber" name="L578" href="#L578">578</a>     <strong class="jxr_keyword">int</strong> rawStackSize = stack.size();
+<a class="jxr_linenumber" name="L579" href="#L579">579</a>     stack.removeAll(visited);
+<a class="jxr_linenumber" name="L580" href="#L580">580</a>     <strong class="jxr_keyword">int</strong> stackSize = stack.size();
+<a class="jxr_linenumber" name="L581" href="#L581">581</a>     LinkedHashSet&lt;URL&gt; subStack = <strong class="jxr_keyword">new</strong> LinkedHashSet&lt;&gt;();
+<a class="jxr_linenumber" name="L582" href="#L582">582</a>     info(<span class="jxr_string">"Entering crawl at level "</span>+level+<span class="jxr_string">" ("</span>+rawStackSize+<span class="jxr_string">" links total, "</span>+stackSize+<span class="jxr_string">" new)"</span>);
+<a class="jxr_linenumber" name="L583" href="#L583">583</a>     <strong class="jxr_keyword">for</strong>(URL u : stack) {
+<a class="jxr_linenumber" name="L584" href="#L584">584</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L585" href="#L585">585</a>         visited.add(u);
+<a class="jxr_linenumber" name="L586" href="#L586">586</a>         PageFetcherResult result = pageFetcher.readPageFromUrl(u);
+<a class="jxr_linenumber" name="L587" href="#L587">587</a>         <strong class="jxr_keyword">if</strong>(result.httpStatus == 200) {
+<a class="jxr_linenumber" name="L588" href="#L588">588</a>           u = (result.redirectUrl != <strong class="jxr_keyword">null</strong>) ? result.redirectUrl : u;
+<a class="jxr_linenumber" name="L589" href="#L589">589</a>           URL postUrl = <strong class="jxr_keyword">new</strong> URL(appendParam(solrUrl.toString(), 
+<a class="jxr_linenumber" name="L590" href="#L590">590</a>               <span class="jxr_string">"literal.id="</span>+URLEncoder.encode(u.toString(),<span class="jxr_string">"UTF-8"</span>) +
+<a class="jxr_linenumber" name="L591" href="#L591">591</a>               <span class="jxr_string">"&amp;literal.url="</span>+URLEncoder.encode(u.toString(),<span class="jxr_string">"UTF-8"</span>)));
+<a class="jxr_linenumber" name="L592" href="#L592">592</a>           <strong class="jxr_keyword">boolean</strong> success = postData(<strong class="jxr_keyword">new</strong> ByteArrayInputStream(result.content.array(), result.content.arrayOffset(),result.content.limit() ), <strong class="jxr_keyword">null</strong>, out, result.contentType, postUrl);
+<a class="jxr_linenumber" name="L593" href="#L593">593</a>           <strong class="jxr_keyword">if</strong> (success) {
+<a class="jxr_linenumber" name="L594" href="#L594">594</a>             info(<span class="jxr_string">"POSTed web resource "</span>+u+<span class="jxr_string">" (depth: "</span>+level+<span class="jxr_string">")"</span>);
+<a class="jxr_linenumber" name="L595" href="#L595">595</a>             Thread.sleep(delay * 1000);
+<a class="jxr_linenumber" name="L596" href="#L596">596</a>             numPages++;
+<a class="jxr_linenumber" name="L597" href="#L597">597</a>             <em class="jxr_comment">// Pull links from HTML pages only</em>
+<a class="jxr_linenumber" name="L598" href="#L598">598</a>             <strong class="jxr_keyword">if</strong>(recursive &gt; level &amp;&amp; result.contentType.equals(<span class="jxr_string">"text/html"</span>)) {
+<a class="jxr_linenumber" name="L599" href="#L599">599</a>               Set&lt;URL&gt; children = pageFetcher.getLinksFromWebPage(u, <strong class="jxr_keyword">new</strong> ByteArrayInputStream(result.content.array(), result.content.arrayOffset(), result.content.limit()), result.contentType, postUrl);
+<a class="jxr_linenumber" name="L600" href="#L600">600</a>               subStack.addAll(children);
+<a class="jxr_linenumber" name="L601" href="#L601">601</a>             }
+<a class="jxr_linenumber" name="L602" href="#L602">602</a>           } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L603" href="#L603">603</a>             warn(<span class="jxr_string">"An error occurred while posting "</span>+u);
+<a class="jxr_linenumber" name="L604" href="#L604">604</a>           }
+<a class="jxr_linenumber" name="L605" href="#L605">605</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L606" href="#L606">606</a>           warn(<span class="jxr_string">"The URL "</span>+u+<span class="jxr_string">" returned a HTTP result status of "</span>+result.httpStatus);
+<a class="jxr_linenumber" name="L607" href="#L607">607</a>         }
+<a class="jxr_linenumber" name="L608" href="#L608">608</a>       } <strong class="jxr_keyword">catch</strong> (IOException e) {
+<a class="jxr_linenumber" name="L609" href="#L609">609</a>         warn(<span class="jxr_string">"Caught exception when trying to open connection to "</span>+u+<span class="jxr_string">": "</span>+e.getMessage());
+<a class="jxr_linenumber" name="L610" href="#L610">610</a>       } <strong class="jxr_keyword">catch</strong> (InterruptedException e) {
+<a class="jxr_linenumber" name="L611" href="#L611">611</a>         <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> RuntimeException(e);
+<a class="jxr_linenumber" name="L612" href="#L612">612</a>       }
+<a class="jxr_linenumber" name="L613" href="#L613">613</a>     }
+<a class="jxr_linenumber" name="L614" href="#L614">614</a>     <strong class="jxr_keyword">if</strong>(!subStack.isEmpty()) {
+<a class="jxr_linenumber" name="L615" href="#L615">615</a>       backlog.add(subStack);
+<a class="jxr_linenumber" name="L616" href="#L616">616</a>       numPages += webCrawl(level+1, out);
+<a class="jxr_linenumber" name="L617" href="#L617">617</a>     }
+<a class="jxr_linenumber" name="L618" href="#L618">618</a>     <strong class="jxr_keyword">return</strong> numPages;    
+<a class="jxr_linenumber" name="L619" href="#L619">619</a>   }
+<a class="jxr_linenumber" name="L620" href="#L620">620</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">class</strong> BAOS <strong class="jxr_keyword">extends</strong> ByteArrayOutputStream {
+<a class="jxr_linenumber" name="L621" href="#L621">621</a>     <strong class="jxr_keyword">public</strong> ByteBuffer getByteBuffer() {
+<a class="jxr_linenumber" name="L622" href="#L622">622</a>       <strong class="jxr_keyword">return</strong> ByteBuffer.wrap(<strong class="jxr_keyword">super</strong>.buf,0,<strong class="jxr_keyword">super</strong>.count);
+<a class="jxr_linenumber" name="L623" href="#L623">623</a>     }
+<a class="jxr_linenumber" name="L624" href="#L624">624</a>   }
+<a class="jxr_linenumber" name="L625" href="#L625">625</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> ByteBuffer inputStreamToByteArray(InputStream is) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L626" href="#L626">626</a>     <strong class="jxr_keyword">return</strong> inputStreamToByteArray(is,Integer.MAX_VALUE);
+<a class="jxr_linenumber" name="L627" href="#L627">627</a> 
+<a class="jxr_linenumber" name="L628" href="#L628">628</a>   }
+<a class="jxr_linenumber" name="L629" href="#L629">629</a> 
+<a class="jxr_linenumber" name="L630" href="#L630">630</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L631" href="#L631">631</a> <em class="jxr_javadoccomment">   * Reads an input stream into a byte array</em>
+<a class="jxr_linenumber" name="L632" href="#L632">632</a> <em class="jxr_javadoccomment">   *</em>
+<a class="jxr_linenumber" name="L633" href="#L633">633</a> <em class="jxr_javadoccomment">   * @param is the input stream</em>
+<a class="jxr_linenumber" name="L634" href="#L634">634</a> <em class="jxr_javadoccomment">   * @return the byte array</em>
+<a class="jxr_linenumber" name="L635" href="#L635">635</a> <em class="jxr_javadoccomment">   * @throws IOException If there is a low-level I/O error.</em>
+<a class="jxr_linenumber" name="L636" href="#L636">636</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L637" href="#L637">637</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> ByteBuffer inputStreamToByteArray(InputStream is, <strong class="jxr_keyword">long</strong> maxSize) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L638" href="#L638">638</a>     BAOS bos =  <strong class="jxr_keyword">new</strong> BAOS();
+<a class="jxr_linenumber" name="L639" href="#L639">639</a>     <strong class="jxr_keyword">long</strong> sz = 0;
+<a class="jxr_linenumber" name="L640" href="#L640">640</a>     <strong class="jxr_keyword">int</strong> next = is.read();
+<a class="jxr_linenumber" name="L641" href="#L641">641</a>     <strong class="jxr_keyword">while</strong> (next &gt; -1) {
+<a class="jxr_linenumber" name="L642" href="#L642">642</a>       <strong class="jxr_keyword">if</strong>(++sz &gt; maxSize) <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> BufferOverflowException();
+<a class="jxr_linenumber" name="L643" href="#L643">643</a>       bos.write(next);
+<a class="jxr_linenumber" name="L644" href="#L644">644</a>       next = is.read();
+<a class="jxr_linenumber" name="L645" href="#L645">645</a>     }
+<a class="jxr_linenumber" name="L646" href="#L646">646</a>     bos.flush();
+<a class="jxr_linenumber" name="L647" href="#L647">647</a>     is.close();
+<a class="jxr_linenumber" name="L648" href="#L648">648</a>     <strong class="jxr_keyword">return</strong> bos.getByteBuffer();
+<a class="jxr_linenumber" name="L649" href="#L649">649</a>   }
+<a class="jxr_linenumber" name="L650" href="#L650">650</a> 
+<a class="jxr_linenumber" name="L651" href="#L651">651</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L652" href="#L652">652</a> <em class="jxr_javadoccomment">   * Computes the full URL based on a base url and a possibly relative link found</em>
+<a class="jxr_linenumber" name="L653" href="#L653">653</a> <em class="jxr_javadoccomment">   * in the href param of an HTML anchor.</em>
+<a class="jxr_linenumber" name="L654" href="#L654">654</a> <em class="jxr_javadoccomment">   * @param baseUrl the base url from where the link was found</em>
+<a class="jxr_linenumber" name="L655" href="#L655">655</a> <em class="jxr_javadoccomment">   * @param link the absolute or relative link</em>
+<a class="jxr_linenumber" name="L656" href="#L656">656</a> <em class="jxr_javadoccomment">   * @return the string version of the full URL</em>
+<a class="jxr_linenumber" name="L657" href="#L657">657</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L658" href="#L658">658</a>   <strong class="jxr_keyword">protected</strong> String computeFullUrl(URL baseUrl, String link) {
+<a class="jxr_linenumber" name="L659" href="#L659">659</a>     <strong class="jxr_keyword">if</strong>(link == <strong class="jxr_keyword">null</strong> || link.length() == 0) {
+<a class="jxr_linenumber" name="L660" href="#L660">660</a>       <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L661" href="#L661">661</a>     }
+<a class="jxr_linenumber" name="L662" href="#L662">662</a>     <strong class="jxr_keyword">if</strong>(!link.startsWith(<span class="jxr_string">"http"</span>)) {
+<a class="jxr_linenumber" name="L663" href="#L663">663</a>       <strong class="jxr_keyword">if</strong>(link.startsWith(<span class="jxr_string">"/"</span>)) {
+<a class="jxr_linenumber" name="L664" href="#L664">664</a>         link = baseUrl.getProtocol() + <span class="jxr_string">"://"</span> + baseUrl.getAuthority() + link;
+<a class="jxr_linenumber" name="L665" href="#L665">665</a>       } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L666" href="#L666">666</a>         <strong class="jxr_keyword">if</strong>(link.contains(<span class="jxr_string">":"</span>)) {
+<a class="jxr_linenumber" name="L667" href="#L667">667</a>           <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">null</strong>; <em class="jxr_comment">// Skip non-relative URLs</em>
+<a class="jxr_linenumber" name="L668" href="#L668">668</a>         }
+<a class="jxr_linenumber" name="L669" href="#L669">669</a>         String path = baseUrl.getPath();
+<a class="jxr_linenumber" name="L670" href="#L670">670</a>         <strong class="jxr_keyword">if</strong>(!path.endsWith(<span class="jxr_string">"/"</span>)) {
+<a class="jxr_linenumber" name="L671" href="#L671">671</a>           <strong class="jxr_keyword">int</strong> sep = path.lastIndexOf(<span class="jxr_string">"/"</span>);
+<a class="jxr_linenumber" name="L672" href="#L672">672</a>           String file = path.substring(sep+1);
+<a class="jxr_linenumber" name="L673" href="#L673">673</a>           <strong class="jxr_keyword">if</strong>(file.contains(<span class="jxr_string">"."</span>) || file.contains(<span class="jxr_string">"?"</span>))
+<a class="jxr_linenumber" name="L674" href="#L674">674</a>             path = path.substring(0,sep);
+<a class="jxr_linenumber" name="L675" href="#L675">675</a>         }
+<a class="jxr_linenumber" name="L676" href="#L676">676</a>         link = baseUrl.getProtocol() + <span class="jxr_string">"://"</span> + baseUrl.getAuthority() + path + <span class="jxr_string">"/"</span> + link;
+<a class="jxr_linenumber" name="L677" href="#L677">677</a>       }
+<a class="jxr_linenumber" name="L678" href="#L678">678</a>     }
+<a class="jxr_linenumber" name="L679" href="#L679">679</a>     link = normalizeUrlEnding(link);
+<a class="jxr_linenumber" name="L680" href="#L680">680</a>     String l = link.toLowerCase(Locale.ROOT);
+<a class="jxr_linenumber" name="L681" href="#L681">681</a>     <em class="jxr_comment">// Simple brute force skip images</em>
+<a class="jxr_linenumber" name="L682" href="#L682">682</a>     <strong class="jxr_keyword">if</strong>(l.endsWith(<span class="jxr_string">".jpg"</span>) || l.endsWith(<span class="jxr_string">".jpeg"</span>) || l.endsWith(<span class="jxr_string">".png"</span>) || l.endsWith(<span class="jxr_string">".gif"</span>)) {
+<a class="jxr_linenumber" name="L683" href="#L683">683</a>       <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">null</strong>; <em class="jxr_comment">// Skip images</em>
+<a class="jxr_linenumber" name="L684" href="#L684">684</a>     }
+<a class="jxr_linenumber" name="L685" href="#L685">685</a>     <strong class="jxr_keyword">return</strong> link;
+<a class="jxr_linenumber" name="L686" href="#L686">686</a>   }
+<a class="jxr_linenumber" name="L687" href="#L687">687</a> 
+<a class="jxr_linenumber" name="L688" href="#L688">688</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L689" href="#L689">689</a> <em class="jxr_javadoccomment">   * Uses the mime-type map to reverse lookup whether the file ending for our type</em>
+<a class="jxr_linenumber" name="L690" href="#L690">690</a> <em class="jxr_javadoccomment">   * is supported by the fileTypes option</em>
+<a class="jxr_linenumber" name="L691" href="#L691">691</a> <em class="jxr_javadoccomment">   * @param type what content-type to lookup</em>
+<a class="jxr_linenumber" name="L692" href="#L692">692</a> <em class="jxr_javadoccomment">   * @return true if this is a supported content type</em>
+<a class="jxr_linenumber" name="L693" href="#L693">693</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L694" href="#L694">694</a>   <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">boolean</strong> typeSupported(String type) {
+<a class="jxr_linenumber" name="L695" href="#L695">695</a>     <strong class="jxr_keyword">for</strong>(String key : mimeMap.keySet()) {
+<a class="jxr_linenumber" name="L696" href="#L696">696</a>       <strong class="jxr_keyword">if</strong>(mimeMap.get(key).equals(type)) {
+<a class="jxr_linenumber" name="L697" href="#L697">697</a>         <strong class="jxr_keyword">if</strong>(fileTypes.contains(key))
+<a class="jxr_linenumber" name="L698" href="#L698">698</a>           <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L699" href="#L699">699</a>       }
+<a class="jxr_linenumber" name="L700" href="#L700">700</a>     }
+<a class="jxr_linenumber" name="L701" href="#L701">701</a>     <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L702" href="#L702">702</a>   }
+<a class="jxr_linenumber" name="L703" href="#L703">703</a> 
+<a class="jxr_linenumber" name="L704" href="#L704">704</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L705" href="#L705">705</a> <em class="jxr_javadoccomment">   * Tests if a string is either "true", "on", "yes" or "1"</em>
+<a class="jxr_linenumber" name="L706" href="#L706">706</a> <em class="jxr_javadoccomment">   * @param property the string to test</em>
+<a class="jxr_linenumber" name="L707" href="#L707">707</a> <em class="jxr_javadoccomment">   * @return true if "on"</em>
+<a class="jxr_linenumber" name="L708" href="#L708">708</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L709" href="#L709">709</a>   <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">boolean</strong> isOn(String property) {
+<a class="jxr_linenumber" name="L710" href="#L710">710</a>     <strong class="jxr_keyword">return</strong>(<span class="jxr_string">"true,on,yes,1"</span>.indexOf(property) &gt; -1);
+<a class="jxr_linenumber" name="L711" href="#L711">711</a>   }
+<a class="jxr_linenumber" name="L712" href="#L712">712</a>   
+<a class="jxr_linenumber" name="L713" href="#L713">713</a>   <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> warn(String msg) {
+<a class="jxr_linenumber" name="L714" href="#L714">714</a>     System.err.println(<span class="jxr_string">"SimplePostTool: WARNING: "</span> + msg);
+<a class="jxr_linenumber" name="L715" href="#L715">715</a>   }
+<a class="jxr_linenumber" name="L716" href="#L716">716</a> 
+<a class="jxr_linenumber" name="L717" href="#L717">717</a>   <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> info(String msg) {
+<a class="jxr_linenumber" name="L718" href="#L718">718</a>     System.out.println(msg);
+<a class="jxr_linenumber" name="L719" href="#L719">719</a>   }
+<a class="jxr_linenumber" name="L720" href="#L720">720</a> 
+<a class="jxr_linenumber" name="L721" href="#L721">721</a>   <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> fatal(String msg) {
+<a class="jxr_linenumber" name="L722" href="#L722">722</a>     System.err.println(<span class="jxr_string">"SimplePostTool: FATAL: "</span> + msg);
+<a class="jxr_linenumber" name="L723" href="#L723">723</a>     System.exit(2);
+<a class="jxr_linenumber" name="L724" href="#L724">724</a>   }
+<a class="jxr_linenumber" name="L725" href="#L725">725</a> 
+<a class="jxr_linenumber" name="L726" href="#L726">726</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L727" href="#L727">727</a> <em class="jxr_javadoccomment">   * Does a simple commit operation </em>
+<a class="jxr_linenumber" name="L728" href="#L728">728</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L729" href="#L729">729</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> commit() {
+<a class="jxr_linenumber" name="L730" href="#L730">730</a>     info(<span class="jxr_string">"COMMITting Solr index changes to "</span> + solrUrl + <span class="jxr_string">"..."</span>);
+<a class="jxr_linenumber" name="L731" href="#L731">731</a>     doGet(appendParam(solrUrl.toString(), <span class="jxr_string">"commit=true"</span>));
+<a class="jxr_linenumber" name="L732" href="#L732">732</a>   }
+<a class="jxr_linenumber" name="L733" href="#L733">733</a> 
+<a class="jxr_linenumber" name="L734" href="#L734">734</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L735" href="#L735">735</a> <em class="jxr_javadoccomment">   * Does a simple optimize operation </em>
+<a class="jxr_linenumber" name="L736" href="#L736">736</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L737" href="#L737">737</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> optimize() {
+<a class="jxr_linenumber" name="L738" href="#L738">738</a>     info(<span class="jxr_string">"Performing an OPTIMIZE to "</span> + solrUrl + <span class="jxr_string">"..."</span>);
+<a class="jxr_linenumber" name="L739" href="#L739">739</a>     doGet(appendParam(solrUrl.toString(), <span class="jxr_string">"optimize=true"</span>));
+<a class="jxr_linenumber" name="L740" href="#L740">740</a>   }
+<a class="jxr_linenumber" name="L741" href="#L741">741</a> 
+<a class="jxr_linenumber" name="L742" href="#L742">742</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L743" href="#L743">743</a> <em class="jxr_javadoccomment">   * Appends a URL query parameter to a URL </em>
+<a class="jxr_linenumber" name="L744" href="#L744">744</a> <em class="jxr_javadoccomment">   * @param url the original URL</em>
+<a class="jxr_linenumber" name="L745" href="#L745">745</a> <em class="jxr_javadoccomment">   * @param param the parameter(s) to append, separated by "&amp;amp;"</em>
+<a class="jxr_linenumber" name="L746" href="#L746">746</a> <em class="jxr_javadoccomment">   * @return the string version of the resulting URL</em>
+<a class="jxr_linenumber" name="L747" href="#L747">747</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L748" href="#L748">748</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> String appendParam(String url, String param) {
+<a class="jxr_linenumber" name="L749" href="#L749">749</a>     String[] pa = param.split(<span class="jxr_string">"&amp;"</span>);
+<a class="jxr_linenumber" name="L750" href="#L750">750</a>     <strong class="jxr_keyword">for</strong>(String p : pa) {
+<a class="jxr_linenumber" name="L751" href="#L751">751</a>       <strong class="jxr_keyword">if</strong>(p.trim().length() == 0) <strong class="jxr_keyword">continue</strong>;
+<a class="jxr_linenumber" name="L752" href="#L752">752</a>       String[] kv = p.split(<span class="jxr_string">"="</span>);
+<a class="jxr_linenumber" name="L753" href="#L753">753</a>       <strong class="jxr_keyword">if</strong>(kv.length == 2) {
+<a class="jxr_linenumber" name="L754" href="#L754">754</a>         url = url + (url.indexOf('?')&gt;0 ? <span class="jxr_string">"&amp;"</span> : <span class="jxr_string">"?"</span>) + kv[0] +<span class="jxr_string">"="</span>+ kv[1];
+<a class="jxr_linenumber" name="L755" href="#L755">755</a>       } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L756" href="#L756">756</a>         warn(<span class="jxr_string">"Skipping param "</span>+p+<span class="jxr_string">" which is not on form key=value"</span>);
+<a class="jxr_linenumber" name="L757" href="#L757">757</a>       }
+<a class="jxr_linenumber" name="L758" href="#L758">758</a>     }
+<a class="jxr_linenumber" name="L759" href="#L759">759</a>     <strong class="jxr_keyword">return</strong> url;
+<a class="jxr_linenumber" name="L760" href="#L760">760</a>   }
+<a class="jxr_linenumber" name="L761" href="#L761">761</a> 
+<a class="jxr_linenumber" name="L762" href="#L762">762</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L763" href="#L763">763</a> <em class="jxr_javadoccomment">   * Opens the file and posts its contents to the solrUrl,</em>
+<a class="jxr_linenumber" name="L764" href="#L764">764</a> <em class="jxr_javadoccomment">   * writes to response to output. </em>
+<a class="jxr_linenumber" name="L765" href="#L765">765</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L766" href="#L766">766</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> postFile(File file, OutputStream output, String type) {
+<a class="jxr_linenumber" name="L767" href="#L767">767</a>     InputStream is = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L768" href="#L768">768</a>     <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L769" href="#L769">769</a>       URL url = solrUrl;
+<a class="jxr_linenumber" name="L770" href="#L770">770</a>       String suffix = <span class="jxr_string">""</span>;
+<a class="jxr_linenumber" name="L771" href="#L771">771</a>       <strong class="jxr_keyword">if</strong>(auto) {
+<a class="jxr_linenumber" name="L772" href="#L772">772</a>         <strong class="jxr_keyword">if</strong>(type == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L773" href="#L773">773</a>           type = guessType(file);
+<a class="jxr_linenumber" name="L774" href="#L774">774</a>         }
+<a class="jxr_linenumber" name="L775" href="#L775">775</a>         <em class="jxr_comment">// TODO: Add a flag that disables /update and sends all to /update/extract, to avoid CSV, JSON, and XML files</em>
+<a class="jxr_linenumber" name="L776" href="#L776">776</a>         <em class="jxr_comment">// TODO: from being interpreted as Solr documents internally</em>
+<a class="jxr_linenumber" name="L777" href="#L777">777</a>         <strong class="jxr_keyword">if</strong>(type.equals(<span class="jxr_string">"application/xml"</span>) || type.equals(<span class="jxr_string">"text/csv"</span>) || type.equals(<span class="jxr_string">"application/json"</span>)) {
+<a class="jxr_linenumber" name="L778" href="#L778">778</a>           <em class="jxr_comment">// Default handler</em>
+<a class="jxr_linenumber" name="L779" href="#L779">779</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L780" href="#L780">780</a>           <em class="jxr_comment">// SolrCell</em>
+<a class="jxr_linenumber" name="L781" href="#L781">781</a>           suffix = <span class="jxr_string">"/extract"</span>;
+<a class="jxr_linenumber" name="L782" href="#L782">782</a>           String urlStr = appendUrlPath(solrUrl, suffix).toString();
+<a class="jxr_linenumber" name="L783" href="#L783">783</a>           <strong class="jxr_keyword">if</strong>(urlStr.indexOf(<span class="jxr_string">"resource.name"</span>)==-1)
+<a class="jxr_linenumber" name="L784" href="#L784">784</a>             urlStr = appendParam(urlStr, <span class="jxr_string">"resource.name="</span> + URLEncoder.encode(file.getAbsolutePath(), <span class="jxr_string">"UTF-8"</span>));
+<a class="jxr_linenumber" name="L785" href="#L785">785</a>           <strong class="jxr_keyword">if</strong>(urlStr.indexOf(<span class="jxr_string">"literal.id"</span>)==-1)
+<a class="jxr_linenumber" name="L786" href="#L786">786</a>             urlStr = appendParam(urlStr, <span class="jxr_string">"literal.id="</span> + URLEncoder.encode(file.getAbsolutePath(), <span class="jxr_string">"UTF-8"</span>));
+<a class="jxr_linenumber" name="L787" href="#L787">787</a>           url = <strong class="jxr_keyword">new</strong> URL(urlStr);
+<a class="jxr_linenumber" name="L788" href="#L788">788</a>         }
+<a class="jxr_linenumber" name="L789" href="#L789">789</a>       } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L790" href="#L790">790</a>         <strong class="jxr_keyword">if</strong>(type == <strong class="jxr_keyword">null</strong>) type = DEFAULT_CONTENT_TYPE;
+<a class="jxr_linenumber" name="L791" href="#L791">791</a>       }
+<a class="jxr_linenumber" name="L792" href="#L792">792</a>       info(<span class="jxr_string">"POSTing file "</span> + file.getName() + (auto?<span class="jxr_string">" ("</span>+type+<span class="jxr_string">")"</span>:<span class="jxr_string">""</span>) + <span class="jxr_string">" to [base]"</span> + suffix);
+<a class="jxr_linenumber" name="L793" href="#L793">793</a>       is = <strong class="jxr_keyword">new</strong> FileInputStream(file);
+<a class="jxr_linenumber" name="L794" href="#L794">794</a>       postData(is, (<strong class="jxr_keyword">int</strong>)file.length(), output, type, url);
+<a class="jxr_linenumber" name="L795" href="#L795">795</a>     } <strong class="jxr_keyword">catch</strong> (IOException e) {
+<a class="jxr_linenumber" name="L796" href="#L796">796</a>       e.printStackTrace();
+<a class="jxr_linenumber" name="L797" href="#L797">797</a>       warn(<span class="jxr_string">"Can't open/read file: "</span> + file);
+<a class="jxr_linenumber" name="L798" href="#L798">798</a>     } <strong class="jxr_keyword">finally</strong> {
+<a class="jxr_linenumber" name="L799" href="#L799">799</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L800" href="#L800">800</a>         <strong class="jxr_keyword">if</strong>(is!=<strong class="jxr_keyword">null</strong>) is.close();
+<a class="jxr_linenumber" name="L801" href="#L801">801</a>       } <strong class="jxr_keyword">catch</strong> (IOException e) {
+<a class="jxr_linenumber" name="L802" href="#L802">802</a>         fatal(<span class="jxr_string">"IOException while closing file: "</span>+ e);
+<a class="jxr_linenumber" name="L803" href="#L803">803</a>       }
+<a class="jxr_linenumber" name="L804" href="#L804">804</a>     }
+<a class="jxr_linenumber" name="L805" href="#L805">805</a>   }
+<a class="jxr_linenumber" name="L806" href="#L806">806</a> 
+<a class="jxr_linenumber" name="L807" href="#L807">807</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L808" href="#L808">808</a> <em class="jxr_javadoccomment">   * Appends to the path of the URL</em>
+<a class="jxr_linenumber" name="L809" href="#L809">809</a> <em class="jxr_javadoccomment">   * @param url the URL</em>
+<a class="jxr_linenumber" name="L810" href="#L810">810</a> <em class="jxr_javadoccomment">   * @param append the path to append</em>
+<a class="jxr_linenumber" name="L811" href="#L811">811</a> <em class="jxr_javadoccomment">   * @return the final URL version </em>
+<a class="jxr_linenumber" name="L812" href="#L812">812</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L813" href="#L813">813</a>   <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">static</strong> URL appendUrlPath(URL url, String append) <strong class="jxr_keyword">throws</strong> MalformedURLException {
+<a class="jxr_linenumber" name="L814" href="#L814">814</a>     <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> URL(url.getProtocol() + <span class="jxr_string">"://"</span> + url.getAuthority() + url.getPath() + append + (url.getQuery() != <strong class="jxr_keyword">null</strong> ? <span class="jxr_string">"?"</span>+url.getQuery() : <span class="jxr_string">""</span>));
+<a class="jxr_linenumber" name="L815" href="#L815">815</a>   }
+<a class="jxr_linenumber" name="L816" href="#L816">816</a> 
+<a class="jxr_linenumber" name="L817" href="#L817">817</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L818" href="#L818">818</a> <em class="jxr_javadoccomment">   * Guesses the type of a file, based on file name suffix</em>
+<a class="jxr_linenumber" name="L819" href="#L819">819</a> <em class="jxr_javadoccomment">   * Returns "application/octet-stream" if no corresponding mimeMap type.</em>
+<a class="jxr_linenumber" name="L820" href="#L820">820</a> <em class="jxr_javadoccomment">   * @param file the file</em>
+<a class="jxr_linenumber" name="L821" href="#L821">821</a> <em class="jxr_javadoccomment">   * @return the content-type guessed</em>
+<a class="jxr_linenumber" name="L822" href="#L822">822</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L823" href="#L823">823</a>   <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">static</strong> String guessType(File file) {
+<a class="jxr_linenumber" name="L824" href="#L824">824</a>     String name = file.getName();
+<a class="jxr_linenumber" name="L825" href="#L825">825</a>     String suffix = name.substring(name.lastIndexOf(<span class="jxr_string">"."</span>)+1);
+<a class="jxr_linenumber" name="L826" href="#L826">826</a>     String type = mimeMap.get(suffix.toLowerCase(Locale.ROOT));
+<a class="jxr_linenumber" name="L827" href="#L827">827</a>     <strong class="jxr_keyword">return</strong> (type != <strong class="jxr_keyword">null</strong>) ? type : <span class="jxr_string">"application/octet-stream"</span>;
+<a class="jxr_linenumber" name="L828" href="#L828">828</a>   }
+<a class="jxr_linenumber" name="L829" href="#L829">829</a> 
+<a class="jxr_linenumber" name="L830" href="#L830">830</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L831" href="#L831">831</a> <em class="jxr_javadoccomment">   * Performs a simple get on the given URL</em>
+<a class="jxr_linenumber" name="L832" href="#L832">832</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L833" href="#L833">833</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> doGet(String url) {
+<a class="jxr_linenumber" name="L834" href="#L834">834</a>     <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L835" href="#L835">835</a>       doGet(<strong class="jxr_keyword">new</strong> URL(url));
+<a class="jxr_linenumber" name="L836" href="#L836">836</a>     } <strong class="jxr_keyword">catch</strong> (MalformedURLException e) {
+<a class="jxr_linenumber" name="L837" href="#L837">837</a>       warn(<span class="jxr_string">"The specified URL "</span>+url+<span class="jxr_string">" is not a valid URL. Please check"</span>);
+<a class="jxr_linenumber" name="L838" href="#L838">838</a>     }
+<a class="jxr_linenumber" name="L839" href="#L839">839</a>   }
+<a class="jxr_linenumber" name="L840" href="#L840">840</a>   
+<a class="jxr_linenumber" name="L841" href="#L841">841</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L842" href="#L842">842</a> <em class="jxr_javadoccomment">   * Performs a simple get on the given URL</em>
+<a class="jxr_linenumber" name="L843" href="#L843">843</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L844" href="#L844">844</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> doGet(URL url) {
+<a class="jxr_linenumber" name="L845" href="#L845">845</a>     <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L846" href="#L846">846</a>       <strong class="jxr_keyword">if</strong>(mockMode) <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L847" href="#L847">847</a>       HttpURLConnection urlc = (HttpURLConnection) url.openConnection();
+<a class="jxr_linenumber" name="L848" href="#L848">848</a>       <strong class="jxr_keyword">if</strong> (url.getUserInfo() != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L849" href="#L849">849</a>         String encoding = DatatypeConverter.printBase64Binary(url.getUserInfo().getBytes(StandardCharsets.US_ASCII));
+<a class="jxr_linenumber" name="L850" href="#L850">850</a>         urlc.setRequestProperty(<span class="jxr_string">"Authorization"</span>, <span class="jxr_string">"Basic "</span> + encoding);
+<a class="jxr_linenumber" name="L851" href="#L851">851</a>       }
+<a class="jxr_linenumber" name="L852" href="#L852">852</a>       urlc.connect();
+<a class="jxr_linenumber" name="L853" href="#L853">853</a>       checkResponseCode(urlc);
+<a class="jxr_linenumber" name="L854" href="#L854">854</a>     } <strong class="jxr_keyword">catch</strong> (IOException e) {
+<a class="jxr_linenumber" name="L855" href="#L855">855</a>       warn(<span class="jxr_string">"An error occurred posting data to "</span>+url+<span class="jxr_string">". Please check that Solr is running."</span>);
+<a class="jxr_linenumber" name="L856" href="#L856">856</a>     }
+<a class="jxr_linenumber" name="L857" href="#L857">857</a>   }
+<a class="jxr_linenumber" name="L858" href="#L858">858</a> 
+<a class="jxr_linenumber" name="L859" href="#L859">859</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L860" href="#L860">860</a> <em class="jxr_javadoccomment">   * Reads data from the data stream and posts it to solr,</em>
+<a class="jxr_linenumber" name="L861" href="#L861">861</a> <em class="jxr_javadoccomment">   * writes to the response to output</em>
+<a class="jxr_linenumber" name="L862" href="#L862">862</a> <em class="jxr_javadoccomment">   * @return true if success</em>
+<a class="jxr_linenumber" name="L863" href="#L863">863</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L864" href="#L864">864</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> postData(InputStream data, Integer length, OutputStream output, String type, URL url) {
+<a class="jxr_linenumber" name="L865" href="#L865">865</a>     <strong class="jxr_keyword">if</strong>(mockMode) <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L866" href="#L866">866</a>     <strong class="jxr_keyword">boolean</strong> success = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L867" href="#L867">867</a>     <strong class="jxr_keyword">if</strong>(type == <strong class="jxr_keyword">null</strong>)
+<a class="jxr_linenumber" name="L868" href="#L868">868</a>       type = DEFAULT_CONTENT_TYPE;
+<a class="jxr_linenumber" name="L869" href="#L869">869</a>     HttpURLConnection urlc = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L870" href="#L870">870</a>     <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L871" href="#L871">871</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L872" href="#L872">872</a>         urlc = (HttpURLConnection) url.openConnection();
+<a class="jxr_linenumber" name="L873" href="#L873">873</a>         <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L874" href="#L874">874</a>           urlc.setRequestMethod(<span class="jxr_string">"POST"</span>);
+<a class="jxr_linenumber" name="L875" href="#L875">875</a>         } <strong class="jxr_keyword">catch</strong> (ProtocolException e) {
+<a class="jxr_linenumber" name="L876" href="#L876">876</a>           fatal(<span class="jxr_string">"Shouldn't happen: HttpURLConnection doesn't support POST??"</span>+e);
+<a class="jxr_linenumber" name="L877" href="#L877">877</a>         }
+<a class="jxr_linenumber" name="L878" href="#L878">878</a>         urlc.setDoOutput(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L879" href="#L879">879</a>         urlc.setDoInput(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L880" href="#L880">880</a>         urlc.setUseCaches(false);
+<a class="jxr_linenumber" name="L881" href="#L881">881</a>         urlc.setAllowUserInteraction(false);
+<a class="jxr_linenumber" name="L882" href="#L882">882</a>         urlc.setRequestProperty(<span class="jxr_string">"Content-type"</span>, type);
+<a class="jxr_linenumber" name="L883" href="#L883">883</a>         <strong class="jxr_keyword">if</strong> (url.getUserInfo() != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L884" href="#L884">884</a>           String encoding = DatatypeConverter.printBase64Binary(url.getUserInfo().getBytes(StandardCharsets.US_ASCII));
+<a class="jxr_linenumber" name="L885" href="#L885">885</a>           urlc.setRequestProperty(<span class="jxr_string">"Authorization"</span>, <span class="jxr_string">"Basic "</span> + encoding);
+<a class="jxr_linenumber" name="L886" href="#L886">886</a>         }
+<a class="jxr_linenumber" name="L887" href="#L887">887</a>         <strong class="jxr_keyword">if</strong> (<strong class="jxr_keyword">null</strong> != length) urlc.setFixedLengthStreamingMode(length);
+<a class="jxr_linenumber" name="L888" href="#L888">888</a>         urlc.connect();
+<a class="jxr_linenumber" name="L889" href="#L889">889</a>       } <strong class="jxr_keyword">catch</strong> (IOException e) {
+<a class="jxr_linenumber" name="L890" href="#L890">890</a>         fatal(<span class="jxr_string">"Connection error (is Solr running at "</span> + solrUrl + <span class="jxr_string">" ?): "</span> + e);
+<a class="jxr_linenumber" name="L891" href="#L891">891</a>         success = false;
+<a class="jxr_linenumber" name="L892" href="#L892">892</a>       }
+<a class="jxr_linenumber" name="L893" href="#L893">893</a>       
+<a class="jxr_linenumber" name="L894" href="#L894">894</a>       <strong class="jxr_keyword">try</strong> (<strong class="jxr_keyword">final</strong> OutputStream out = urlc.getOutputStream()) {
+<a class="jxr_linenumber" name="L895" href="#L895">895</a>         pipe(data, out);
+<a class="jxr_linenumber" name="L896" href="#L896">896</a>       } <strong class="jxr_keyword">catch</strong> (IOException e) {
+<a class="jxr_linenumber" name="L897" href="#L897">897</a>         fatal(<span class="jxr_string">"IOException while posting data: "</span> + e);
+<a class="jxr_linenumber" name="L898" href="#L898">898</a>         success = false;
+<a class="jxr_linenumber" name="L899" href="#L899">899</a>       }
+<a class="jxr_linenumber" name="L900" href="#L900">900</a>       
+<a class="jxr_linenumber" name="L901" href="#L901">901</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L902" href="#L902">902</a>         success &amp;= checkResponseCode(urlc);
+<a class="jxr_linenumber" name="L903" href="#L903">903</a>         <strong class="jxr_keyword">try</strong> (<strong class="jxr_keyword">final</strong> InputStream in = urlc.getInputStream()) {
+<a class="jxr_linenumber" name="L904" href="#L904">904</a>           pipe(in, output);
+<a class="jxr_linenumber" name="L905" href="#L905">905</a>         }
+<a class="jxr_linenumber" name="L906" href="#L906">906</a>       } <strong class="jxr_keyword">catch</strong> (IOException e) {
+<a class="jxr_linenumber" name="L907" href="#L907">907</a>         warn(<span class="jxr_string">"IOException while reading response: "</span> + e);
+<a class="jxr_linenumber" name="L908" href="#L908">908</a>         success = false;
+<a class="jxr_linenumber" name="L909" href="#L909">909</a>       }
+<a class="jxr_linenumber" name="L910" href="#L910">910</a>     } <strong class="jxr_keyword">finally</strong> {
+<a class="jxr_linenumber" name="L911" href="#L911">911</a>       <strong class="jxr_keyword">if</strong> (urlc!=<strong class="jxr_keyword">null</strong>) urlc.disconnect();
+<a class="jxr_linenumber" name="L912" href="#L912">912</a>     }
+<a class="jxr_linenumber" name="L913" href="#L913">913</a>     <strong class="jxr_keyword">return</strong> success;
+<a class="jxr_linenumber" name="L914" href="#L914">914</a>   }
+<a class="jxr_linenumber" name="L915" href="#L915">915</a>   
+<a class="jxr_linenumber" name="L916" href="#L916">916</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">boolean</strong> checkResponseCode(HttpURLConnection urlc) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L917" href="#L917">917</a>     <strong class="jxr_keyword">if</strong> (urlc.getResponseCode() &gt;= 400) {
+<a class="jxr_linenumber" name="L918" href="#L918">918</a>       warn(<span class="jxr_string">"Solr returned an error #"</span> + urlc.getResponseCode() + 
+<a class="jxr_linenumber" name="L919" href="#L919">919</a>             <span class="jxr_string">" ("</span> + urlc.getResponseMessage() + <span class="jxr_string">") for url: "</span> + urlc.getURL());
+<a class="jxr_linenumber" name="L920" href="#L920">920</a>       Charset charset = StandardCharsets.ISO_8859_1;
+<a class="jxr_linenumber" name="L921" href="#L921">921</a>       <strong class="jxr_keyword">final</strong> String contentType = urlc.getContentType();
+<a class="jxr_linenumber" name="L922" href="#L922">922</a>       <em class="jxr_comment">// code cloned from ContentStreamBase, but post.jar should be standalone!</em>
+<a class="jxr_linenumber" name="L923" href="#L923">923</a>       <strong class="jxr_keyword">if</strong> (contentType != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L924" href="#L924">924</a>         <strong class="jxr_keyword">int</strong> idx = contentType.toLowerCase(Locale.ROOT).indexOf(<span class="jxr_string">"charset="</span>);
+<a class="jxr_linenumber" name="L925" href="#L925">925</a>         <strong class="jxr_keyword">if</strong> (idx &gt; 0) {
+<a class="jxr_linenumber" name="L926" href="#L926">926</a>           charset = Charset.forName(contentType.substring(idx + <span class="jxr_string">"charset="</span>.length()).trim());
+<a class="jxr_linenumber" name="L927" href="#L927">927</a>         }
+<a class="jxr_linenumber" name="L928" href="#L928">928</a>       }
+<a class="jxr_linenumber" name="L929" href="#L929">929</a>       <em class="jxr_comment">// Print the response returned by Solr</em>
+<a class="jxr_linenumber" name="L930" href="#L930">930</a>       <strong class="jxr_keyword">try</strong> (InputStream errStream = urlc.getErrorStream()) {
+<a class="jxr_linenumber" name="L931" href="#L931">931</a>         <strong class="jxr_keyword">if</strong> (errStream != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L932" href="#L932">932</a>           BufferedReader br = <strong class="jxr_keyword">new</strong> BufferedReader(<strong class="jxr_keyword">new</strong> InputStreamReader(errStream, charset));
+<a class="jxr_linenumber" name="L933" href="#L933">933</a>           <strong class="jxr_keyword">final</strong> StringBuilder response = <strong class="jxr_keyword">new</strong> StringBuilder(<span class="jxr_string">"Response: "</span>);
+<a class="jxr_linenumber" name="L934" href="#L934">934</a>           <strong class="jxr_keyword">int</strong> ch;
+<a class="jxr_linenumber" name="L935" href="#L935">935</a>           <strong class="jxr_keyword">while</strong> ((ch = br.read()) != -1) {
+<a class="jxr_linenumber" name="L936" href="#L936">936</a>             response.append((<strong class="jxr_keyword">char</strong>) ch);
+<a class="jxr_linenumber" name="L937" href="#L937">937</a>           }
+<a class="jxr_linenumber" name="L938" href="#L938">938</a>           warn(response.toString().trim());
+<a class="jxr_linenumber" name="L939" href="#L939">939</a>         }
+<a class="jxr_linenumber" name="L940" href="#L940">940</a>       }
+<a class="jxr_linenumber" name="L941" href="#L941">941</a>       <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L942" href="#L942">942</a>     }
+<a class="jxr_linenumber" name="L943" href="#L943">943</a>     <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L944" href="#L944">944</a>   }
+<a class="jxr_linenumber" name="L945" href="#L945">945</a> 
+<a class="jxr_linenumber" name="L946" href="#L946">946</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L947" href="#L947">947</a> <em class="jxr_javadoccomment">   * Converts a string to an input stream </em>
+<a class="jxr_linenumber" name="L948" href="#L948">948</a> <em class="jxr_javadoccomment">   * @param s the string</em>
+<a class="jxr_linenumber" name="L949" href="#L949">949</a> <em class="jxr_javadoccomment">   * @return the input stream</em>
+<a class="jxr_linenumber" name="L950" href="#L950">950</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L951" href="#L951">951</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> InputStream stringToStream(String s) {
+<a class="jxr_linenumber" name="L952" href="#L952">952</a>     <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> ByteArrayInputStream(s.getBytes(StandardCharsets.UTF_8));
+<a class="jxr_linenumber" name="L953" href="#L953">953</a>   }
+<a class="jxr_linenumber" name="L954" href="#L954">954</a> 
+<a class="jxr_linenumber" name="L955" href="#L955">955</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L956" href="#L956">956</a> <em class="jxr_javadoccomment">   * Pipes everything from the source to the dest.  If dest is null, </em>
+<a class="jxr_linenumber" name="L957" href="#L957">957</a> <em class="jxr_javadoccomment">   * then everything is read from source and thrown away.</em>
+<a class="jxr_linenumber" name="L958" href="#L958">958</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L959" href="#L959">959</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">void</strong> pipe(InputStream source, OutputStream dest) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L960" href="#L960">960</a>     byte[] buf = <strong class="jxr_keyword">new</strong> byte[1024];
+<a class="jxr_linenumber" name="L961" href="#L961">961</a>     <strong class="jxr_keyword">int</strong> read = 0;
+<a class="jxr_linenumber" name="L962" href="#L962">962</a>     <strong class="jxr_keyword">while</strong> ( (read = source.read(buf) ) &gt;= 0) {
+<a class="jxr_linenumber" name="L963" href="#L963">963</a>       <strong class="jxr_keyword">if</strong> (<strong class="jxr_keyword">null</strong> != dest) dest.write(buf, 0, read);
+<a class="jxr_linenumber" name="L964" href="#L964">964</a>     }
+<a class="jxr_linenumber" name="L965" href="#L965">965</a>     <strong class="jxr_keyword">if</strong> (<strong class="jxr_keyword">null</strong> != dest) dest.flush();
+<a class="jxr_linenumber" name="L966" href="#L966">966</a>   }
+<a class="jxr_linenumber" name="L967" href="#L967">967</a> 
+<a class="jxr_linenumber" name="L968" href="#L968">968</a>   <strong class="jxr_keyword">public</strong> FileFilter getFileFilterFromFileTypes(String fileTypes) {
+<a class="jxr_linenumber" name="L969" href="#L969">969</a>     String glob;
+<a class="jxr_linenumber" name="L970" href="#L970">970</a>     <strong class="jxr_keyword">if</strong>(fileTypes.equals(<span class="jxr_string">"*"</span>))
+<a class="jxr_linenumber" name="L971" href="#L971">971</a>       glob = <span class="jxr_string">".*"</span>;
+<a class="jxr_linenumber" name="L972" href="#L972">972</a>     <strong class="jxr_keyword">else</strong>
+<a class="jxr_linenumber" name="L973" href="#L973">973</a>       glob = <span class="jxr_string">"^.*&#92;&#92;.("</span> + fileTypes.replace(<span class="jxr_string">","</span>, <span class="jxr_string">"|"</span>) + <span class="jxr_string">")$"</span>;
+<a class="jxr_linenumber" name="L974" href="#L974">974</a>     <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> GlobFileFilter(glob, <strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L975" href="#L975">975</a>   }
+<a class="jxr_linenumber" name="L976" href="#L976">976</a> 
+<a class="jxr_linenumber" name="L977" href="#L977">977</a>   <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L978" href="#L978">978</a>   <em class="jxr_comment">// Utility methods for XPath handing</em>
+<a class="jxr_linenumber" name="L979" href="#L979">979</a>   <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L980" href="#L980">980</a>   
+<a class="jxr_linenumber" name="L981" href="#L981">981</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L982" href="#L982">982</a> <em class="jxr_javadoccomment">   * Gets all nodes matching an XPath</em>
+<a class="jxr_linenumber" name="L983" href="#L983">983</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L984" href="#L984">984</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> NodeList getNodesFromXP(Node n, String xpath) <strong class="jxr_keyword">throws</strong> XPathExpressionException {
+<a class="jxr_linenumber" name="L985" href="#L985">985</a>     XPathFactory factory = XPathFactory.newInstance();
+<a class="jxr_linenumber" name="L986" href="#L986">986</a>     XPath xp = factory.newXPath();
+<a class="jxr_linenumber" name="L987" href="#L987">987</a>     XPathExpression expr = xp.compile(xpath);
+<a class="jxr_linenumber" name="L988" href="#L988">988</a>     <strong class="jxr_keyword">return</strong> (NodeList) expr.evaluate(n, XPathConstants.NODESET);
+<a class="jxr_linenumber" name="L989" href="#L989">989</a>   }
+<a class="jxr_linenumber" name="L990" href="#L990">990</a>   
+<a class="jxr_linenumber" name="L991" href="#L991">991</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L992" href="#L992">992</a> <em class="jxr_javadoccomment">   * Gets the string content of the matching an XPath</em>
+<a class="jxr_linenumber" name="L993" href="#L993">993</a> <em class="jxr_javadoccomment">   * @param n the node (or doc)</em>
+<a class="jxr_linenumber" name="L994" href="#L994">994</a> <em class="jxr_javadoccomment">   * @param xpath the xpath string</em>
+<a class="jxr_linenumber" name="L995" href="#L995">995</a> <em class="jxr_javadoccomment">   * @param concatAll if true, text from all matching nodes will be concatenated, else only the first returned</em>
+<a class="jxr_linenumber" name="L996" href="#L996">996</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L997" href="#L997">997</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> String getXP(Node n, String xpath, <strong class="jxr_keyword">boolean</strong> concatAll)
+<a class="jxr_linenumber" name="L998" href="#L998">998</a>       <strong class="jxr_keyword">throws</strong> XPathExpressionException {
+<a class="jxr_linenumber" name="L999" href="#L999">999</a>     NodeList nodes = getNodesFromXP(n, xpath);
+<a class="jxr_linenumber" name="L1000" href="#L1000">1000</a>     StringBuilder sb = <strong class="jxr_keyword">new</strong> StringBuilder();
+<a class="jxr_linenumber" name="L1001" href="#L1001">1001</a>     <strong class="jxr_keyword">if</strong> (nodes.getLength() &gt; 0) {
+<a class="jxr_linenumber" name="L1002" href="#L1002">1002</a>       <strong class="jxr_keyword">for</strong>(<strong class="jxr_keyword">int</strong> i = 0; i &lt; nodes.getLength() ; i++) {
+<a class="jxr_linenumber" name="L1003" href="#L1003">1003</a>         sb.append(nodes.item(i).getNodeValue() + <span class="jxr_string">" "</span>);
+<a class="jxr_linenumber" name="L1004" href="#L1004">1004</a>         <strong class="jxr_keyword">if</strong>(!concatAll) <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L1005" href="#L1005">1005</a>       }
+<a class="jxr_linenumber" name="L1006" href="#L1006">1006</a>       <strong class="jxr_keyword">return</strong> sb.toString().trim();
+<a class="jxr_linenumber" name="L1007" href="#L1007">1007</a>     } <strong class="jxr_keyword">else</strong>
+<a class="jxr_linenumber" name="L1008" href="#L1008">1008</a>       <strong class="jxr_keyword">return</strong> <span class="jxr_string">""</span>;
+<a class="jxr_linenumber" name="L1009" href="#L1009">1009</a>   }
+<a class="jxr_linenumber" name="L1010" href="#L1010">1010</a>   
+<a class="jxr_linenumber" name="L1011" href="#L1011">1011</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L1012" href="#L1012">1012</a> <em class="jxr_javadoccomment">   * Takes a string as input and returns a DOM </em>
+<a class="jxr_linenumber" name="L1013" href="#L1013">1013</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L1014" href="#L1014">1014</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> Document makeDom(byte[] in) <strong class="jxr_keyword">throws</strong> SAXException, IOException,
+<a class="jxr_linenumber" name="L1015" href="#L1015">1015</a>   ParserConfigurationException {
+<a class="jxr_linenumber" name="L1016" href="#L1016">1016</a>     InputStream is = <strong class="jxr_keyword">new</strong> ByteArrayInputStream(in);
+<a class="jxr_linenumber" name="L1017" href="#L1017">1017</a>     Document dom = DocumentBuilderFactory.newInstance()
+<a class="jxr_linenumber" name="L1018" href="#L1018">1018</a>         .newDocumentBuilder().parse(is);
+<a class="jxr_linenumber" name="L1019" href="#L1019">1019</a>     <strong class="jxr_keyword">return</strong> dom;
+<a class="jxr_linenumber" name="L1020" href="#L1020">1020</a>   }
+<a class="jxr_linenumber" name="L1021" href="#L1021">1021</a> 
+<a class="jxr_linenumber" name="L1022" href="#L1022">1022</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L1023" href="#L1023">1023</a> <em class="jxr_javadoccomment">   * Inner class to filter files based on glob wildcards</em>
+<a class="jxr_linenumber" name="L1024" href="#L1024">1024</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L1025" href="#L1025">1025</a>   <strong class="jxr_keyword">class</strong> GlobFileFilter <strong class="jxr_keyword">implements</strong> FileFilter
+<a class="jxr_linenumber" name="L1026" href="#L1026">1026</a>   {
+<a class="jxr_linenumber" name="L1027" href="#L1027">1027</a>     <strong class="jxr_keyword">private</strong> String _pattern;
+<a class="jxr_linenumber" name="L1028" href="#L1028">1028</a>     <strong class="jxr_keyword">private</strong> Pattern p;
+<a class="jxr_linenumber" name="L1029" href="#L1029">1029</a>     
+<a class="jxr_linenumber" name="L1030" href="#L1030">1030</a>     <strong class="jxr_keyword">public</strong> GlobFileFilter(String pattern, <strong class="jxr_keyword">boolean</strong> isRegex)
+<a class="jxr_linenumber" name="L1031" href="#L1031">1031</a>     {
+<a class="jxr_linenumber" name="L1032" href="#L1032">1032</a>       _pattern = pattern;
+<a class="jxr_linenumber" name="L1033" href="#L1033">1033</a>       <strong class="jxr_keyword">if</strong>(!isRegex) {
+<a class="jxr_linenumber" name="L1034" href="#L1034">1034</a>         _pattern = _pattern
+<a class="jxr_linenumber" name="L1035" href="#L1035">1035</a>             .replace(<span class="jxr_string">"^"</span>, <span class="jxr_string">"&#92;&#92;^"</span>)
+<a class="jxr_linenumber" name="L1036" href="#L1036">1036</a>             .replace(<span class="jxr_string">"$"</span>, <span class="jxr_string">"&#92;&#92;$"</span>)
+<a class="jxr_linenumber" name="L1037" href="#L1037">1037</a>             .replace(<span class="jxr_string">"."</span>, <span class="jxr_string">"&#92;&#92;."</span>)
+<a class="jxr_linenumber" name="L1038" href="#L1038">1038</a>             .replace(<span class="jxr_string">"("</span>, <span class="jxr_string">"&#92;&#92;("</span>)
+<a class="jxr_linenumber" name="L1039" href="#L1039">1039</a>             .replace(<span class="jxr_string">")"</span>, <span class="jxr_string">"&#92;&#92;)"</span>)
+<a class="jxr_linenumber" name="L1040" href="#L1040">1040</a>             .replace(<span class="jxr_string">"+"</span>, <span class="jxr_string">"&#92;&#92;+"</span>)
+<a class="jxr_linenumber" name="L1041" href="#L1041">1041</a>             .replace(<span class="jxr_string">"*"</span>, <span class="jxr_string">".*"</span>)
+<a class="jxr_linenumber" name="L1042" href="#L1042">1042</a>             .replace(<span class="jxr_string">"?"</span>, <span class="jxr_string">"."</span>);
+<a class="jxr_linenumber" name="L1043" href="#L1043">1043</a>         _pattern = <span class="jxr_string">"^"</span> + _pattern + <span class="jxr_string">"$"</span>;
+<a class="jxr_linenumber" name="L1044" href="#L1044">1044</a>       }
+<a class="jxr_linenumber" name="L1045" href="#L1045">1045</a>       
+<a class="jxr_linenumber" name="L1046" href="#L1046">1046</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L1047" href="#L1047">1047</a>         p = Pattern.compile(_pattern,Pattern.CASE_INSENSITIVE);
+<a class="jxr_linenumber" name="L1048" href="#L1048">1048</a>       } <strong class="jxr_keyword">catch</strong>(PatternSyntaxException e) {
+<a class="jxr_linenumber" name="L1049" href="#L1049">1049</a>         fatal(<span class="jxr_string">"Invalid type list "</span>+pattern+<span class="jxr_string">". "</span>+e.getDescription());
+<a class="jxr_linenumber" name="L1050" href="#L1050">1050</a>       }
+<a class="jxr_linenumber" name="L1051" href="#L1051">1051</a>     }
+<a class="jxr_linenumber" name="L1052" href="#L1052">1052</a>     
+<a class="jxr_linenumber" name="L1053" href="#L1053">1053</a>     @Override
+<a class="jxr_linenumber" name="L1054" href="#L1054">1054</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> accept(File file)
+<a class="jxr_linenumber" name="L1055" href="#L1055">1055</a>     {
+<a class="jxr_linenumber" name="L1056" href="#L1056">1056</a>       <strong class="jxr_keyword">return</strong> p.matcher(file.getName()).find();
+<a class="jxr_linenumber" name="L1057" href="#L1057">1057</a>     }
+<a class="jxr_linenumber" name="L1058" href="#L1058">1058</a>   }
+<a class="jxr_linenumber" name="L1059" href="#L1059">1059</a>   
+<a class="jxr_linenumber" name="L1060" href="#L1060">1060</a>   <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L1061" href="#L1061">1061</a>   <em class="jxr_comment">// Simple crawler class which can fetch a page and check for robots.txt</em>
+<a class="jxr_linenumber" name="L1062" href="#L1062">1062</a>   <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L1063" href="#L1063">1063</a>   <strong class="jxr_keyword">class</strong> PageFetcher {
+<a class="jxr_linenumber" name="L1064" href="#L1064">1064</a>     Map&lt;String, List&lt;String&gt;&gt; robotsCache;
+<a class="jxr_linenumber" name="L1065" href="#L1065">1065</a>     <strong class="jxr_keyword">final</strong> String DISALLOW = <span class="jxr_string">"Disallow:"</span>;
+<a class="jxr_linenumber" name="L1066" href="#L1066">1066</a>     
+<a class="jxr_linenumber" name="L1067" href="#L1067">1067</a>     <strong class="jxr_keyword">public</strong> PageFetcher() {
+<a class="jxr_linenumber" name="L1068" href="#L1068">1068</a>       robotsCache = <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;();
+<a class="jxr_linenumber" name="L1069" href="#L1069">1069</a>     }
+<a class="jxr_linenumber" name="L1070" href="#L1070">1070</a>     
+<a class="jxr_linenumber" name="L1071" href="#L1071">1071</a>     <strong class="jxr_keyword">public</strong> PageFetcherResult readPageFromUrl(URL u) {
+<a class="jxr_linenumber" name="L1072" href="#L1072">1072</a>       PageFetcherResult res = <strong class="jxr_keyword">new</strong> PageFetcherResult();
+<a class="jxr_linenumber" name="L1073" href="#L1073">1073</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L1074" href="#L1074">1074</a>         <strong class="jxr_keyword">if</strong> (isDisallowedByRobots(u)) {
+<a class="jxr_linenumber" name="L1075" href="#L1075">1075</a>           warn(<span class="jxr_string">"The URL "</span>+u+<span class="jxr_string">" is disallowed by robots.txt and will not be crawled."</span>);
+<a class="jxr_linenumber" name="L1076" href="#L1076">1076</a>           res.httpStatus = 403;
+<a class="jxr_linenumber" name="L1077" href="#L1077">1077</a>           visited.add(u);
+<a class="jxr_linenumber" name="L1078" href="#L1078">1078</a>           <strong class="jxr_keyword">return</strong> res;
+<a class="jxr_linenumber" name="L1079" href="#L1079">1079</a>         }
+<a class="jxr_linenumber" name="L1080" href="#L1080">1080</a>         res.httpStatus = 404;
+<a class="jxr_linenumber" name="L1081" href="#L1081">1081</a>         HttpURLConnection conn = (HttpURLConnection) u.openConnection();
+<a class="jxr_linenumber" name="L1082" href="#L1082">1082</a>         conn.setRequestProperty(<span class="jxr_string">"User-Agent"</span>, <span class="jxr_string">"SimplePostTool-crawler/"</span>+VERSION_OF_THIS_TOOL+<span class="jxr_string">" (http://lucene.apache.org/solr/)"</span>);
+<a class="jxr_linenumber" name="L1083" href="#L1083">1083</a>         conn.setRequestProperty(<span class="jxr_string">"Accept-Encoding"</span>, <span class="jxr_string">"gzip, deflate"</span>);
+<a class="jxr_linenumber" name="L1084" href="#L1084">1084</a>         conn.connect();
+<a class="jxr_linenumber" name="L1085" href="#L1085">1085</a>         res.httpStatus = conn.getResponseCode();
+<a class="jxr_linenumber" name="L1086" href="#L1086">1086</a>         <strong class="jxr_keyword">if</strong>(!normalizeUrlEnding(conn.getURL().toString()).equals(normalizeUrlEnding(u.toString()))) {
+<a class="jxr_linenumber" name="L1087" href="#L1087">1087</a>           info(<span class="jxr_string">"The URL "</span>+u+<span class="jxr_string">" caused a redirect to "</span>+conn.getURL());
+<a class="jxr_linenumber" name="L1088" href="#L1088">1088</a>           u = conn.getURL();
+<a class="jxr_linenumber" name="L1089" href="#L1089">1089</a>           res.redirectUrl = u;
+<a class="jxr_linenumber" name="L1090" href="#L1090">1090</a>           visited.add(u);
+<a class="jxr_linenumber" name="L1091" href="#L1091">1091</a>         }
+<a class="jxr_linenumber" name="L1092" href="#L1092">1092</a>         <strong class="jxr_keyword">if</strong>(res.httpStatus == 200) {
+<a class="jxr_linenumber" name="L1093" href="#L1093">1093</a>           <em class="jxr_comment">// Raw content type of form "text/html; encoding=utf-8"</em>
+<a class="jxr_linenumber" name="L1094" href="#L1094">1094</a>           String rawContentType = conn.getContentType();
+<a class="jxr_linenumber" name="L1095" href="#L1095">1095</a>           String type = rawContentType.split(<span class="jxr_string">";"</span>)[0];
+<a class="jxr_linenumber" name="L1096" href="#L1096">1096</a>           <strong class="jxr_keyword">if</strong>(typeSupported(type) || <span class="jxr_string">"*"</span>.equals(fileTypes)) {
+<a class="jxr_linenumber" name="L1097" href="#L1097">1097</a>             String encoding = conn.getContentEncoding();
+<a class="jxr_linenumber" name="L1098" href="#L1098">1098</a>             InputStream is;
+<a class="jxr_linenumber" name="L1099" href="#L1099">1099</a>             <strong class="jxr_keyword">if</strong> (encoding != <strong class="jxr_keyword">null</strong> &amp;&amp; encoding.equalsIgnoreCase(<span class="jxr_string">"gzip"</span>)) {
+<a class="jxr_linenumber" name="L1100" href="#L1100">1100</a>               is = <strong class="jxr_keyword">new</strong> GZIPInputStream(conn.getInputStream());
+<a class="jxr_linenumber" name="L1101" href="#L1101">1101</a>             } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (encoding != <strong class="jxr_keyword">null</strong> &amp;&amp; encoding.equalsIgnoreCase(<span class="jxr_string">"deflate"</span>)) {
+<a class="jxr_linenumber" name="L1102" href="#L1102">1102</a>               is = <strong class="jxr_keyword">new</strong> InflaterInputStream(conn.getInputStream(), <strong class="jxr_keyword">new</strong> Inflater(<strong class="jxr_keyword">true</strong>));
+<a class="jxr_linenumber" name="L1103" href="#L1103">1103</a>             } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L1104" href="#L1104">1104</a>               is = conn.getInputStream();
+<a class="jxr_linenumber" name="L1105" href="#L1105">1105</a>             }
+<a class="jxr_linenumber" name="L1106" href="#L1106">1106</a>             
+<a class="jxr_linenumber" name="L1107" href="#L1107">1107</a>             <em class="jxr_comment">// Read into memory, so that we later can pull links from the page without re-fetching </em>
+<a class="jxr_linenumber" name="L1108" href="#L1108">1108</a>             res.content = inputStreamToByteArray(is);
+<a class="jxr_linenumber" name="L1109" href="#L1109">1109</a>             is.close();
+<a class="jxr_linenumber" name="L1110" href="#L1110">1110</a>           } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L1111" href="#L1111">1111</a>             warn(<span class="jxr_string">"Skipping URL with unsupported type "</span>+type);
+<a class="jxr_linenumber" name="L1112" href="#L1112">1112</a>             res.httpStatus = 415;
+<a class="jxr_linenumber" name="L1113" href="#L1113">1113</a>           }
+<a class="jxr_linenumber" name="L1114" href="#L1114">1114</a>         }
+<a class="jxr_linenumber" name="L1115" href="#L1115">1115</a>       } <strong class="jxr_keyword">catch</strong>(IOException e) {
+<a class="jxr_linenumber" name="L1116" href="#L1116">1116</a>         warn(<span class="jxr_string">"IOException when reading page from url "</span>+u+<span class="jxr_string">": "</span>+e.getMessage());
+<a class="jxr_linenumber" name="L1117" href="#L1117">1117</a>       }
+<a class="jxr_linenumber" name="L1118" href="#L1118">1118</a>       <strong class="jxr_keyword">return</strong> res;
+<a class="jxr_linenumber" name="L1119" href="#L1119">1119</a>     }
+<a class="jxr_linenumber" name="L1120" href="#L1120">1120</a>     
+<a class="jxr_linenumber" name="L1121" href="#L1121">1121</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> isDisallowedByRobots(URL url) {
+<a class="jxr_linenumber" name="L1122" href="#L1122">1122</a>       String host = url.getHost();
+<a class="jxr_linenumber" name="L1123" href="#L1123">1123</a>       String strRobot = url.getProtocol() + <span class="jxr_string">"://"</span> + host + <span class="jxr_string">"/robots.txt"</span>;
+<a class="jxr_linenumber" name="L1124" href="#L1124">1124</a>       List&lt;String&gt; disallows = robotsCache.get(host);
+<a class="jxr_linenumber" name="L1125" href="#L1125">1125</a>       <strong class="jxr_keyword">if</strong>(disallows == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L1126" href="#L1126">1126</a>         disallows = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L1127" href="#L1127">1127</a>         URL urlRobot;
+<a class="jxr_linenumber" name="L1128" href="#L1128">1128</a>         <strong class="jxr_keyword">try</strong> { 
+<a class="jxr_linenumber" name="L1129" href="#L1129">1129</a>           urlRobot = <strong class="jxr_keyword">new</strong> URL(strRobot);
+<a class="jxr_linenumber" name="L1130" href="#L1130">1130</a>           disallows = parseRobotsTxt(urlRobot.openStream());
+<a class="jxr_linenumber" name="L1131" href="#L1131">1131</a>         } <strong class="jxr_keyword">catch</strong> (MalformedURLException e) {
+<a class="jxr_linenumber" name="L1132" href="#L1132">1132</a>           <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>; <em class="jxr_comment">// We cannot trust this robots URL, should not happen</em>
+<a class="jxr_linenumber" name="L1133" href="#L1133">1133</a>         } <strong class="jxr_keyword">catch</strong> (IOException e) {
+<a class="jxr_linenumber" name="L1134" href="#L1134">1134</a>           <em class="jxr_comment">// There is no robots.txt, will cache an empty disallow list</em>
+<a class="jxr_linenumber" name="L1135" href="#L1135">1135</a>         }
+<a class="jxr_linenumber" name="L1136" href="#L1136">1136</a>       }
+<a class="jxr_linenumber" name="L1137" href="#L1137">1137</a>       
+<a class="jxr_linenumber" name="L1138" href="#L1138">1138</a>       robotsCache.put(host, disallows);
+<a class="jxr_linenumber" name="L1139" href="#L1139">1139</a> 
+<a class="jxr_linenumber" name="L1140" href="#L1140">1140</a>       String strURL = url.getFile();
+<a class="jxr_linenumber" name="L1141" href="#L1141">1141</a>       <strong class="jxr_keyword">for</strong> (String path : disallows) {
+<a class="jxr_linenumber" name="L1142" href="#L1142">1142</a>         <strong class="jxr_keyword">if</strong> (path.equals(<span class="jxr_string">"/"</span>) || strURL.indexOf(path) == 0)
+<a class="jxr_linenumber" name="L1143" href="#L1143">1143</a>           <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L1144" href="#L1144">1144</a>       }
+<a class="jxr_linenumber" name="L1145" href="#L1145">1145</a>       <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L1146" href="#L1146">1146</a>     }
+<a class="jxr_linenumber" name="L1147" href="#L1147">1147</a> 
+<a class="jxr_linenumber" name="L1148" href="#L1148">1148</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L1149" href="#L1149">1149</a> <em class="jxr_javadoccomment">     * Very simple robots.txt parser which obeys all Disallow lines regardless</em>
+<a class="jxr_linenumber" name="L1150" href="#L1150">1150</a> <em class="jxr_javadoccomment">     * of user agent or whether there are valid Allow: lines.</em>
+<a class="jxr_linenumber" name="L1151" href="#L1151">1151</a> <em class="jxr_javadoccomment">     * @param is Input stream of the robots.txt file</em>
+<a class="jxr_linenumber" name="L1152" href="#L1152">1152</a> <em class="jxr_javadoccomment">     * @return a list of disallow paths</em>
+<a class="jxr_linenumber" name="L1153" href="#L1153">1153</a> <em class="jxr_javadoccomment">     * @throws IOException if problems reading the stream</em>
+<a class="jxr_linenumber" name="L1154" href="#L1154">1154</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L1155" href="#L1155">1155</a>     <strong class="jxr_keyword">protected</strong> List&lt;String&gt; parseRobotsTxt(InputStream is) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L1156" href="#L1156">1156</a>       List&lt;String&gt; disallows = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L1157" href="#L1157">1157</a>       BufferedReader r = <strong class="jxr_keyword">new</strong> BufferedReader(<strong class="jxr_keyword">new</strong> InputStreamReader(is, StandardCharsets.UTF_8));
+<a class="jxr_linenumber" name="L1158" href="#L1158">1158</a>       String l;
+<a class="jxr_linenumber" name="L1159" href="#L1159">1159</a>       <strong class="jxr_keyword">while</strong>((l = r.readLine()) != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L1160" href="#L1160">1160</a>         String[] arr = l.split(<span class="jxr_string">"#"</span>);
+<a class="jxr_linenumber" name="L1161" href="#L1161">1161</a>         <strong class="jxr_keyword">if</strong>(arr.length == 0) <strong class="jxr_keyword">continue</strong>;
+<a class="jxr_linenumber" name="L1162" href="#L1162">1162</a>         l = arr[0].trim();
+<a class="jxr_linenumber" name="L1163" href="#L1163">1163</a>         <strong class="jxr_keyword">if</strong>(l.startsWith(DISALLOW)) {
+<a class="jxr_linenumber" name="L1164" href="#L1164">1164</a>           l = l.substring(DISALLOW.length()).trim();
+<a class="jxr_linenumber" name="L1165" href="#L1165">1165</a>           <strong class="jxr_keyword">if</strong>(l.length() == 0) <strong class="jxr_keyword">continue</strong>;
+<a class="jxr_linenumber" name="L1166" href="#L1166">1166</a>           disallows.add(l);
+<a class="jxr_linenumber" name="L1167" href="#L1167">1167</a>         }
+<a class="jxr_linenumber" name="L1168" href="#L1168">1168</a>       }
+<a class="jxr_linenumber" name="L1169" href="#L1169">1169</a>       is.close();
+<a class="jxr_linenumber" name="L1170" href="#L1170">1170</a>       <strong class="jxr_keyword">return</strong> disallows;
+<a class="jxr_linenumber" name="L1171" href="#L1171">1171</a>     }
+<a class="jxr_linenumber" name="L1172" href="#L1172">1172</a> 
+<a class="jxr_linenumber" name="L1173" href="#L1173">1173</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L1174" href="#L1174">1174</a> <em class="jxr_javadoccomment">     * Finds links on a web page, using /extract?extractOnly=true</em>
+<a class="jxr_linenumber" name="L1175" href="#L1175">1175</a> <em class="jxr_javadoccomment">     * @param u the URL of the web page</em>
+<a class="jxr_linenumber" name="L1176" href="#L1176">1176</a> <em class="jxr_javadoccomment">     * @param is the input stream of the page</em>
+<a class="jxr_linenumber" name="L1177" href="#L1177">1177</a> <em class="jxr_javadoccomment">     * @param type the content-type</em>
+<a class="jxr_linenumber" name="L1178" href="#L1178">1178</a> <em class="jxr_javadoccomment">     * @param postUrl the URL (typically /solr/extract) in order to pull out links</em>
+<a class="jxr_linenumber" name="L1179" href="#L1179">1179</a> <em class="jxr_javadoccomment">     * @return a set of URLs parsed from the page</em>
+<a class="jxr_linenumber" name="L1180" href="#L1180">1180</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L1181" href="#L1181">1181</a>     <strong class="jxr_keyword">protected</strong> Set&lt;URL&gt; getLinksFromWebPage(URL u, InputStream is, String type, URL postUrl) {
+<a class="jxr_linenumber" name="L1182" href="#L1182">1182</a>       Set&lt;URL&gt; l = <strong class="jxr_keyword">new</strong> HashSet&lt;&gt;();
+<a class="jxr_linenumber" name="L1183" href="#L1183">1183</a>       URL url = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L1184" href="#L1184">1184</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L1185" href="#L1185">1185</a>         ByteArrayOutputStream os = <strong class="jxr_keyword">new</strong> ByteArrayOutputStream();
+<a class="jxr_linenumber" name="L1186" href="#L1186">1186</a>         URL extractUrl = <strong class="jxr_keyword">new</strong> URL(appendParam(postUrl.toString(), <span class="jxr_string">"extractOnly=true"</span>));
+<a class="jxr_linenumber" name="L1187" href="#L1187">1187</a>         <strong class="jxr_keyword">boolean</strong> success = postData(is, <strong class="jxr_keyword">null</strong>, os, type, extractUrl);
+<a class="jxr_linenumber" name="L1188" href="#L1188">1188</a>         <strong class="jxr_keyword">if</strong>(success) {
+<a class="jxr_linenumber" name="L1189" href="#L1189">1189</a>           Document d = makeDom(os.toByteArray());
+<a class="jxr_linenumber" name="L1190" href="#L1190">1190</a>           String innerXml = getXP(d, <span class="jxr_string">"/response/str/text()[1]"</span>, false);
+<a class="jxr_linenumber" name="L1191" href="#L1191">1191</a>           d = makeDom(innerXml.getBytes(StandardCharsets.UTF_8));
+<a class="jxr_linenumber" name="L1192" href="#L1192">1192</a>           NodeList links = getNodesFromXP(d, <span class="jxr_string">"/html/body//a/@href"</span>);
+<a class="jxr_linenumber" name="L1193" href="#L1193">1193</a>           <strong class="jxr_keyword">for</strong>(<strong class="jxr_keyword">int</strong> i = 0; i &lt; links.getLength(); i++) {
+<a class="jxr_linenumber" name="L1194" href="#L1194">1194</a>             String link = links.item(i).getTextContent();
+<a class="jxr_linenumber" name="L1195" href="#L1195">1195</a>             link = computeFullUrl(u, link);
+<a class="jxr_linenumber" name="L1196" href="#L1196">1196</a>             <strong class="jxr_keyword">if</strong>(link == <strong class="jxr_keyword">null</strong>)
+<a class="jxr_linenumber" name="L1197" href="#L1197">1197</a>               <strong class="jxr_keyword">continue</strong>;
+<a class="jxr_linenumber" name="L1198" href="#L1198">1198</a>             url = <strong class="jxr_keyword">new</strong> URL(link);
+<a class="jxr_linenumber" name="L1199" href="#L1199">1199</a>             <strong class="jxr_keyword">if</strong>(url.getAuthority() == <strong class="jxr_keyword">null</strong> || !url.getAuthority().equals(u.getAuthority()))
+<a class="jxr_linenumber" name="L1200" href="#L1200">1200</a>               <strong class="jxr_keyword">continue</strong>;
+<a class="jxr_linenumber" name="L1201" href="#L1201">1201</a>             l.add(url);
+<a class="jxr_linenumber" name="L1202" href="#L1202">1202</a>           }
+<a class="jxr_linenumber" name="L1203" href="#L1203">1203</a>         }
+<a class="jxr_linenumber" name="L1204" href="#L1204">1204</a>       } <strong class="jxr_keyword">catch</strong> (MalformedURLException e) {
+<a class="jxr_linenumber" name="L1205" href="#L1205">1205</a>         warn(<span class="jxr_string">"Malformed URL "</span>+url);
+<a class="jxr_linenumber" name="L1206" href="#L1206">1206</a>       } <strong class="jxr_keyword">catch</strong> (IOException e) {
+<a class="jxr_linenumber" name="L1207" href="#L1207">1207</a>         warn(<span class="jxr_string">"IOException opening URL "</span>+url+<span class="jxr_string">": "</span>+e.getMessage());
+<a class="jxr_linenumber" name="L1208" href="#L1208">1208</a>       } <strong class="jxr_keyword">catch</strong> (Exception e) {
+<a class="jxr_linenumber" name="L1209" href="#L1209">1209</a>         <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> RuntimeException(e);
+<a class="jxr_linenumber" name="L1210" href="#L1210">1210</a>       }
+<a class="jxr_linenumber" name="L1211" href="#L1211">1211</a>       <strong class="jxr_keyword">return</strong> l;
+<a class="jxr_linenumber" name="L1212" href="#L1212">1212</a>     }
+<a class="jxr_linenumber" name="L1213" href="#L1213">1213</a>   }
+<a class="jxr_linenumber" name="L1214" href="#L1214">1214</a>     
+<a class="jxr_linenumber" name="L1215" href="#L1215">1215</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L1216" href="#L1216">1216</a> <em class="jxr_javadoccomment">   * Utility class to hold the result form a page fetch</em>
+<a class="jxr_linenumber" name="L1217" href="#L1217">1217</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L1218" href="#L1218">1218</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> PageFetcherResult {
+<a class="jxr_linenumber" name="L1219" href="#L1219">1219</a>     <strong class="jxr_keyword">int</strong> httpStatus = 200;
+<a class="jxr_linenumber" name="L1220" href="#L1220">1220</a>     String contentType = <span class="jxr_string">"text/html"</span>;
+<a class="jxr_linenumber" name="L1221" href="#L1221">1221</a>     URL redirectUrl = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L1222" href="#L1222">1222</a>     ByteBuffer content;
+<a class="jxr_linenumber" name="L1223" href="#L1223">1223</a>   }
+<a class="jxr_linenumber" name="L1224" href="#L1224">1224</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

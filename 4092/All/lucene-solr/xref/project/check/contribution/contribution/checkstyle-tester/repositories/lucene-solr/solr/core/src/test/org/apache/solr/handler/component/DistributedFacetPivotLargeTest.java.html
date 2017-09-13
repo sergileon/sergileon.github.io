@@ -1,0 +1,982 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>DistributedFacetPivotLargeTest xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.solr.handler.component;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> java.io.IOException;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> java.util.Date;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> java.util.List;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> junit.framework.AssertionFailedError;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.BaseDistributedSearchTestCase;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.SolrClient;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.SolrServerException;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.response.FieldStatsInfo;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.response.PivotField;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.response.QueryResponse;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.response.RangeFacet;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.SolrInputDocument;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.params.FacetParams;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.params.SolrParams;
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">import</strong> org.junit.Test;
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> DistributedFacetPivotLargeTest <strong class="jxr_keyword">extends</strong> BaseDistributedSearchTestCase {
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>    
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String SPECIAL = <span class="jxr_string">""</span>; 
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>    @Test
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>    @ShardsFixed(num = 4)
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> test() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>      <strong class="jxr_keyword">this</strong>.stress = 0 ;
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>      handle.clear();
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>      handle.put(<span class="jxr_string">"QTime"</span>, SKIPVAL);
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>      handle.put(<span class="jxr_string">"timestamp"</span>, SKIPVAL);
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>      handle.put(<span class="jxr_string">"maxScore"</span>, SKIPVAL);    
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>      
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>      setupDistributedPivotFacetDocuments();
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>      
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>      QueryResponse rsp = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>      
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>      List&lt;PivotField&gt; pivots = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>      PivotField firstInt = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>      PivotField firstBool = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>      PivotField firstDate = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>      PivotField firstPlace = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>      PivotField firstCompany = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>  
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>      <em class="jxr_comment">// basic check w/ limit &amp; default sort (count)</em>
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>      rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>                   <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>                   <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>                   <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>                   FacetParams.FACET_LIMIT, <span class="jxr_string">"12"</span>); 
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>      pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>      assertEquals(12, pivots.size());
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>      firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>      assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 257, firstPlace);
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>      assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 101, firstPlace.getPivot().get(0));
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>      <em class="jxr_comment">// Microsoft will come back wrong if refinement was not done correctly</em>
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>      assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft"</span>, 56, firstPlace.getPivot().get(1));
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>  
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>      <em class="jxr_comment">// trivial mincount=0 check</em>
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>      rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"does_not_exist_s:foo"</span>,
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>                   <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>                   <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>                   <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"company_t"</span>,
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>                   FacetParams.FACET_LIMIT, <span class="jxr_string">"10"</span>,
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>                   FacetParams.FACET_PIVOT_MINCOUNT,<span class="jxr_string">"0"</span>); 
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>      pivots = rsp.getFacetPivot().get(<span class="jxr_string">"company_t"</span>);
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>      assertEquals(10, pivots.size());
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>      <strong class="jxr_keyword">for</strong> (PivotField p : pivots) {
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>        assertEquals(0, p.getCount());
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>      }
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>  
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>      <em class="jxr_comment">// sanity check limit=0 w/ mincount=0 &amp; missing=true</em>
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>      <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>      <em class="jxr_comment">// SOLR-6328: doesn't work for single node, so can't work for distrib either (yet)</em>
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>      <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>      <em class="jxr_comment">// PivotFacetField's init of needRefinementAtThisLevel as needing potential change</em>
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>      <em class="jxr_comment">// </em>
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>      <em class="jxr_comment">// rsp = query( "q", "*:*",</em>
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>      <em class="jxr_comment">//              "rows", "0",</em>
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>      <em class="jxr_comment">//              "facet","true",</em>
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>      <em class="jxr_comment">//              "f.company_t.facet.limit", "10",</em>
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>      <em class="jxr_comment">//              "facet.pivot","special_s,bogus_s,company_t",</em>
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>      <em class="jxr_comment">//              "facet.missing", "true",</em>
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>     <em class="jxr_comment">//              FacetParams.FACET_LIMIT, "0",</em>
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>     <em class="jxr_comment">//              FacetParams.FACET_PIVOT_MINCOUNT,"0"); </em>
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>     <em class="jxr_comment">// pivots = rsp.getFacetPivot().get("special_s,bogus_s,company_t");</em>
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>     <em class="jxr_comment">// assertEquals(1, pivots.size()); // only the missing</em>
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>     <em class="jxr_comment">// assertPivot("special_s", null, docNumber - 5, pivots.get(0)); // 5 docs w/special_s</em>
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>     <em class="jxr_comment">// assertEquals(pivots.toString(), 1, pivots.get(0).getPivot());</em>
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>     <em class="jxr_comment">// assertPivot("bogus_s", null, docNumber, pivots.get(0).getPivot().get(0));</em>
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>     <em class="jxr_comment">// // TODO: some asserts on company results</em>
+<a class="jxr_linenumber" name="L108" href="#L108">108</a> 
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>     <em class="jxr_comment">// basic check w/ default sort, limit, &amp; mincount==0</em>
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>     rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L111" href="#L111">111</a>                  <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>                  <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>                  FacetParams.FACET_LIMIT, <span class="jxr_string">"50"</span>,
+<a class="jxr_linenumber" name="L115" href="#L115">115</a>                  FacetParams.FACET_PIVOT_MINCOUNT,<span class="jxr_string">"0"</span>); 
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>     assertEquals(50, pivots.size());
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>     firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>     assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 257, firstPlace);
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 101, firstPlace.getPivot().get(0));
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>     <em class="jxr_comment">// Microsoft will come back wrong if refinement was not done correctly</em>
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft"</span>, 56, firstPlace.getPivot().get(1));
+<a class="jxr_linenumber" name="L123" href="#L123">123</a> 
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>     <em class="jxr_comment">// sort=index + offset + limit w/ some variables</em>
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>     <strong class="jxr_keyword">for</strong> (SolrParams variableParams : 
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>            <strong class="jxr_keyword">new</strong> SolrParams[] { <em class="jxr_comment">// bother variations should kwrk just as well</em>
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>              <em class="jxr_comment">// defauts</em>
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>              params(),
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>              <em class="jxr_comment">// force refinement</em>
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>              params(FacetParams.FACET_OVERREQUEST_RATIO, <span class="jxr_string">"1"</span>, 
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>                     FacetParams.FACET_OVERREQUEST_COUNT, <span class="jxr_string">"0"</span>)           }) {
+<a class="jxr_linenumber" name="L132" href="#L132">132</a> 
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>       SolrParams p = SolrParams.wrapDefaults( params( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>                                                       <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>                                                       <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>                                                       <span class="jxr_string">"facet.sort"</span>,<span class="jxr_string">"index"</span>,
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>                                                       <span class="jxr_string">"f.place_s.facet.limit"</span>, <span class="jxr_string">"20"</span>,
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>                                                       <span class="jxr_string">"f.place_s.facet.offset"</span>, <span class="jxr_string">"40"</span>,
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>                                                       <span class="jxr_string">"facet.pivot"</span>, <span class="jxr_string">"place_s,company_t"</span>),
+<a class="jxr_linenumber" name="L140" href="#L140">140</a>                                               variableParams );
+<a class="jxr_linenumber" name="L141" href="#L141">141</a> 
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>         rsp = query( p );
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>         pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>         assertEquals(20, pivots.size()); <em class="jxr_comment">// limit</em>
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; 10; i++) {
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>           PivotField place = pivots.get(i); 
+<a class="jxr_linenumber" name="L148" href="#L148">148</a>           assertTrue(place.toString(), place.getValue().toString().endsWith(<span class="jxr_string">"placeholder"</span>));
+<a class="jxr_linenumber" name="L149" href="#L149">149</a>           assertEquals(3, place.getPivot().size());
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>           assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 6, place.getPivot().get(0));
+<a class="jxr_linenumber" name="L151" href="#L151">151</a>           assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft"</span>, 6, place.getPivot().get(1));
+<a class="jxr_linenumber" name="L152" href="#L152">152</a>           assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"polecat"</span>, 6, place.getPivot().get(2));
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>         }
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>         assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 257, pivots.get(10));
+<a class="jxr_linenumber" name="L155" href="#L155">155</a>         assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"krakaw"</span>, 1, pivots.get(11));
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>         assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"medical staffing network holdings, inc."</span>, 51, pivots.get(12));
+<a class="jxr_linenumber" name="L157" href="#L157">157</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 13; i &lt; 20; i++) {
+<a class="jxr_linenumber" name="L158" href="#L158">158</a>           PivotField place = pivots.get(i); 
+<a class="jxr_linenumber" name="L159" href="#L159">159</a>           assertTrue(place.toString(), place.getValue().toString().startsWith(<span class="jxr_string">"placeholder"</span>));
+<a class="jxr_linenumber" name="L160" href="#L160">160</a>           assertEquals(1, place.getPivot().size());
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>           PivotField company = place.getPivot().get(0);
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>           assertTrue(company.toString(), company.getValue().toString().startsWith(<span class="jxr_string">"compholder"</span>));
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>           assertEquals(company.toString(), 1, company.getCount());
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>         }
+<a class="jxr_linenumber" name="L165" href="#L165">165</a>       } <strong class="jxr_keyword">catch</strong> (AssertionFailedError ae) {
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>         <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> AssertionError(ae.getMessage() + <span class="jxr_string">" &lt;== "</span> + p.toString(), ae);
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>       }
+<a class="jxr_linenumber" name="L168" href="#L168">168</a>     }
+<a class="jxr_linenumber" name="L169" href="#L169">169</a> 
+<a class="jxr_linenumber" name="L170" href="#L170">170</a>     <em class="jxr_comment">// sort=index + mincount=0</em>
+<a class="jxr_linenumber" name="L171" href="#L171">171</a>     <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>     <em class="jxr_comment">// SOLR-6329: facet.pivot.mincount=0 doesn't work well with distrib</em>
+<a class="jxr_linenumber" name="L173" href="#L173">173</a>     <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L174" href="#L174">174</a>     <em class="jxr_comment">// broken honda</em>
+<a class="jxr_linenumber" name="L175" href="#L175">175</a>     <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L176" href="#L176">176</a>     <em class="jxr_comment">// This is tricky, here's what i think is happening.... </em>
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>     <em class="jxr_comment">// - "company:honda" only exists on twoShard, and only w/ "place:cardiff"</em>
+<a class="jxr_linenumber" name="L178" href="#L178">178</a>     <em class="jxr_comment">// - twoShard has no other places in its docs</em>
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>     <em class="jxr_comment">// - twoShard can't return any other places to w/ honda as a count=0 sub-value</em>
+<a class="jxr_linenumber" name="L180" href="#L180">180</a>     <em class="jxr_comment">// - if we refined all other companies places, would twoShard return honda==0 ?</em>
+<a class="jxr_linenumber" name="L181" href="#L181">181</a>     <em class="jxr_comment">//   ... but there's no refinement since mincount==0</em>
+<a class="jxr_linenumber" name="L182" href="#L182">182</a>     <em class="jxr_comment">// - would it even matter</em>
+<a class="jxr_linenumber" name="L183" href="#L183">183</a>     <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L184" href="#L184">184</a>     <em class="jxr_comment">// should we remove the refinement short circut?</em>
+<a class="jxr_linenumber" name="L185" href="#L185">185</a>     <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L186" href="#L186">186</a>     <em class="jxr_comment">// rsp = query( params( "q", "*:*",</em>
+<a class="jxr_linenumber" name="L187" href="#L187">187</a>     <em class="jxr_comment">//                      "rows", "0",</em>
+<a class="jxr_linenumber" name="L188" href="#L188">188</a>     <em class="jxr_comment">//                      "facet","true",</em>
+<a class="jxr_linenumber" name="L189" href="#L189">189</a>     <em class="jxr_comment">//                      "facet.sort","index",</em>
+<a class="jxr_linenumber" name="L190" href="#L190">190</a>     <em class="jxr_comment">//                      "f.place_s.facet.limit", "20",</em>
+<a class="jxr_linenumber" name="L191" href="#L191">191</a>     <em class="jxr_comment">//                      "f.place_s.facet.offset", "40",</em>
+<a class="jxr_linenumber" name="L192" href="#L192">192</a>     <em class="jxr_comment">//                      FacetParams.FACET_PIVOT_MINCOUNT,"0",</em>
+<a class="jxr_linenumber" name="L193" href="#L193">193</a>     <em class="jxr_comment">//                      "facet.pivot", "place_s,company_t") );</em>
+<a class="jxr_linenumber" name="L194" href="#L194">194</a>     <em class="jxr_comment">// // TODO: more asserts</em>
+<a class="jxr_linenumber" name="L195" href="#L195">195</a>     <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L196" href="#L196">196</a>     <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L197" href="#L197">197</a>     <em class="jxr_comment">// really trivial demonstration of the above problem</em>
+<a class="jxr_linenumber" name="L198" href="#L198">198</a>     <em class="jxr_comment">// </em>
+<a class="jxr_linenumber" name="L199" href="#L199">199</a>     <em class="jxr_comment">// rsp = query( params( "q", "*:*",</em>
+<a class="jxr_linenumber" name="L200" href="#L200">200</a>     <em class="jxr_comment">//                      "rows", "0",</em>
+<a class="jxr_linenumber" name="L201" href="#L201">201</a>     <em class="jxr_comment">//                      "facet","true",</em>
+<a class="jxr_linenumber" name="L202" href="#L202">202</a>     <em class="jxr_comment">//                      FacetParams.FACET_PIVOT_MINCOUNT,"0",</em>
+<a class="jxr_linenumber" name="L203" href="#L203">203</a>     <em class="jxr_comment">//                      "facet.pivot", "top_s,sub_s") );</em>
+<a class="jxr_linenumber" name="L204" href="#L204">204</a> 
+<a class="jxr_linenumber" name="L205" href="#L205">205</a>     <em class="jxr_comment">// facet.missing=true + facet.sort=index + facet.pivot.mincount &gt; 0 (SOLR-7829)</em>
+<a class="jxr_linenumber" name="L206" href="#L206">206</a>     <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> expectedNumDocsMissingBool = 111;
+<a class="jxr_linenumber" name="L207" href="#L207">207</a>     <strong class="jxr_keyword">for</strong> (String facetSort : <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"count"</span>, <span class="jxr_string">"index"</span>}) {
+<a class="jxr_linenumber" name="L208" href="#L208">208</a>       <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> mincount : <strong class="jxr_keyword">new</strong> <strong class="jxr_keyword">int</strong>[] { 1, 20,
+<a class="jxr_linenumber" name="L209" href="#L209">209</a>                                       (expectedNumDocsMissingBool / 2) - 1,
+<a class="jxr_linenumber" name="L210" href="#L210">210</a>                                       (expectedNumDocsMissingBool / 2) + 1,
+<a class="jxr_linenumber" name="L211" href="#L211">211</a>                                       expectedNumDocsMissingBool }) {
+<a class="jxr_linenumber" name="L212" href="#L212">212</a>              
+<a class="jxr_linenumber" name="L213" href="#L213">213</a>         SolrParams p = params( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L214" href="#L214">214</a>                                <span class="jxr_string">"fq"</span>,<span class="jxr_string">"-real_b:true"</span>, <em class="jxr_comment">// simplify asserts by ruling out true counts</em>
+<a class="jxr_linenumber" name="L215" href="#L215">215</a>                                <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>                                <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L217" href="#L217">217</a>                                <span class="jxr_string">"facet.pivot"</span>, <span class="jxr_string">"real_b"</span>,
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>                                <span class="jxr_string">"facet.missing"</span>, <span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L219" href="#L219">219</a>                                <span class="jxr_string">"facet.pivot.mincount"</span>, <span class="jxr_string">""</span>+mincount,
+<a class="jxr_linenumber" name="L220" href="#L220">220</a>                                <span class="jxr_string">"facet.sort"</span>, facetSort);
+<a class="jxr_linenumber" name="L221" href="#L221">221</a>         
+<a class="jxr_linenumber" name="L222" href="#L222">222</a>         <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L223" href="#L223">223</a>           rsp = query( p );
+<a class="jxr_linenumber" name="L224" href="#L224">224</a>           pivots = rsp.getFacetPivot().get(<span class="jxr_string">"real_b"</span>);
+<a class="jxr_linenumber" name="L225" href="#L225">225</a>           assertEquals(2, pivots.size()); <em class="jxr_comment">// false, missing - in that order, regardless of sort</em>
+<a class="jxr_linenumber" name="L226" href="#L226">226</a>           assertPivot(<span class="jxr_string">"real_b"</span>, false, 300, pivots.get(0)); 
+<a class="jxr_linenumber" name="L227" href="#L227">227</a>           assertPivot(<span class="jxr_string">"real_b"</span>, <strong class="jxr_keyword">null</strong>, expectedNumDocsMissingBool, pivots.get(1));
+<a class="jxr_linenumber" name="L228" href="#L228">228</a>           
+<a class="jxr_linenumber" name="L229" href="#L229">229</a>         } <strong class="jxr_keyword">catch</strong> (AssertionFailedError ae) {
+<a class="jxr_linenumber" name="L230" href="#L230">230</a>           <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> AssertionError(ae.getMessage() + <span class="jxr_string">" &lt;== "</span> + p.toString(), ae);
+<a class="jxr_linenumber" name="L231" href="#L231">231</a>         }
+<a class="jxr_linenumber" name="L232" href="#L232">232</a>       }
+<a class="jxr_linenumber" name="L233" href="#L233">233</a>     }
+<a class="jxr_linenumber" name="L234" href="#L234">234</a>     
+<a class="jxr_linenumber" name="L235" href="#L235">235</a>     <em class="jxr_comment">// basic check w/ limit &amp; index sort</em>
+<a class="jxr_linenumber" name="L236" href="#L236">236</a>     <strong class="jxr_keyword">for</strong> (SolrParams facetParams : 
+<a class="jxr_linenumber" name="L237" href="#L237">237</a>            <em class="jxr_comment">// results should be the same regardless of whether local params are used</em>
+<a class="jxr_linenumber" name="L238" href="#L238">238</a>            <strong class="jxr_keyword">new</strong> SolrParams[] {
+<a class="jxr_linenumber" name="L239" href="#L239">239</a>              <em class="jxr_comment">// Broken: SOLR-6193</em>
+<a class="jxr_linenumber" name="L240" href="#L240">240</a>              <em class="jxr_comment">// params("facet.pivot","{!facet.limit=4 facet.sort=index}place_s,company_t"),</em>
+<a class="jxr_linenumber" name="L241" href="#L241">241</a>              <em class="jxr_comment">// params("facet.pivot","{!facet.sort=index}place_s,company_t",</em>
+<a class="jxr_linenumber" name="L242" href="#L242">242</a>              <em class="jxr_comment">//        FacetParams.FACET_LIMIT, "4"),</em>
+<a class="jxr_linenumber" name="L243" href="#L243">243</a>              params(<span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L244" href="#L244">244</a>                     FacetParams.FACET_LIMIT, <span class="jxr_string">"4"</span>,
+<a class="jxr_linenumber" name="L245" href="#L245">245</a>                     <span class="jxr_string">"facet.sort"</span>, <span class="jxr_string">"index"</span>)                                  }) {
+<a class="jxr_linenumber" name="L246" href="#L246">246</a>       SolrParams p = SolrParams.wrapDefaults( params( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L247" href="#L247">247</a>                                                       <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L248" href="#L248">248</a>                                                       <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>), 
+<a class="jxr_linenumber" name="L249" href="#L249">249</a>                                               facetParams );
+<a class="jxr_linenumber" name="L250" href="#L250">250</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L251" href="#L251">251</a>         rsp = query( p );
+<a class="jxr_linenumber" name="L252" href="#L252">252</a>         pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L253" href="#L253">253</a>         assertEquals(4, pivots.size());
+<a class="jxr_linenumber" name="L254" href="#L254">254</a>         firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L255" href="#L255">255</a>         assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"0placeholder"</span>, 6, firstPlace);
+<a class="jxr_linenumber" name="L256" href="#L256">256</a>         firstCompany = firstPlace.getPivot().get(0);
+<a class="jxr_linenumber" name="L257" href="#L257">257</a>         assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 6, firstCompany);
+<a class="jxr_linenumber" name="L258" href="#L258">258</a>       } <strong class="jxr_keyword">catch</strong> (AssertionFailedError ae) {
+<a class="jxr_linenumber" name="L259" href="#L259">259</a>         <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> AssertionError(ae.getMessage() + <span class="jxr_string">" &lt;== "</span> + p.toString(), ae);
+<a class="jxr_linenumber" name="L260" href="#L260">260</a>       }
+<a class="jxr_linenumber" name="L261" href="#L261">261</a>     }
+<a class="jxr_linenumber" name="L262" href="#L262">262</a> 
+<a class="jxr_linenumber" name="L263" href="#L263">263</a>     <em class="jxr_comment">// Pivot Faceting (combined wtih Field Faceting)</em>
+<a class="jxr_linenumber" name="L264" href="#L264">264</a>     <strong class="jxr_keyword">for</strong> (SolrParams facetParams : 
+<a class="jxr_linenumber" name="L265" href="#L265">265</a>            <em class="jxr_comment">// with and w/o an excluded fq</em>
+<a class="jxr_linenumber" name="L266" href="#L266">266</a>            <em class="jxr_comment">// (either way, facet results should be the same)</em>
+<a class="jxr_linenumber" name="L267" href="#L267">267</a>            <strong class="jxr_keyword">new</strong> SolrParams[] { 
+<a class="jxr_linenumber" name="L268" href="#L268">268</a>              params(<span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L269" href="#L269">269</a>                     <span class="jxr_string">"facet.field"</span>,<span class="jxr_string">"place_s"</span>),
+<a class="jxr_linenumber" name="L270" href="#L270">270</a>              params(<span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"{!ex=ok}place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L271" href="#L271">271</a>                     <span class="jxr_string">"facet.field"</span>,<span class="jxr_string">"{!ex=ok}place_s"</span>,
+<a class="jxr_linenumber" name="L272" href="#L272">272</a>                     <span class="jxr_string">"fq"</span>,<span class="jxr_string">"{!tag=ok}place_s:cardiff"</span>),
+<a class="jxr_linenumber" name="L273" href="#L273">273</a>              params(<span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"{!ex=pl,co}place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L274" href="#L274">274</a>                     <span class="jxr_string">"fq"</span>,<span class="jxr_string">"{!tag=pl}place_s:cardiff"</span>,
+<a class="jxr_linenumber" name="L275" href="#L275">275</a>                     <span class="jxr_string">"fq"</span>,<span class="jxr_string">"{!tag=co}company_t:bbc"</span>)                      }) {
+<a class="jxr_linenumber" name="L276" href="#L276">276</a>       
+<a class="jxr_linenumber" name="L277" href="#L277">277</a>       <em class="jxr_comment">// default order (count)</em>
+<a class="jxr_linenumber" name="L278" href="#L278">278</a>       rsp = query( SolrParams.wrapDefaults(params(<span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L279" href="#L279">279</a>                                                   <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L280" href="#L280">280</a>                                                   <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L281" href="#L281">281</a>                                                   FacetParams.FACET_LIMIT, <span class="jxr_string">"4"</span>),
+<a class="jxr_linenumber" name="L282" href="#L282">282</a>                                            facetParams) );
+<a class="jxr_linenumber" name="L283" href="#L283">283</a>       pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L284" href="#L284">284</a>       assertEquals(4, pivots.size());
+<a class="jxr_linenumber" name="L285" href="#L285">285</a>       firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L286" href="#L286">286</a>       assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 257, firstPlace);
+<a class="jxr_linenumber" name="L287" href="#L287">287</a>       assertEquals(4, firstPlace.getPivot().size());
+<a class="jxr_linenumber" name="L288" href="#L288">288</a>       firstCompany = firstPlace.getPivot().get(0);
+<a class="jxr_linenumber" name="L289" href="#L289">289</a>       assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 101, firstCompany);
+<a class="jxr_linenumber" name="L290" href="#L290">290</a> 
+<a class="jxr_linenumber" name="L291" href="#L291">291</a>       <em class="jxr_comment">// Index Order</em>
+<a class="jxr_linenumber" name="L292" href="#L292">292</a>       rsp = query( SolrParams.wrapDefaults(params(<span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L293" href="#L293">293</a>                                                   <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L294" href="#L294">294</a>                                                   <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L295" href="#L295">295</a>                                                   FacetParams.FACET_LIMIT, <span class="jxr_string">"4"</span>,
+<a class="jxr_linenumber" name="L296" href="#L296">296</a>                                                   <span class="jxr_string">"facet.sort"</span>, <span class="jxr_string">"index"</span>),
+<a class="jxr_linenumber" name="L297" href="#L297">297</a>                                            facetParams) );
+<a class="jxr_linenumber" name="L298" href="#L298">298</a>       pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L299" href="#L299">299</a>       assertEquals(4, pivots.size());
+<a class="jxr_linenumber" name="L300" href="#L300">300</a>       firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L301" href="#L301">301</a>       assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"0placeholder"</span>, 6, firstPlace);
+<a class="jxr_linenumber" name="L302" href="#L302">302</a>       assertEquals(3, firstPlace.getPivot().size()); <em class="jxr_comment">// num vals in data &lt; limit==3</em>
+<a class="jxr_linenumber" name="L303" href="#L303">303</a>       firstCompany = firstPlace.getPivot().get(0);
+<a class="jxr_linenumber" name="L304" href="#L304">304</a>       assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 6, firstCompany);
+<a class="jxr_linenumber" name="L305" href="#L305">305</a>       
+<a class="jxr_linenumber" name="L306" href="#L306">306</a>       <em class="jxr_comment">// Field level limits </em>
+<a class="jxr_linenumber" name="L307" href="#L307">307</a>       rsp = query( SolrParams.wrapDefaults(params(<span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L308" href="#L308">308</a>                                                   <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L309" href="#L309">309</a>                                                   <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L310" href="#L310">310</a>                                                   <span class="jxr_string">"f.place_s.facet.limit"</span>,<span class="jxr_string">"2"</span>,
+<a class="jxr_linenumber" name="L311" href="#L311">311</a>                                                   <span class="jxr_string">"f.company_t.facet.limit"</span>,<span class="jxr_string">"4"</span>),
+<a class="jxr_linenumber" name="L312" href="#L312">312</a>                                            facetParams) );
+<a class="jxr_linenumber" name="L313" href="#L313">313</a>       pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L314" href="#L314">314</a>       assertEquals(2, pivots.size());
+<a class="jxr_linenumber" name="L315" href="#L315">315</a>       firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L316" href="#L316">316</a>       assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 257, firstPlace);
+<a class="jxr_linenumber" name="L317" href="#L317">317</a>       assertEquals(4, firstPlace.getPivot().size());
+<a class="jxr_linenumber" name="L318" href="#L318">318</a>       firstCompany = firstPlace.getPivot().get(0);
+<a class="jxr_linenumber" name="L319" href="#L319">319</a>       assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 101, firstCompany);
+<a class="jxr_linenumber" name="L320" href="#L320">320</a>     }
+<a class="jxr_linenumber" name="L321" href="#L321">321</a> 
+<a class="jxr_linenumber" name="L322" href="#L322">322</a>     <em class="jxr_comment">// Pivot Faceting Count w/fq (not excluded)</em>
+<a class="jxr_linenumber" name="L323" href="#L323">323</a>     rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L324" href="#L324">324</a>                  <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L325" href="#L325">325</a>                  <span class="jxr_string">"fq"</span>,<span class="jxr_string">"place_s:cardiff"</span>,
+<a class="jxr_linenumber" name="L326" href="#L326">326</a>                  <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L327" href="#L327">327</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L328" href="#L328">328</a>                  FacetParams.FACET_LIMIT, <span class="jxr_string">"4"</span>);
+<a class="jxr_linenumber" name="L329" href="#L329">329</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L330" href="#L330">330</a>     assertEquals(1, pivots.size());
+<a class="jxr_linenumber" name="L331" href="#L331">331</a>     firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L332" href="#L332">332</a>     assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 257, firstPlace);
+<a class="jxr_linenumber" name="L333" href="#L333">333</a>     assertEquals(4, firstPlace.getPivot().size());
+<a class="jxr_linenumber" name="L334" href="#L334">334</a>     firstCompany = firstPlace.getPivot().get(0);
+<a class="jxr_linenumber" name="L335" href="#L335">335</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 101, firstCompany);
+<a class="jxr_linenumber" name="L336" href="#L336">336</a> 
+<a class="jxr_linenumber" name="L337" href="#L337">337</a> 
+<a class="jxr_linenumber" name="L338" href="#L338">338</a>     <em class="jxr_comment">// Same Pivot - one with exclusion and one w/o</em>
+<a class="jxr_linenumber" name="L339" href="#L339">339</a>     rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L340" href="#L340">340</a>                  <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L341" href="#L341">341</a>                  <span class="jxr_string">"fq"</span>,<span class="jxr_string">"{!tag=ff}pay_i:[2000 TO *]"</span>,
+<a class="jxr_linenumber" name="L342" href="#L342">342</a>                  <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L343" href="#L343">343</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"{!key=filt}place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L344" href="#L344">344</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"{!key=nofilt ex=ff}place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L345" href="#L345">345</a>                  FacetParams.FACET_LIMIT, <span class="jxr_string">"4"</span>);
+<a class="jxr_linenumber" name="L346" href="#L346">346</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"filt"</span>);
+<a class="jxr_linenumber" name="L347" href="#L347">347</a>     assertEquals(4, pivots.size());
+<a class="jxr_linenumber" name="L348" href="#L348">348</a>     firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L349" href="#L349">349</a>     assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 105, firstPlace);
+<a class="jxr_linenumber" name="L350" href="#L350">350</a>     assertEquals(4, firstPlace.getPivot().size());
+<a class="jxr_linenumber" name="L351" href="#L351">351</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 101, firstPlace.getPivot().get(0));
+<a class="jxr_linenumber" name="L352" href="#L352">352</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft"</span>, 54, firstPlace.getPivot().get(1));
+<a class="jxr_linenumber" name="L353" href="#L353">353</a>     <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L354" href="#L354">354</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"nofilt"</span>);
+<a class="jxr_linenumber" name="L355" href="#L355">355</a>     assertEquals(4, pivots.size());
+<a class="jxr_linenumber" name="L356" href="#L356">356</a>     firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L357" href="#L357">357</a>     assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 257, firstPlace);
+<a class="jxr_linenumber" name="L358" href="#L358">358</a>     assertEquals(4, firstPlace.getPivot().size());
+<a class="jxr_linenumber" name="L359" href="#L359">359</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 101, firstPlace.getPivot().get(0));
+<a class="jxr_linenumber" name="L360" href="#L360">360</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft"</span>, 56, firstPlace.getPivot().get(1));
+<a class="jxr_linenumber" name="L361" href="#L361">361</a> 
+<a class="jxr_linenumber" name="L362" href="#L362">362</a>     <em class="jxr_comment">// Same Pivot - one in default (count) order and one in index order</em>
+<a class="jxr_linenumber" name="L363" href="#L363">363</a>     <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L364" href="#L364">364</a>     <em class="jxr_comment">// Broken: SOLR-6193 - the facet.sort localparam isn't being picked up correctly</em>
+<a class="jxr_linenumber" name="L365" href="#L365">365</a>     <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L366" href="#L366">366</a>     <em class="jxr_comment">// rsp = query( "q", "*:*",</em>
+<a class="jxr_linenumber" name="L367" href="#L367">367</a>     <em class="jxr_comment">//              "rows", "0",</em>
+<a class="jxr_linenumber" name="L368" href="#L368">368</a>     <em class="jxr_comment">//              "facet","true",</em>
+<a class="jxr_linenumber" name="L369" href="#L369">369</a>     <em class="jxr_comment">//              "fq","pay_i:[2000 TO *]",</em>
+<a class="jxr_linenumber" name="L370" href="#L370">370</a>     <em class="jxr_comment">//              "facet.pivot","{!key=sc}place_s,company_t",</em>
+<a class="jxr_linenumber" name="L371" href="#L371">371</a>     <em class="jxr_comment">//              "facet.pivot","{!key=si facet.sort=index}place_s,company_t",</em>
+<a class="jxr_linenumber" name="L372" href="#L372">372</a>     <em class="jxr_comment">//              FacetParams.FACET_LIMIT, "4");</em>
+<a class="jxr_linenumber" name="L373" href="#L373">373</a>     <em class="jxr_comment">// pivots = rsp.getFacetPivot().get("sc");</em>
+<a class="jxr_linenumber" name="L374" href="#L374">374</a>     <em class="jxr_comment">// assertEquals(4, pivots.size());</em>
+<a class="jxr_linenumber" name="L375" href="#L375">375</a>     <em class="jxr_comment">// firstPlace = pivots.get(0);</em>
+<a class="jxr_linenumber" name="L376" href="#L376">376</a>     <em class="jxr_comment">// assertPivot("place_s", "cardiff", 105, firstPlace); </em>
+<a class="jxr_linenumber" name="L377" href="#L377">377</a>     <em class="jxr_comment">// assertEquals(4, firstPlace.getPivot().size());</em>
+<a class="jxr_linenumber" name="L378" href="#L378">378</a>     <em class="jxr_comment">// assertPivot("company_t", "bbc", 101, firstPlace.getPivot().get(0));</em>
+<a class="jxr_linenumber" name="L379" href="#L379">379</a>     <em class="jxr_comment">// assertPivot("company_t", "microsoft", 54, firstPlace.getPivot().get(1));</em>
+<a class="jxr_linenumber" name="L380" href="#L380">380</a>     <em class="jxr_comment">// //</em>
+<a class="jxr_linenumber" name="L381" href="#L381">381</a>     <em class="jxr_comment">// pivots = rsp.getFacetPivot().get("si");</em>
+<a class="jxr_linenumber" name="L382" href="#L382">382</a>     <em class="jxr_comment">// assertEquals(4, pivots.size());</em>
+<a class="jxr_linenumber" name="L383" href="#L383">383</a>     <em class="jxr_comment">// firstPlace = pivots.get(0);</em>
+<a class="jxr_linenumber" name="L384" href="#L384">384</a>     <em class="jxr_comment">// assertPivot("place_s", "0placeholder", 6, firstPlace); </em>
+<a class="jxr_linenumber" name="L385" href="#L385">385</a>     <em class="jxr_comment">// assertEquals(3, firstPlace.getPivot().size()); // only 3 in the data &lt; facet.limit</em>
+<a class="jxr_linenumber" name="L386" href="#L386">386</a>     <em class="jxr_comment">// assertPivot("company_t", "bbc", 6, firstPlace.getPivot().get(0));</em>
+<a class="jxr_linenumber" name="L387" href="#L387">387</a>     <em class="jxr_comment">// assertPivot("company_t", "microsoft", 6, firstPlace.getPivot().get(1));</em>
+<a class="jxr_linenumber" name="L388" href="#L388">388</a> 
+<a class="jxr_linenumber" name="L389" href="#L389">389</a> 
+<a class="jxr_linenumber" name="L390" href="#L390">390</a>     <em class="jxr_comment">// Field level limits and small offset</em>
+<a class="jxr_linenumber" name="L391" href="#L391">391</a>     rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L392" href="#L392">392</a>                  <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L393" href="#L393">393</a>                  <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L394" href="#L394">394</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L395" href="#L395">395</a>                  <span class="jxr_string">"f.place_s.facet.limit"</span>,<span class="jxr_string">"2"</span>,
+<a class="jxr_linenumber" name="L396" href="#L396">396</a>                  <span class="jxr_string">"f.company_t.facet.limit"</span>,<span class="jxr_string">"4"</span>,
+<a class="jxr_linenumber" name="L397" href="#L397">397</a>                  <span class="jxr_string">"facet.offset"</span>,<span class="jxr_string">"1"</span>);
+<a class="jxr_linenumber" name="L398" href="#L398">398</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L399" href="#L399">399</a>     assertEquals(2, pivots.size());
+<a class="jxr_linenumber" name="L400" href="#L400">400</a>     firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L401" href="#L401">401</a>     assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"medical staffing network holdings, inc."</span>, 51, firstPlace);
+<a class="jxr_linenumber" name="L402" href="#L402">402</a>     assertEquals(2, firstPlace.getPivot().size()); <em class="jxr_comment">// num vals in data &lt; limit==4</em>
+<a class="jxr_linenumber" name="L403" href="#L403">403</a>     firstCompany = firstPlace.getPivot().get(0);
+<a class="jxr_linenumber" name="L404" href="#L404">404</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 50, firstCompany);
+<a class="jxr_linenumber" name="L405" href="#L405">405</a>     
+<a class="jxr_linenumber" name="L406" href="#L406">406</a>     
+<a class="jxr_linenumber" name="L407" href="#L407">407</a>     <em class="jxr_comment">// Field level offsets and limit</em>
+<a class="jxr_linenumber" name="L408" href="#L408">408</a>     rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L409" href="#L409">409</a>                  <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L410" href="#L410">410</a>                  <span class="jxr_string">"fq"</span>,<span class="jxr_string">"{!tag=pl}place_s:cardiff"</span>,
+<a class="jxr_linenumber" name="L411" href="#L411">411</a>                  <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L412" href="#L412">412</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"{!ex=pl}place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L413" href="#L413">413</a>                  <span class="jxr_string">"f.place_s.facet.offset"</span>,<span class="jxr_string">"1"</span>,
+<a class="jxr_linenumber" name="L414" href="#L414">414</a>                  <span class="jxr_string">"f.company_t.facet.offset"</span>,<span class="jxr_string">"2"</span>,
+<a class="jxr_linenumber" name="L415" href="#L415">415</a>                  FacetParams.FACET_LIMIT, <span class="jxr_string">"4"</span>); 
+<a class="jxr_linenumber" name="L416" href="#L416">416</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L417" href="#L417">417</a>     assertEquals(4, pivots.size());
+<a class="jxr_linenumber" name="L418" href="#L418">418</a>     firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L419" href="#L419">419</a>     assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"medical staffing network holdings, inc."</span>, 51, firstPlace);
+<a class="jxr_linenumber" name="L420" href="#L420">420</a>     assertEquals(1, firstPlace.getPivot().size()); <em class="jxr_comment">// num vals in data &lt; limit==4</em>
+<a class="jxr_linenumber" name="L421" href="#L421">421</a>     firstCompany = firstPlace.getPivot().get(0);
+<a class="jxr_linenumber" name="L422" href="#L422">422</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"polecat"</span>, 50, firstCompany);
+<a class="jxr_linenumber" name="L423" href="#L423">423</a>      
+<a class="jxr_linenumber" name="L424" href="#L424">424</a> 
+<a class="jxr_linenumber" name="L425" href="#L425">425</a>     <em class="jxr_comment">// datetime</em>
+<a class="jxr_linenumber" name="L426" href="#L426">426</a>     rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L427" href="#L427">427</a>                  <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L428" href="#L428">428</a>                  <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L429" href="#L429">429</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"hiredate_dt,place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L430" href="#L430">430</a>                  <span class="jxr_string">"f.hiredate_dt.facet.limit"</span>,<span class="jxr_string">"2"</span>,
+<a class="jxr_linenumber" name="L431" href="#L431">431</a>                  <span class="jxr_string">"f.hiredate_dt.facet.offset"</span>,<span class="jxr_string">"1"</span>,
+<a class="jxr_linenumber" name="L432" href="#L432">432</a>                  FacetParams.FACET_LIMIT, <span class="jxr_string">"4"</span>);
+<a class="jxr_linenumber" name="L433" href="#L433">433</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"hiredate_dt,place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L434" href="#L434">434</a>     assertEquals(2, pivots.size());
+<a class="jxr_linenumber" name="L435" href="#L435">435</a>     firstDate = pivots.get(0); <em class="jxr_comment">// 2012-09-01T12:30:00Z</em>
+<a class="jxr_linenumber" name="L436" href="#L436">436</a>     assertPivot(<span class="jxr_string">"hiredate_dt"</span>, <strong class="jxr_keyword">new</strong> Date(1346502600000L), 200, firstDate);
+<a class="jxr_linenumber" name="L437" href="#L437">437</a>     assertEquals(1, firstDate.getPivot().size()); <em class="jxr_comment">// num vals in data &lt; limit==4</em>
+<a class="jxr_linenumber" name="L438" href="#L438">438</a>     firstPlace = firstDate.getPivot().get(0);
+<a class="jxr_linenumber" name="L439" href="#L439">439</a>     assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 200, firstPlace);
+<a class="jxr_linenumber" name="L440" href="#L440">440</a>     assertEquals(4, firstPlace.getPivot().size());
+<a class="jxr_linenumber" name="L441" href="#L441">441</a>     firstCompany = firstPlace.getPivot().get(0);
+<a class="jxr_linenumber" name="L442" href="#L442">442</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 50, firstCompany);
+<a class="jxr_linenumber" name="L443" href="#L443">443</a> 
+<a class="jxr_linenumber" name="L444" href="#L444">444</a>     <em class="jxr_comment">// int</em>
+<a class="jxr_linenumber" name="L445" href="#L445">445</a>     rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L446" href="#L446">446</a>                  <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L447" href="#L447">447</a>                  <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L448" href="#L448">448</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"pay_i,place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L449" href="#L449">449</a>                  <span class="jxr_string">"f.pay_i.facet.limit"</span>,<span class="jxr_string">"2"</span>,
+<a class="jxr_linenumber" name="L450" href="#L450">450</a>                  <span class="jxr_string">"f.pay_i.facet.offset"</span>,<span class="jxr_string">"1"</span>,
+<a class="jxr_linenumber" name="L451" href="#L451">451</a>                  FacetParams.FACET_LIMIT, <span class="jxr_string">"4"</span>);
+<a class="jxr_linenumber" name="L452" href="#L452">452</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"pay_i,place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L453" href="#L453">453</a>     assertEquals(2, pivots.size());
+<a class="jxr_linenumber" name="L454" href="#L454">454</a>     firstInt = pivots.get(0);
+<a class="jxr_linenumber" name="L455" href="#L455">455</a>     assertPivot(<span class="jxr_string">"pay_i"</span>, 2000, 50, firstInt);
+<a class="jxr_linenumber" name="L456" href="#L456">456</a>     assertEquals(4, firstInt.getPivot().size());
+<a class="jxr_linenumber" name="L457" href="#L457">457</a>     firstPlace = firstInt.getPivot().get(0);
+<a class="jxr_linenumber" name="L458" href="#L458">458</a>     assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"0placeholder"</span>, 1, firstPlace);
+<a class="jxr_linenumber" name="L459" href="#L459">459</a>     assertEquals(3, firstPlace.getPivot().size());
+<a class="jxr_linenumber" name="L460" href="#L460">460</a>     firstCompany = firstPlace.getPivot().get(0);
+<a class="jxr_linenumber" name="L461" href="#L461">461</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 1, firstCompany);
+<a class="jxr_linenumber" name="L462" href="#L462">462</a>     
+<a class="jxr_linenumber" name="L463" href="#L463">463</a>     <em class="jxr_comment">// boolean</em>
+<a class="jxr_linenumber" name="L464" href="#L464">464</a>     rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L465" href="#L465">465</a>                  <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L466" href="#L466">466</a>                  <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L467" href="#L467">467</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"real_b,place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L468" href="#L468">468</a>                  <span class="jxr_string">"f.real_b.facet.missing"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L469" href="#L469">469</a>                  <span class="jxr_string">"f.real_b.facet.limit"</span>,<span class="jxr_string">"2"</span>,
+<a class="jxr_linenumber" name="L470" href="#L470">470</a>                  FacetParams.FACET_LIMIT, <span class="jxr_string">"4"</span>);
+<a class="jxr_linenumber" name="L471" href="#L471">471</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"real_b,place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L472" href="#L472">472</a>     assertEquals(3, pivots.size());
+<a class="jxr_linenumber" name="L473" href="#L473">473</a>     firstBool = pivots.get(0);
+<a class="jxr_linenumber" name="L474" href="#L474">474</a>     assertPivot(<span class="jxr_string">"real_b"</span>, false, 300, firstBool);
+<a class="jxr_linenumber" name="L475" href="#L475">475</a>     assertEquals(4, firstBool.getPivot().size());
+<a class="jxr_linenumber" name="L476" href="#L476">476</a>     firstPlace = firstBool.getPivot().get(0);
+<a class="jxr_linenumber" name="L477" href="#L477">477</a>     assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"0placeholder"</span>, 6, firstPlace);
+<a class="jxr_linenumber" name="L478" href="#L478">478</a>     assertEquals(3, firstPlace.getPivot().size());
+<a class="jxr_linenumber" name="L479" href="#L479">479</a>     firstCompany = firstPlace.getPivot().get(0);
+<a class="jxr_linenumber" name="L480" href="#L480">480</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 6, firstCompany);
+<a class="jxr_linenumber" name="L481" href="#L481">481</a>     
+<a class="jxr_linenumber" name="L482" href="#L482">482</a>     <em class="jxr_comment">// bogus fields</em>
+<a class="jxr_linenumber" name="L483" href="#L483">483</a>     rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L484" href="#L484">484</a>                  <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L485" href="#L485">485</a>                  <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L486" href="#L486">486</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"doesntexist_t,neitherdoi_i"</span>,
+<a class="jxr_linenumber" name="L487" href="#L487">487</a>                  FacetParams.FACET_LIMIT, <span class="jxr_string">"4"</span>);
+<a class="jxr_linenumber" name="L488" href="#L488">488</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"doesntexist_t,neitherdoi_i"</span>);
+<a class="jxr_linenumber" name="L489" href="#L489">489</a>     assertEquals(0, pivots.size());
+<a class="jxr_linenumber" name="L490" href="#L490">490</a> 
+<a class="jxr_linenumber" name="L491" href="#L491">491</a>     <em class="jxr_comment">// bogus fields with facet.missing</em>
+<a class="jxr_linenumber" name="L492" href="#L492">492</a>     rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L493" href="#L493">493</a>                  <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L494" href="#L494">494</a>                  <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L495" href="#L495">495</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"doesntexist_t,neitherdoi_i"</span>,
+<a class="jxr_linenumber" name="L496" href="#L496">496</a>                  <span class="jxr_string">"facet.missing"</span>, <span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L497" href="#L497">497</a>                  FacetParams.FACET_LIMIT, <span class="jxr_string">"4"</span>);
+<a class="jxr_linenumber" name="L498" href="#L498">498</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"doesntexist_t,neitherdoi_i"</span>);
+<a class="jxr_linenumber" name="L499" href="#L499">499</a>     assertEquals(1, pivots.size());
+<a class="jxr_linenumber" name="L500" href="#L500">500</a>     assertPivot(<span class="jxr_string">"doesntexist_t"</span>, <strong class="jxr_keyword">null</strong>, docNumber, pivots.get(0));
+<a class="jxr_linenumber" name="L501" href="#L501">501</a>     assertEquals(1, pivots.get(0).getPivot().size());
+<a class="jxr_linenumber" name="L502" href="#L502">502</a>     assertPivot(<span class="jxr_string">"neitherdoi_i"</span>, <strong class="jxr_keyword">null</strong>, docNumber, pivots.get(0).getPivot().get(0));
+<a class="jxr_linenumber" name="L503" href="#L503">503</a> 
+<a class="jxr_linenumber" name="L504" href="#L504">504</a>     <em class="jxr_comment">// Negative facet limit</em>
+<a class="jxr_linenumber" name="L505" href="#L505">505</a>     <strong class="jxr_keyword">for</strong> (SolrParams facetParams : 
+<a class="jxr_linenumber" name="L506" href="#L506">506</a>            <em class="jxr_comment">// results should be the same regardless of whether facet.limit is global,</em>
+<a class="jxr_linenumber" name="L507" href="#L507">507</a>            <em class="jxr_comment">// a local param, or specified as a per-field override for both fields</em>
+<a class="jxr_linenumber" name="L508" href="#L508">508</a>            <strong class="jxr_keyword">new</strong> SolrParams[] {
+<a class="jxr_linenumber" name="L509" href="#L509">509</a>              params(FacetParams.FACET_LIMIT, <span class="jxr_string">"-1"</span>,
+<a class="jxr_linenumber" name="L510" href="#L510">510</a>                     <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"place_s,company_t"</span>),
+<a class="jxr_linenumber" name="L511" href="#L511">511</a>              <em class="jxr_comment">// Broken: SOLR-6193</em>
+<a class="jxr_linenumber" name="L512" href="#L512">512</a>              <em class="jxr_comment">// params("facet.pivot","{!facet.limit=-1}place_s,company_t"),    </em>
+<a class="jxr_linenumber" name="L513" href="#L513">513</a>              params(<span class="jxr_string">"f.place_s.facet.limit"</span>, <span class="jxr_string">"-1"</span>,
+<a class="jxr_linenumber" name="L514" href="#L514">514</a>                     <span class="jxr_string">"f.company_t.facet.limit"</span>, <span class="jxr_string">"-1"</span>,
+<a class="jxr_linenumber" name="L515" href="#L515">515</a>                     <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"place_s,company_t"</span>)                       }) {
+<a class="jxr_linenumber" name="L516" href="#L516">516</a> 
+<a class="jxr_linenumber" name="L517" href="#L517">517</a>       SolrParams p = SolrParams.wrapDefaults( params( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L518" href="#L518">518</a>                                                       <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L519" href="#L519">519</a>                                                       <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L520" href="#L520">520</a>                                                       <span class="jxr_string">"facet.sort"</span>, <span class="jxr_string">"count"</span> ),
+<a class="jxr_linenumber" name="L521" href="#L521">521</a>                                               facetParams);
+<a class="jxr_linenumber" name="L522" href="#L522">522</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L523" href="#L523">523</a>         rsp = query( p );
+<a class="jxr_linenumber" name="L524" href="#L524">524</a>         pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L525" href="#L525">525</a>         assertEquals(103, pivots.size());
+<a class="jxr_linenumber" name="L526" href="#L526">526</a>         firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L527" href="#L527">527</a>         assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 257, firstPlace);
+<a class="jxr_linenumber" name="L528" href="#L528">528</a>         assertEquals(54, firstPlace.getPivot().size());
+<a class="jxr_linenumber" name="L529" href="#L529">529</a>         firstCompany = firstPlace.getPivot().get(0);
+<a class="jxr_linenumber" name="L530" href="#L530">530</a>         assertPivot(<span class="jxr_string">"company_t"</span>,<span class="jxr_string">"bbc"</span>, 101, firstCompany);
+<a class="jxr_linenumber" name="L531" href="#L531">531</a>       } <strong class="jxr_keyword">catch</strong> (AssertionFailedError ae) {
+<a class="jxr_linenumber" name="L532" href="#L532">532</a>         <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> AssertionError(ae.getMessage() + <span class="jxr_string">" &lt;== "</span> + p.toString(), ae);
+<a class="jxr_linenumber" name="L533" href="#L533">533</a>       }
+<a class="jxr_linenumber" name="L534" href="#L534">534</a>     }
+<a class="jxr_linenumber" name="L535" href="#L535">535</a> 
+<a class="jxr_linenumber" name="L536" href="#L536">536</a>     <em class="jxr_comment">// Negative per-field facet limit (outer)</em>
+<a class="jxr_linenumber" name="L537" href="#L537">537</a>     <strong class="jxr_keyword">for</strong> (SolrParams facetParams : 
+<a class="jxr_linenumber" name="L538" href="#L538">538</a>            <em class="jxr_comment">// results should be the same regardless of whether per-field facet.limit is</em>
+<a class="jxr_linenumber" name="L539" href="#L539">539</a>            <em class="jxr_comment">// a global or a local param</em>
+<a class="jxr_linenumber" name="L540" href="#L540">540</a>            <strong class="jxr_keyword">new</strong> SolrParams[] {
+<a class="jxr_linenumber" name="L541" href="#L541">541</a>              <em class="jxr_comment">// Broken: SOLR-6193</em>
+<a class="jxr_linenumber" name="L542" href="#L542">542</a>              <em class="jxr_comment">// params( "facet.pivot","{!f.id.facet.limit=-1}place_s,id" ),</em>
+<a class="jxr_linenumber" name="L543" href="#L543">543</a>              params( <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"place_s,id"</span>,
+<a class="jxr_linenumber" name="L544" href="#L544">544</a>                      <span class="jxr_string">"f.id.facet.limit"</span>, <span class="jxr_string">"-1"</span>)                            }) {
+<a class="jxr_linenumber" name="L545" href="#L545">545</a>       
+<a class="jxr_linenumber" name="L546" href="#L546">546</a>       SolrParams p = SolrParams.wrapDefaults( params( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>, 
+<a class="jxr_linenumber" name="L547" href="#L547">547</a>                                                       <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L548" href="#L548">548</a>                                                       <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L549" href="#L549">549</a>                                                       <span class="jxr_string">"facet.sort"</span>, <span class="jxr_string">"count"</span> ),
+<a class="jxr_linenumber" name="L550" href="#L550">550</a>                                               facetParams);
+<a class="jxr_linenumber" name="L551" href="#L551">551</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L552" href="#L552">552</a>         rsp = query( p );
+<a class="jxr_linenumber" name="L553" href="#L553">553</a>         pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,id"</span>);
+<a class="jxr_linenumber" name="L554" href="#L554">554</a>         assertEquals(100, pivots.size()); <em class="jxr_comment">// default</em>
+<a class="jxr_linenumber" name="L555" href="#L555">555</a>         firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L556" href="#L556">556</a>         assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 257, firstPlace);
+<a class="jxr_linenumber" name="L557" href="#L557">557</a>         assertEquals(257, firstPlace.getPivot().size());
+<a class="jxr_linenumber" name="L558" href="#L558">558</a>       } <strong class="jxr_keyword">catch</strong> (AssertionFailedError ae) {
+<a class="jxr_linenumber" name="L559" href="#L559">559</a>         <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> AssertionError(ae.getMessage() + <span class="jxr_string">" &lt;== "</span> + p.toString(), ae);
+<a class="jxr_linenumber" name="L560" href="#L560">560</a>       }
+<a class="jxr_linenumber" name="L561" href="#L561">561</a>     }
+<a class="jxr_linenumber" name="L562" href="#L562">562</a> 
+<a class="jxr_linenumber" name="L563" href="#L563">563</a>     <em class="jxr_comment">// Negative per-field facet limit (inner)</em>
+<a class="jxr_linenumber" name="L564" href="#L564">564</a>     <strong class="jxr_keyword">for</strong> (SolrParams facetParams : 
+<a class="jxr_linenumber" name="L565" href="#L565">565</a>            <em class="jxr_comment">// results should be the same regardless of whether per-field facet.limit is</em>
+<a class="jxr_linenumber" name="L566" href="#L566">566</a>            <em class="jxr_comment">// a global or a local param</em>
+<a class="jxr_linenumber" name="L567" href="#L567">567</a>            <strong class="jxr_keyword">new</strong> SolrParams[] {
+<a class="jxr_linenumber" name="L568" href="#L568">568</a>              <em class="jxr_comment">// Broken: SOLR-6193</em>
+<a class="jxr_linenumber" name="L569" href="#L569">569</a>              <em class="jxr_comment">// params( "facet.pivot","{!f.place_s.facet.limit=-1}place_s,id" ),</em>
+<a class="jxr_linenumber" name="L570" href="#L570">570</a>              params( <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"place_s,id"</span>,
+<a class="jxr_linenumber" name="L571" href="#L571">571</a>                      <span class="jxr_string">"f.place_s.facet.limit"</span>, <span class="jxr_string">"-1"</span>)                       }) {
+<a class="jxr_linenumber" name="L572" href="#L572">572</a>       
+<a class="jxr_linenumber" name="L573" href="#L573">573</a>       SolrParams p = SolrParams.wrapDefaults( params( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>, 
+<a class="jxr_linenumber" name="L574" href="#L574">574</a>                                                       <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L575" href="#L575">575</a>                                                       <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L576" href="#L576">576</a>                                                       <span class="jxr_string">"facet.sort"</span>, <span class="jxr_string">"count"</span> ),
+<a class="jxr_linenumber" name="L577" href="#L577">577</a>                                               facetParams);
+<a class="jxr_linenumber" name="L578" href="#L578">578</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L579" href="#L579">579</a>         rsp = query( p );
+<a class="jxr_linenumber" name="L580" href="#L580">580</a>         pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,id"</span>);
+<a class="jxr_linenumber" name="L581" href="#L581">581</a>         assertEquals(103, pivots.size());
+<a class="jxr_linenumber" name="L582" href="#L582">582</a>         firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L583" href="#L583">583</a>         assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 257, firstPlace);
+<a class="jxr_linenumber" name="L584" href="#L584">584</a>         assertEquals(100, firstPlace.getPivot().size()); <em class="jxr_comment">// default</em>
+<a class="jxr_linenumber" name="L585" href="#L585">585</a>       } <strong class="jxr_keyword">catch</strong> (AssertionFailedError ae) {
+<a class="jxr_linenumber" name="L586" href="#L586">586</a>         <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> AssertionError(ae.getMessage() + <span class="jxr_string">" &lt;== "</span> + p.toString(), ae);
+<a class="jxr_linenumber" name="L587" href="#L587">587</a>       }
+<a class="jxr_linenumber" name="L588" href="#L588">588</a>     }
+<a class="jxr_linenumber" name="L589" href="#L589">589</a>     
+<a class="jxr_linenumber" name="L590" href="#L590">590</a>     <em class="jxr_comment">// Mincount + facet.pivot 2 different ways (swap field order)</em>
+<a class="jxr_linenumber" name="L591" href="#L591">591</a>     rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L592" href="#L592">592</a>                  <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L593" href="#L593">593</a>                  <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L594" href="#L594">594</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L595" href="#L595">595</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"company_t,place_s"</span>,
+<a class="jxr_linenumber" name="L596" href="#L596">596</a>                  FacetParams.FACET_PIVOT_MINCOUNT,<span class="jxr_string">"6"</span>);
+<a class="jxr_linenumber" name="L597" href="#L597">597</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L598" href="#L598">598</a>     assertEquals(52, pivots.size()); 
+<a class="jxr_linenumber" name="L599" href="#L599">599</a>     firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L600" href="#L600">600</a>     assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 257, firstPlace);
+<a class="jxr_linenumber" name="L601" href="#L601">601</a>     assertEquals(4, firstPlace.getPivot().size());
+<a class="jxr_linenumber" name="L602" href="#L602">602</a>     firstCompany = firstPlace.getPivot().get(0);
+<a class="jxr_linenumber" name="L603" href="#L603">603</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 101, firstCompany);
+<a class="jxr_linenumber" name="L604" href="#L604">604</a>     <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L605" href="#L605">605</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"company_t,place_s"</span>);
+<a class="jxr_linenumber" name="L606" href="#L606">606</a>     assertEquals(4, pivots.size());
+<a class="jxr_linenumber" name="L607" href="#L607">607</a>     firstCompany = pivots.get(0);
+<a class="jxr_linenumber" name="L608" href="#L608">608</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 451, firstCompany);
+<a class="jxr_linenumber" name="L609" href="#L609">609</a>     assertEquals(52, firstCompany.getPivot().size());
+<a class="jxr_linenumber" name="L610" href="#L610">610</a>     firstPlace = firstCompany.getPivot().get(0);
+<a class="jxr_linenumber" name="L611" href="#L611">611</a>     assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 101, firstPlace);
+<a class="jxr_linenumber" name="L612" href="#L612">612</a> 
+<a class="jxr_linenumber" name="L613" href="#L613">613</a>     <em class="jxr_comment">// refine on SPECIAL empty string</em>
+<a class="jxr_linenumber" name="L614" href="#L614">614</a>     rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L615" href="#L615">615</a>                  <span class="jxr_string">"fq"</span>, <span class="jxr_string">"-place_s:0placeholder"</span>,
+<a class="jxr_linenumber" name="L616" href="#L616">616</a>                  <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L617" href="#L617">617</a>                  <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L618" href="#L618">618</a>                  <span class="jxr_string">"facet.limit"</span>,<span class="jxr_string">"1"</span>,
+<a class="jxr_linenumber" name="L619" href="#L619">619</a>                  FacetParams.FACET_OVERREQUEST_RATIO, <span class="jxr_string">"0"</span>, <em class="jxr_comment">// force refinement</em>
+<a class="jxr_linenumber" name="L620" href="#L620">620</a>                  FacetParams.FACET_OVERREQUEST_COUNT, <span class="jxr_string">"1"</span>, <em class="jxr_comment">// force refinement</em>
+<a class="jxr_linenumber" name="L621" href="#L621">621</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"special_s,company_t"</span>);
+<a class="jxr_linenumber" name="L622" href="#L622">622</a>     assertEquals(docNumber - 6, rsp.getResults().getNumFound()); <em class="jxr_comment">// all docs but 0place</em>
+<a class="jxr_linenumber" name="L623" href="#L623">623</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"special_s,company_t"</span>);
+<a class="jxr_linenumber" name="L624" href="#L624">624</a>     assertEquals(1, pivots.size()); 
+<a class="jxr_linenumber" name="L625" href="#L625">625</a>     firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L626" href="#L626">626</a>     assertPivot(<span class="jxr_string">"special_s"</span>, SPECIAL, 3, firstPlace);
+<a class="jxr_linenumber" name="L627" href="#L627">627</a>     assertEquals(1, firstPlace.getPivot().size());
+<a class="jxr_linenumber" name="L628" href="#L628">628</a>     firstCompany = firstPlace.getPivot().get(0);
+<a class="jxr_linenumber" name="L629" href="#L629">629</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft"</span>, 2, firstCompany);
+<a class="jxr_linenumber" name="L630" href="#L630">630</a> 
+<a class="jxr_linenumber" name="L631" href="#L631">631</a>     <em class="jxr_comment">// TODO test "company_t,special_s" as well</em>
+<a class="jxr_linenumber" name="L632" href="#L632">632</a> 
+<a class="jxr_linenumber" name="L633" href="#L633">633</a> 
+<a class="jxr_linenumber" name="L634" href="#L634">634</a>     <em class="jxr_comment">// refine on SPECIAL empty string &amp; facet.missing</em>
+<a class="jxr_linenumber" name="L635" href="#L635">635</a>     <em class="jxr_comment">// Also proves refinement on non-top elements occurs and allows them to get into the top</em>
+<a class="jxr_linenumber" name="L636" href="#L636">636</a>     rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L637" href="#L637">637</a>                  <span class="jxr_string">"fq"</span>, <span class="jxr_string">"-place_s:0placeholder"</span>,
+<a class="jxr_linenumber" name="L638" href="#L638">638</a>                  <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L639" href="#L639">639</a>                  <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L640" href="#L640">640</a>                  <span class="jxr_string">"facet.limit"</span>,<span class="jxr_string">"1"</span>,
+<a class="jxr_linenumber" name="L641" href="#L641">641</a>                  <span class="jxr_string">"facet.missing"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L642" href="#L642">642</a>                  FacetParams.FACET_OVERREQUEST_RATIO, <span class="jxr_string">"0"</span>, <em class="jxr_comment">// force refinement</em>
+<a class="jxr_linenumber" name="L643" href="#L643">643</a>                  FacetParams.FACET_OVERREQUEST_COUNT, <span class="jxr_string">"2"</span>, <em class="jxr_comment">// force refinement</em>
+<a class="jxr_linenumber" name="L644" href="#L644">644</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"special_s,company_t"</span>);
+<a class="jxr_linenumber" name="L645" href="#L645">645</a>     assertEquals(docNumber - 6, rsp.getResults().getNumFound()); <em class="jxr_comment">// all docs but 0place</em>
+<a class="jxr_linenumber" name="L646" href="#L646">646</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"special_s,company_t"</span>);
+<a class="jxr_linenumber" name="L647" href="#L647">647</a>     assertEquals(2, pivots.size()); 
+<a class="jxr_linenumber" name="L648" href="#L648">648</a>     firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L649" href="#L649">649</a>     assertPivot(<span class="jxr_string">"special_s"</span>, SPECIAL, 3, firstPlace);
+<a class="jxr_linenumber" name="L650" href="#L650">650</a>     assertEquals(1, firstPlace.getPivot().size());
+<a class="jxr_linenumber" name="L651" href="#L651">651</a>     firstCompany = firstPlace.getPivot().get(0);
+<a class="jxr_linenumber" name="L652" href="#L652">652</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft"</span>, 2, firstCompany);
+<a class="jxr_linenumber" name="L653" href="#L653">653</a>     <em class="jxr_comment">// last is "missing" val</em>
+<a class="jxr_linenumber" name="L654" href="#L654">654</a>     assertPivot(<span class="jxr_string">"special_s"</span>, <strong class="jxr_keyword">null</strong>, docNumber -6 -3 -2, pivots.get(1)); <em class="jxr_comment">// -0place -SPECIAL -xxx</em>
+<a class="jxr_linenumber" name="L655" href="#L655">655</a> 
+<a class="jxr_linenumber" name="L656" href="#L656">656</a>     <em class="jxr_comment">// forced refinement on facet.missing</em>
+<a class="jxr_linenumber" name="L657" href="#L657">657</a>     rsp = query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L658" href="#L658">658</a>                  <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L659" href="#L659">659</a>                  <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L660" href="#L660">660</a>                  <span class="jxr_string">"f.bogus_x_s.facet.missing"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L661" href="#L661">661</a>                  <span class="jxr_string">"f.bogus_y_s.facet.missing"</span>,<span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L662" href="#L662">662</a>                  <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"bogus_x_s,place_s,bogus_y_s,company_t"</span>,
+<a class="jxr_linenumber" name="L663" href="#L663">663</a>                  FacetParams.FACET_LIMIT, <span class="jxr_string">"12"</span>); 
+<a class="jxr_linenumber" name="L664" href="#L664">664</a>     pivots = rsp.getFacetPivot().get(<span class="jxr_string">"bogus_x_s,place_s,bogus_y_s,company_t"</span>);
+<a class="jxr_linenumber" name="L665" href="#L665">665</a>     assertEquals(1, pivots.size()); <em class="jxr_comment">// just the missing value for bogus_x_s</em>
+<a class="jxr_linenumber" name="L666" href="#L666">666</a>     assertPivot(<span class="jxr_string">"bogus_x_s"</span>, <strong class="jxr_keyword">null</strong>, docNumber, pivots.get(0));
+<a class="jxr_linenumber" name="L667" href="#L667">667</a>     pivots = pivots.get(0).getPivot();
+<a class="jxr_linenumber" name="L668" href="#L668">668</a>     assertEquals(12, pivots.size()); <em class="jxr_comment">// places</em>
+<a class="jxr_linenumber" name="L669" href="#L669">669</a>     firstPlace = pivots.get(0);
+<a class="jxr_linenumber" name="L670" href="#L670">670</a>     assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 257, firstPlace);
+<a class="jxr_linenumber" name="L671" href="#L671">671</a>     assertEquals(1, firstPlace.getPivot().size()); <em class="jxr_comment">// just the missing value for bogus_y_s</em>
+<a class="jxr_linenumber" name="L672" href="#L672">672</a>     assertPivot(<span class="jxr_string">"bogus_y_s"</span>, <strong class="jxr_keyword">null</strong>, 257, firstPlace.getPivot().get(0));
+<a class="jxr_linenumber" name="L673" href="#L673">673</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 101, firstPlace.getPivot().get(0).getPivot().get(0));
+<a class="jxr_linenumber" name="L674" href="#L674">674</a>     <em class="jxr_comment">// Microsoft will come back wrong if refinement was not done correctly</em>
+<a class="jxr_linenumber" name="L675" href="#L675">675</a>     assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft"</span>, 56, firstPlace.getPivot().get(0).getPivot().get(1));
+<a class="jxr_linenumber" name="L676" href="#L676">676</a> 
+<a class="jxr_linenumber" name="L677" href="#L677">677</a> 
+<a class="jxr_linenumber" name="L678" href="#L678">678</a> 
+<a class="jxr_linenumber" name="L679" href="#L679">679</a> 
+<a class="jxr_linenumber" name="L680" href="#L680">680</a> 
+<a class="jxr_linenumber" name="L681" href="#L681">681</a>     <em class="jxr_comment">// Overrequesting a lot</em>
+<a class="jxr_linenumber" name="L682" href="#L682">682</a>     <strong class="jxr_keyword">this</strong>.query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L683" href="#L683">683</a>                 <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L684" href="#L684">684</a>                 <span class="jxr_string">"facet"</span>, <span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L685" href="#L685">685</a>                 <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L686" href="#L686">686</a>                 FacetParams.FACET_OVERREQUEST_RATIO, <span class="jxr_string">"10"</span>,
+<a class="jxr_linenumber" name="L687" href="#L687">687</a>                 FacetParams.FACET_OVERREQUEST_COUNT, <span class="jxr_string">"100"</span>);    
+<a class="jxr_linenumber" name="L688" href="#L688">688</a>     
+<a class="jxr_linenumber" name="L689" href="#L689">689</a>     <em class="jxr_comment">// Overrequesting off</em>
+<a class="jxr_linenumber" name="L690" href="#L690">690</a>     <strong class="jxr_keyword">this</strong>.query( <span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L691" href="#L691">691</a>                 <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L692" href="#L692">692</a>                 <span class="jxr_string">"facet"</span>, <span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L693" href="#L693">693</a>                 <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L694" href="#L694">694</a>                 FacetParams.FACET_OVERREQUEST_RATIO, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L695" href="#L695">695</a>                 FacetParams.FACET_OVERREQUEST_COUNT, <span class="jxr_string">"0"</span>);
+<a class="jxr_linenumber" name="L696" href="#L696">696</a> 
+<a class="jxr_linenumber" name="L697" href="#L697">697</a>     doTestDeepPivotStats();
+<a class="jxr_linenumber" name="L698" href="#L698">698</a>     doTestPivotRanges();
+<a class="jxr_linenumber" name="L699" href="#L699">699</a>   }
+<a class="jxr_linenumber" name="L700" href="#L700">700</a> 
+<a class="jxr_linenumber" name="L701" href="#L701">701</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> doTestDeepPivotStats() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L702" href="#L702">702</a> 
+<a class="jxr_linenumber" name="L703" href="#L703">703</a>     QueryResponse rsp = query(<span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L704" href="#L704">704</a>                               <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L705" href="#L705">705</a>                               <span class="jxr_string">"facet"</span>, <span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L706" href="#L706">706</a>                               <span class="jxr_string">"facet.pivot"</span>,<span class="jxr_string">"{!stats=s1}place_s,company_t"</span>,
+<a class="jxr_linenumber" name="L707" href="#L707">707</a>                               <span class="jxr_string">"stats"</span>, <span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L708" href="#L708">708</a>                               <span class="jxr_string">"stats.field"</span>, <span class="jxr_string">"{!key=avg_price tag=s1}pay_i"</span>);
+<a class="jxr_linenumber" name="L709" href="#L709">709</a> 
+<a class="jxr_linenumber" name="L710" href="#L710">710</a>     List&lt;PivotField&gt; pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L711" href="#L711">711</a> 
+<a class="jxr_linenumber" name="L712" href="#L712">712</a>     PivotField cardiffPivotField = pivots.get(0);
+<a class="jxr_linenumber" name="L713" href="#L713">713</a>     assertEquals(<span class="jxr_string">"cardiff"</span>, cardiffPivotField.getValue());
+<a class="jxr_linenumber" name="L714" href="#L714">714</a>     assertEquals(257, cardiffPivotField.getCount());
+<a class="jxr_linenumber" name="L715" href="#L715">715</a> 
+<a class="jxr_linenumber" name="L716" href="#L716">716</a>     FieldStatsInfo cardiffStatsInfo = cardiffPivotField.getFieldStatsInfo().get(<span class="jxr_string">"avg_price"</span>);
+<a class="jxr_linenumber" name="L717" href="#L717">717</a>     assertEquals(<span class="jxr_string">"avg_price"</span>, cardiffStatsInfo.getName());
+<a class="jxr_linenumber" name="L718" href="#L718">718</a>     assertEquals(0.0, cardiffStatsInfo.getMin());
+<a class="jxr_linenumber" name="L719" href="#L719">719</a>     assertEquals(8742.0, cardiffStatsInfo.getMax());
+<a class="jxr_linenumber" name="L720" href="#L720">720</a>     assertEquals(257, (<strong class="jxr_keyword">long</strong>) cardiffStatsInfo.getCount());
+<a class="jxr_linenumber" name="L721" href="#L721">721</a>     assertEquals(0, (<strong class="jxr_keyword">long</strong>) cardiffStatsInfo.getMissing());
+<a class="jxr_linenumber" name="L722" href="#L722">722</a>     assertEquals(347554.0, cardiffStatsInfo.getSum());
+<a class="jxr_linenumber" name="L723" href="#L723">723</a>     assertEquals(8.20968772E8, cardiffStatsInfo.getSumOfSquares(), 0.1E-7);
+<a class="jxr_linenumber" name="L724" href="#L724">724</a>     assertEquals(1352.35019455253, (<strong class="jxr_keyword">double</strong>) cardiffStatsInfo.getMean(), 0.1E-7);
+<a class="jxr_linenumber" name="L725" href="#L725">725</a>     assertEquals(1170.86048165857, cardiffStatsInfo.getStddev(), 0.1E-7);
+<a class="jxr_linenumber" name="L726" href="#L726">726</a> 
+<a class="jxr_linenumber" name="L727" href="#L727">727</a>     PivotField bbcCardifftPivotField = cardiffPivotField.getPivot().get(0);
+<a class="jxr_linenumber" name="L728" href="#L728">728</a>     assertEquals(<span class="jxr_string">"bbc"</span>, bbcCardifftPivotField.getValue());
+<a class="jxr_linenumber" name="L729" href="#L729">729</a>     assertEquals(101, bbcCardifftPivotField.getCount());
+<a class="jxr_linenumber" name="L730" href="#L730">730</a> 
+<a class="jxr_linenumber" name="L731" href="#L731">731</a>     FieldStatsInfo bbcCardifftPivotFieldStatsInfo = bbcCardifftPivotField.getFieldStatsInfo().get(<span class="jxr_string">"avg_price"</span>);
+<a class="jxr_linenumber" name="L732" href="#L732">732</a>     assertEquals(2400.0, bbcCardifftPivotFieldStatsInfo.getMin());
+<a class="jxr_linenumber" name="L733" href="#L733">733</a>     assertEquals(8742.0, bbcCardifftPivotFieldStatsInfo.getMax());
+<a class="jxr_linenumber" name="L734" href="#L734">734</a>     assertEquals(101, (<strong class="jxr_keyword">long</strong>) bbcCardifftPivotFieldStatsInfo.getCount());
+<a class="jxr_linenumber" name="L735" href="#L735">735</a>     assertEquals(0, (<strong class="jxr_keyword">long</strong>) bbcCardifftPivotFieldStatsInfo.getMissing());
+<a class="jxr_linenumber" name="L736" href="#L736">736</a>     assertEquals(248742.0, bbcCardifftPivotFieldStatsInfo.getSum());
+<a class="jxr_linenumber" name="L737" href="#L737">737</a>     assertEquals(6.52422564E8, bbcCardifftPivotFieldStatsInfo.getSumOfSquares(), 0.1E-7);
+<a class="jxr_linenumber" name="L738" href="#L738">738</a>     assertEquals(2462.792079208, (<strong class="jxr_keyword">double</strong>) bbcCardifftPivotFieldStatsInfo.getMean(), 0.1E-7);
+<a class="jxr_linenumber" name="L739" href="#L739">739</a>     assertEquals(631.0525860312, bbcCardifftPivotFieldStatsInfo.getStddev(), 0.1E-7);
+<a class="jxr_linenumber" name="L740" href="#L740">740</a> 
+<a class="jxr_linenumber" name="L741" href="#L741">741</a> 
+<a class="jxr_linenumber" name="L742" href="#L742">742</a>     PivotField placeholder0PivotField = pivots.get(2);
+<a class="jxr_linenumber" name="L743" href="#L743">743</a>     assertEquals(<span class="jxr_string">"0placeholder"</span>, placeholder0PivotField.getValue());
+<a class="jxr_linenumber" name="L744" href="#L744">744</a>     assertEquals(6, placeholder0PivotField.getCount());
+<a class="jxr_linenumber" name="L745" href="#L745">745</a> 
+<a class="jxr_linenumber" name="L746" href="#L746">746</a>     FieldStatsInfo placeholder0PivotFieldStatsInfo = placeholder0PivotField.getFieldStatsInfo().get(<span class="jxr_string">"avg_price"</span>);
+<a class="jxr_linenumber" name="L747" href="#L747">747</a>     assertEquals(<span class="jxr_string">"avg_price"</span>, placeholder0PivotFieldStatsInfo.getName());
+<a class="jxr_linenumber" name="L748" href="#L748">748</a>     assertEquals(2000.0, placeholder0PivotFieldStatsInfo.getMin());
+<a class="jxr_linenumber" name="L749" href="#L749">749</a>     assertEquals(6400.0, placeholder0PivotFieldStatsInfo.getMax());
+<a class="jxr_linenumber" name="L750" href="#L750">750</a>     assertEquals(6, (<strong class="jxr_keyword">long</strong>) placeholder0PivotFieldStatsInfo.getCount());
+<a class="jxr_linenumber" name="L751" href="#L751">751</a>     assertEquals(0, (<strong class="jxr_keyword">long</strong>) placeholder0PivotFieldStatsInfo.getMissing());
+<a class="jxr_linenumber" name="L752" href="#L752">752</a>     assertEquals(22700.0, placeholder0PivotFieldStatsInfo.getSum());
+<a class="jxr_linenumber" name="L753" href="#L753">753</a>     assertEquals(1.0105E8, placeholder0PivotFieldStatsInfo.getSumOfSquares(), 0.1E-7);
+<a class="jxr_linenumber" name="L754" href="#L754">754</a>     assertEquals(3783.333333333, (<strong class="jxr_keyword">double</strong>) placeholder0PivotFieldStatsInfo.getMean(), 0.1E-7);
+<a class="jxr_linenumber" name="L755" href="#L755">755</a>     assertEquals(1741.742422595, placeholder0PivotFieldStatsInfo.getStddev(), 0.1E-7);
+<a class="jxr_linenumber" name="L756" href="#L756">756</a> 
+<a class="jxr_linenumber" name="L757" href="#L757">757</a>     PivotField microsoftPlaceholder0PivotField = placeholder0PivotField.getPivot().get(1);
+<a class="jxr_linenumber" name="L758" href="#L758">758</a>     assertEquals(<span class="jxr_string">"microsoft"</span>, microsoftPlaceholder0PivotField.getValue());
+<a class="jxr_linenumber" name="L759" href="#L759">759</a>     assertEquals(6, microsoftPlaceholder0PivotField.getCount());
+<a class="jxr_linenumber" name="L760" href="#L760">760</a> 
+<a class="jxr_linenumber" name="L761" href="#L761">761</a>     FieldStatsInfo microsoftPlaceholder0PivotFieldStatsInfo = microsoftPlaceholder0PivotField.getFieldStatsInfo().get(<span class="jxr_string">"avg_price"</span>);
+<a class="jxr_linenumber" name="L762" href="#L762">762</a>     assertEquals(<span class="jxr_string">"avg_price"</span>, microsoftPlaceholder0PivotFieldStatsInfo.getName());
+<a class="jxr_linenumber" name="L763" href="#L763">763</a>     assertEquals(2000.0, microsoftPlaceholder0PivotFieldStatsInfo.getMin());
+<a class="jxr_linenumber" name="L764" href="#L764">764</a>     assertEquals(6400.0, microsoftPlaceholder0PivotFieldStatsInfo.getMax());
+<a class="jxr_linenumber" name="L765" href="#L765">765</a>     assertEquals(6, (<strong class="jxr_keyword">long</strong>) microsoftPlaceholder0PivotFieldStatsInfo.getCount());
+<a class="jxr_linenumber" name="L766" href="#L766">766</a>     assertEquals(0, (<strong class="jxr_keyword">long</strong>) microsoftPlaceholder0PivotFieldStatsInfo.getMissing());
+<a class="jxr_linenumber" name="L767" href="#L767">767</a>     assertEquals(22700.0, microsoftPlaceholder0PivotFieldStatsInfo.getSum());
+<a class="jxr_linenumber" name="L768" href="#L768">768</a>     assertEquals(1.0105E8, microsoftPlaceholder0PivotFieldStatsInfo.getSumOfSquares(), 0.1E-7);
+<a class="jxr_linenumber" name="L769" href="#L769">769</a>     assertEquals(3783.333333333, (<strong class="jxr_keyword">double</strong>) microsoftPlaceholder0PivotFieldStatsInfo.getMean(), 0.1E-7);
+<a class="jxr_linenumber" name="L770" href="#L770">770</a>     assertEquals(1741.742422595, microsoftPlaceholder0PivotFieldStatsInfo.getStddev(), 0.1E-7);
+<a class="jxr_linenumber" name="L771" href="#L771">771</a>   }
+<a class="jxr_linenumber" name="L772" href="#L772">772</a> 
+<a class="jxr_linenumber" name="L773" href="#L773">773</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L774" href="#L774">774</a> <em class="jxr_javadoccomment">   * spot checks some pivot values and the ranges hanging on them</em>
+<a class="jxr_linenumber" name="L775" href="#L775">775</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L776" href="#L776">776</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> doTestPivotRanges() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L777" href="#L777">777</a> 
+<a class="jxr_linenumber" name="L778" href="#L778">778</a>     <em class="jxr_comment">// note: 'p0' is only a top level range, not included in per-pivot ranges</em>
+<a class="jxr_linenumber" name="L779" href="#L779">779</a>     <strong class="jxr_keyword">for</strong> (SolrParams p : <strong class="jxr_keyword">new</strong> SolrParams[]{
+<a class="jxr_linenumber" name="L780" href="#L780">780</a>         <em class="jxr_comment">// results should be identical for all of these</em>
+<a class="jxr_linenumber" name="L781" href="#L781">781</a>         params(<span class="jxr_string">"facet.range"</span>, <span class="jxr_string">"{!key=p0 facet.range.gap=500}pay_i"</span>,
+<a class="jxr_linenumber" name="L782" href="#L782">782</a>             <span class="jxr_string">"facet.range"</span>, <span class="jxr_string">"{!key=p1 tag=t1 facet.range.gap=100}pay_i"</span>,
+<a class="jxr_linenumber" name="L783" href="#L783">783</a>             <span class="jxr_string">"facet.range"</span>, <span class="jxr_string">"{!key=p2 tag=t1 facet.range.gap=200}pay_i"</span>,
+<a class="jxr_linenumber" name="L784" href="#L784">784</a>             <span class="jxr_string">"facet.range.start"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L785" href="#L785">785</a>             <span class="jxr_string">"facet.range.end"</span>, <span class="jxr_string">"1000"</span>),
+<a class="jxr_linenumber" name="L786" href="#L786">786</a>         params(<span class="jxr_string">"facet.range"</span>, <span class="jxr_string">"{!key=p0 facet.range.gap=500}pay_i"</span>,
+<a class="jxr_linenumber" name="L787" href="#L787">787</a>             <span class="jxr_string">"facet.range"</span>, <span class="jxr_string">"{!key=p1 tag=t1 facet.range.gap=100}pay_i"</span>,
+<a class="jxr_linenumber" name="L788" href="#L788">788</a>             <span class="jxr_string">"facet.range"</span>, <span class="jxr_string">"{!key=p2 tag=t1 facet.range.gap=200}pay_i"</span>,
+<a class="jxr_linenumber" name="L789" href="#L789">789</a>             <span class="jxr_string">"f.pay_i.facet.range.start"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L790" href="#L790">790</a>             <span class="jxr_string">"facet.range.end"</span>, <span class="jxr_string">"1000"</span>),
+<a class="jxr_linenumber" name="L791" href="#L791">791</a>         params(<span class="jxr_string">"facet.range"</span>, <span class="jxr_string">"{!key=p0 facet.range.gap=500 facet.range.start=0}pay_i"</span>,
+<a class="jxr_linenumber" name="L792" href="#L792">792</a>             <span class="jxr_string">"facet.range"</span>, <span class="jxr_string">"{!key=p1 tag=t1 facet.range.gap=100 facet.range.start=0}pay_i"</span>,
+<a class="jxr_linenumber" name="L793" href="#L793">793</a>             <span class="jxr_string">"facet.range"</span>, <span class="jxr_string">"{!key=p2 tag=t1 facet.range.gap=200 facet.range.start=0}pay_i"</span>,
+<a class="jxr_linenumber" name="L794" href="#L794">794</a>             <span class="jxr_string">"facet.range.end"</span>, <span class="jxr_string">"1000"</span>)}) {
+<a class="jxr_linenumber" name="L795" href="#L795">795</a> 
+<a class="jxr_linenumber" name="L796" href="#L796">796</a>       QueryResponse rsp
+<a class="jxr_linenumber" name="L797" href="#L797">797</a>           = query(SolrParams.wrapDefaults(p, params(<span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>,
+<a class="jxr_linenumber" name="L798" href="#L798">798</a>           <span class="jxr_string">"rows"</span>, <span class="jxr_string">"0"</span>,
+<a class="jxr_linenumber" name="L799" href="#L799">799</a>           <span class="jxr_string">"facet"</span>, <span class="jxr_string">"true"</span>,
+<a class="jxr_linenumber" name="L800" href="#L800">800</a>           <span class="jxr_string">"facet.pivot"</span>, <span class="jxr_string">"{!range=t1}place_s,company_t"</span>)));
+<a class="jxr_linenumber" name="L801" href="#L801">801</a> 
+<a class="jxr_linenumber" name="L802" href="#L802">802</a>       List&lt;PivotField&gt; pivots = rsp.getFacetPivot().get(<span class="jxr_string">"place_s,company_t"</span>);
+<a class="jxr_linenumber" name="L803" href="#L803">803</a>       PivotField pf = <strong class="jxr_keyword">null</strong>; <em class="jxr_comment">// changes as we spot check</em>
+<a class="jxr_linenumber" name="L804" href="#L804">804</a>       List&lt;RangeFacet.Count&gt; rfc = <strong class="jxr_keyword">null</strong>; <em class="jxr_comment">// changes as we spot check</em>
+<a class="jxr_linenumber" name="L805" href="#L805">805</a> 
+<a class="jxr_linenumber" name="L806" href="#L806">806</a>       <em class="jxr_comment">// 1st sanity check top level ranges</em>
+<a class="jxr_linenumber" name="L807" href="#L807">807</a>       assertEquals(3, rsp.getFacetRanges().size());
+<a class="jxr_linenumber" name="L808" href="#L808">808</a>       assertRange(<span class="jxr_string">"p0"</span>, 0, 500, 1000, 2, rsp.getFacetRanges().get(0));
+<a class="jxr_linenumber" name="L809" href="#L809">809</a>       assertRange(<span class="jxr_string">"p1"</span>, 0, 100, 1000, 10, rsp.getFacetRanges().get(1));
+<a class="jxr_linenumber" name="L810" href="#L810">810</a>       assertRange(<span class="jxr_string">"p2"</span>, 0, 200, 1000, 5, rsp.getFacetRanges().get(2));
+<a class="jxr_linenumber" name="L811" href="#L811">811</a> 
+<a class="jxr_linenumber" name="L812" href="#L812">812</a>       <em class="jxr_comment">// check pivots...</em>
+<a class="jxr_linenumber" name="L813" href="#L813">813</a> 
+<a class="jxr_linenumber" name="L814" href="#L814">814</a>       <em class="jxr_comment">// first top level pivot value</em>
+<a class="jxr_linenumber" name="L815" href="#L815">815</a>       pf = pivots.get(0);
+<a class="jxr_linenumber" name="L816" href="#L816">816</a>       assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, 257, pf);
+<a class="jxr_linenumber" name="L817" href="#L817">817</a>       assertRange(<span class="jxr_string">"p1"</span>, 0, 100, 1000, 10, pf.getFacetRanges().get(0));
+<a class="jxr_linenumber" name="L818" href="#L818">818</a>       assertRange(<span class="jxr_string">"p2"</span>, 0, 200, 1000, 5, pf.getFacetRanges().get(1));
+<a class="jxr_linenumber" name="L819" href="#L819">819</a> 
+<a class="jxr_linenumber" name="L820" href="#L820">820</a>       rfc = pf.getFacetRanges().get(0).getCounts();
+<a class="jxr_linenumber" name="L821" href="#L821">821</a>       assertEquals(<span class="jxr_string">"200"</span>, rfc.get(2).getValue());
+<a class="jxr_linenumber" name="L822" href="#L822">822</a>       assertEquals(14, rfc.get(2).getCount());
+<a class="jxr_linenumber" name="L823" href="#L823">823</a>       assertEquals(<span class="jxr_string">"300"</span>, rfc.get(3).getValue());
+<a class="jxr_linenumber" name="L824" href="#L824">824</a>       assertEquals(15, rfc.get(3).getCount());
+<a class="jxr_linenumber" name="L825" href="#L825">825</a> 
+<a class="jxr_linenumber" name="L826" href="#L826">826</a>       rfc = pf.getFacetRanges().get(1).getCounts();
+<a class="jxr_linenumber" name="L827" href="#L827">827</a>       assertEquals(<span class="jxr_string">"200"</span>, rfc.get(1).getValue());
+<a class="jxr_linenumber" name="L828" href="#L828">828</a>       assertEquals(29, rfc.get(1).getCount());
+<a class="jxr_linenumber" name="L829" href="#L829">829</a> 
+<a class="jxr_linenumber" name="L830" href="#L830">830</a>       <em class="jxr_comment">// drill down one level of the pivot</em>
+<a class="jxr_linenumber" name="L831" href="#L831">831</a>       pf = pf.getPivot().get(0);
+<a class="jxr_linenumber" name="L832" href="#L832">832</a>       assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc"</span>, 101, pf);
+<a class="jxr_linenumber" name="L833" href="#L833">833</a>       assertRange(<span class="jxr_string">"p1"</span>, 0, 100, 1000, 10, pf.getFacetRanges().get(0));
+<a class="jxr_linenumber" name="L834" href="#L834">834</a>       assertRange(<span class="jxr_string">"p2"</span>, 0, 200, 1000, 5, pf.getFacetRanges().get(1));
+<a class="jxr_linenumber" name="L835" href="#L835">835</a> 
+<a class="jxr_linenumber" name="L836" href="#L836">836</a>       rfc = pf.getFacetRanges().get(0).getCounts();
+<a class="jxr_linenumber" name="L837" href="#L837">837</a>       <strong class="jxr_keyword">for</strong> (RangeFacet.Count c : rfc) {
+<a class="jxr_linenumber" name="L838" href="#L838">838</a>         assertEquals(0, c.getCount()); <em class="jxr_comment">// no docs in our ranges for this pivot drill down</em>
+<a class="jxr_linenumber" name="L839" href="#L839">839</a>       }
+<a class="jxr_linenumber" name="L840" href="#L840">840</a> 
+<a class="jxr_linenumber" name="L841" href="#L841">841</a>       <em class="jxr_comment">// pop back up and spot check a different top level pivot value</em>
+<a class="jxr_linenumber" name="L842" href="#L842">842</a>       pf = pivots.get(53);
+<a class="jxr_linenumber" name="L843" href="#L843">843</a>       assertPivot(<span class="jxr_string">"place_s"</span>, <span class="jxr_string">"placeholder0"</span>, 1, pf);
+<a class="jxr_linenumber" name="L844" href="#L844">844</a>       assertRange(<span class="jxr_string">"p1"</span>, 0, 100, 1000, 10, pf.getFacetRanges().get(0));
+<a class="jxr_linenumber" name="L845" href="#L845">845</a>       assertRange(<span class="jxr_string">"p2"</span>, 0, 200, 1000, 5, pf.getFacetRanges().get(1));
+<a class="jxr_linenumber" name="L846" href="#L846">846</a> 
+<a class="jxr_linenumber" name="L847" href="#L847">847</a>       rfc = pf.getFacetRanges().get(0).getCounts();
+<a class="jxr_linenumber" name="L848" href="#L848">848</a>       assertEquals(<span class="jxr_string">"0"</span>, rfc.get(0).getValue());
+<a class="jxr_linenumber" name="L849" href="#L849">849</a>       assertEquals(1, rfc.get(0).getCount());
+<a class="jxr_linenumber" name="L850" href="#L850">850</a>       assertEquals(<span class="jxr_string">"100"</span>, rfc.get(1).getValue());
+<a class="jxr_linenumber" name="L851" href="#L851">851</a>       assertEquals(0, rfc.get(1).getCount());
+<a class="jxr_linenumber" name="L852" href="#L852">852</a> 
+<a class="jxr_linenumber" name="L853" href="#L853">853</a>       <em class="jxr_comment">// drill down one level of the pivot</em>
+<a class="jxr_linenumber" name="L854" href="#L854">854</a>       pf = pf.getPivot().get(0);
+<a class="jxr_linenumber" name="L855" href="#L855">855</a>       assertPivot(<span class="jxr_string">"company_t"</span>, <span class="jxr_string">"compholder0"</span>, 1, pf);
+<a class="jxr_linenumber" name="L856" href="#L856">856</a>       assertRange(<span class="jxr_string">"p1"</span>, 0, 100, 1000, 10, pf.getFacetRanges().get(0));
+<a class="jxr_linenumber" name="L857" href="#L857">857</a>       assertRange(<span class="jxr_string">"p2"</span>, 0, 200, 1000, 5, pf.getFacetRanges().get(1));
+<a class="jxr_linenumber" name="L858" href="#L858">858</a> 
+<a class="jxr_linenumber" name="L859" href="#L859">859</a>       rfc = pf.getFacetRanges().get(0).getCounts();
+<a class="jxr_linenumber" name="L860" href="#L860">860</a>       assertEquals(<span class="jxr_string">"0"</span>, rfc.get(0).getValue());
+<a class="jxr_linenumber" name="L861" href="#L861">861</a>       assertEquals(1, rfc.get(0).getCount());
+<a class="jxr_linenumber" name="L862" href="#L862">862</a>       assertEquals(<span class="jxr_string">"100"</span>, rfc.get(1).getValue());
+<a class="jxr_linenumber" name="L863" href="#L863">863</a>       assertEquals(0, rfc.get(1).getCount());
+<a class="jxr_linenumber" name="L864" href="#L864">864</a> 
+<a class="jxr_linenumber" name="L865" href="#L865">865</a>     }
+<a class="jxr_linenumber" name="L866" href="#L866">866</a>   }
+<a class="jxr_linenumber" name="L867" href="#L867">867</a> 
+<a class="jxr_linenumber" name="L868" href="#L868">868</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L869" href="#L869">869</a> <em class="jxr_javadoccomment">   * asserts that the actual PivotField matches the expected criteria</em>
+<a class="jxr_linenumber" name="L870" href="#L870">870</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L871" href="#L871">871</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> assertPivot(String field, Object value, <strong class="jxr_keyword">int</strong> count, <em class="jxr_comment">// int numKids,</em>
+<a class="jxr_linenumber" name="L872" href="#L872">872</a>                            PivotField actual) {
+<a class="jxr_linenumber" name="L873" href="#L873">873</a>     assertEquals(<span class="jxr_string">"FIELD: "</span> + actual.toString(), field, actual.getField());
+<a class="jxr_linenumber" name="L874" href="#L874">874</a>     assertEquals(<span class="jxr_string">"VALUE: "</span> + actual.toString(), value, actual.getValue());
+<a class="jxr_linenumber" name="L875" href="#L875">875</a>     assertEquals(<span class="jxr_string">"COUNT: "</span> + actual.toString(), count, actual.getCount());
+<a class="jxr_linenumber" name="L876" href="#L876">876</a>     <em class="jxr_comment">// TODO: add arg &amp;&amp; assert on number of kids</em>
+<a class="jxr_linenumber" name="L877" href="#L877">877</a>     <em class="jxr_comment">//assertEquals("#KIDS: " + actual.toString(), numKids, actual.getPivot().size());</em>
+<a class="jxr_linenumber" name="L878" href="#L878">878</a>   }
+<a class="jxr_linenumber" name="L879" href="#L879">879</a> 
+<a class="jxr_linenumber" name="L880" href="#L880">880</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L881" href="#L881">881</a> <em class="jxr_javadoccomment">   * asserts that the actual RangeFacet matches the expected criteria</em>
+<a class="jxr_linenumber" name="L882" href="#L882">882</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L883" href="#L883">883</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> assertRange(String name, Object start, Object gap, Object end, <strong class="jxr_keyword">int</strong> numCount,
+<a class="jxr_linenumber" name="L884" href="#L884">884</a>                            RangeFacet actual) {
+<a class="jxr_linenumber" name="L885" href="#L885">885</a>     assertEquals(<span class="jxr_string">"NAME: "</span> + actual.toString(), name, actual.getName());
+<a class="jxr_linenumber" name="L886" href="#L886">886</a>     assertEquals(<span class="jxr_string">"START: "</span> + actual.toString(), start, actual.getStart());
+<a class="jxr_linenumber" name="L887" href="#L887">887</a>     assertEquals(<span class="jxr_string">"GAP: "</span> + actual.toString(), gap, actual.getGap());
+<a class="jxr_linenumber" name="L888" href="#L888">888</a>     assertEquals(<span class="jxr_string">"END: "</span> + actual.toString(), end, actual.getEnd());
+<a class="jxr_linenumber" name="L889" href="#L889">889</a>     assertEquals(<span class="jxr_string">"#COUNT: "</span> + actual.toString(), numCount, actual.getCounts().size());
+<a class="jxr_linenumber" name="L890" href="#L890">890</a>   }
+<a class="jxr_linenumber" name="L891" href="#L891">891</a> 
+<a class="jxr_linenumber" name="L892" href="#L892">892</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> setupDistributedPivotFacetDocuments() <strong class="jxr_keyword">throws</strong> Exception{
+<a class="jxr_linenumber" name="L893" href="#L893">893</a>     
+<a class="jxr_linenumber" name="L894" href="#L894">894</a>     <em class="jxr_comment">//Clear docs</em>
+<a class="jxr_linenumber" name="L895" href="#L895">895</a>     del(<span class="jxr_string">"*:*"</span>);
+<a class="jxr_linenumber" name="L896" href="#L896">896</a>     commit();
+<a class="jxr_linenumber" name="L897" href="#L897">897</a> 
+<a class="jxr_linenumber" name="L898" href="#L898">898</a>     <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> maxDocs = 50;
+<a class="jxr_linenumber" name="L899" href="#L899">899</a>     <strong class="jxr_keyword">final</strong> SolrClient zeroShard = clients.get(0);
+<a class="jxr_linenumber" name="L900" href="#L900">900</a>     <strong class="jxr_keyword">final</strong> SolrClient oneShard = clients.get(1);
+<a class="jxr_linenumber" name="L901" href="#L901">901</a>     <strong class="jxr_keyword">final</strong> SolrClient twoShard = clients.get(2);
+<a class="jxr_linenumber" name="L902" href="#L902">902</a>     <strong class="jxr_keyword">final</strong> SolrClient threeShard = clients.get(3); <em class="jxr_comment">// edge case: never gets any matching docs</em>
+<a class="jxr_linenumber" name="L903" href="#L903">903</a> 
+<a class="jxr_linenumber" name="L904" href="#L904">904</a>     <strong class="jxr_keyword">for</strong>(Integer i=0;i&lt;maxDocs;i++){<em class="jxr_comment">//50 entries</em>
+<a class="jxr_linenumber" name="L905" href="#L905">905</a>       addPivotDoc(zeroShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft polecat bbc"</span>,<span class="jxr_string">"pay_i"</span>,2400,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-07-01T12:30:00Z"</span>,<span class="jxr_string">"real_b"</span>,<span class="jxr_string">"true"</span>);
+<a class="jxr_linenumber" name="L906" href="#L906">906</a>       addPivotDoc(zeroShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"medical staffing network holdings, inc."</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft polecat bbc"</span>,<span class="jxr_string">"pay_i"</span>,2400,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-07-01T12:30:00Z"</span>);
+<a class="jxr_linenumber" name="L907" href="#L907">907</a>       
+<a class="jxr_linenumber" name="L908" href="#L908">908</a>       addPivotDoc(oneShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"placeholder"</span>+i, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"compHolder"</span>+i,<span class="jxr_string">"pay_i"</span>,24*i,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-08-01T12:30:00Z"</span>);
+<a class="jxr_linenumber" name="L909" href="#L909">909</a>       
+<a class="jxr_linenumber" name="L910" href="#L910">910</a>       addPivotDoc(twoShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"bbc honda"</span>,<span class="jxr_string">"pay_i"</span>,2400,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-09-01T12:30:00Z"</span>,<span class="jxr_string">"real_b"</span>,<span class="jxr_string">"true"</span>);
+<a class="jxr_linenumber" name="L911" href="#L911">911</a>       addPivotDoc(twoShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"compHolder"</span>+i,<span class="jxr_string">"pay_i"</span>,22*i,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-09-01T12:30:00Z"</span>,<span class="jxr_string">"real_b"</span>,<span class="jxr_string">"true"</span>);
+<a class="jxr_linenumber" name="L912" href="#L912">912</a>       addPivotDoc(twoShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"compHolder"</span>+i,<span class="jxr_string">"pay_i"</span>,21*i,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-09-01T12:30:00Z"</span>,<span class="jxr_string">"real_b"</span>,<span class="jxr_string">"true"</span>);
+<a class="jxr_linenumber" name="L913" href="#L913">913</a>       addPivotDoc(twoShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"compHolder"</span>+i,<span class="jxr_string">"pay_i"</span>,20*i,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-09-01T12:30:00Z"</span>,<span class="jxr_string">"real_b"</span>,<span class="jxr_string">"true"</span>);
+<a class="jxr_linenumber" name="L914" href="#L914">914</a>       
+<a class="jxr_linenumber" name="L915" href="#L915">915</a>       <em class="jxr_comment">//For the filler content</em>
+<a class="jxr_linenumber" name="L916" href="#L916">916</a>       <em class="jxr_comment">//Fifty places with 6 results each</em>
+<a class="jxr_linenumber" name="L917" href="#L917">917</a>       addPivotDoc(oneShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, i+<span class="jxr_string">"placeholder"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft polecat bbc"</span>,<span class="jxr_string">"pay_i"</span>,2400,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-10-01T12:30:00Z"</span>,<span class="jxr_string">"real_b"</span>,<span class="jxr_string">"false"</span>);
+<a class="jxr_linenumber" name="L918" href="#L918">918</a>       addPivotDoc(oneShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, i+<span class="jxr_string">"placeholder"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft polecat bbc"</span>,<span class="jxr_string">"pay_i"</span>,3100,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-10-01T12:30:00Z"</span>,<span class="jxr_string">"real_b"</span>,<span class="jxr_string">"false"</span>);
+<a class="jxr_linenumber" name="L919" href="#L919">919</a>       addPivotDoc(oneShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, i+<span class="jxr_string">"placeholder"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft polecat bbc"</span>,<span class="jxr_string">"pay_i"</span>,3400,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-10-01T12:30:00Z"</span>,<span class="jxr_string">"real_b"</span>,<span class="jxr_string">"false"</span>);
+<a class="jxr_linenumber" name="L920" href="#L920">920</a>       addPivotDoc(oneShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, i+<span class="jxr_string">"placeholder"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft polecat bbc"</span>,<span class="jxr_string">"pay_i"</span>,5400,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-10-01T12:30:00Z"</span>,<span class="jxr_string">"real_b"</span>,<span class="jxr_string">"false"</span>);
+<a class="jxr_linenumber" name="L921" href="#L921">921</a>       addPivotDoc(oneShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, i+<span class="jxr_string">"placeholder"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft polecat bbc"</span>,<span class="jxr_string">"pay_i"</span>,6400,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-10-01T12:30:00Z"</span>,<span class="jxr_string">"real_b"</span>,<span class="jxr_string">"false"</span>);
+<a class="jxr_linenumber" name="L922" href="#L922">922</a>       addPivotDoc(oneShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, i+<span class="jxr_string">"placeholder"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft polecat bbc"</span>,<span class="jxr_string">"pay_i"</span>,2000,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-10-01T12:30:00Z"</span>,<span class="jxr_string">"real_b"</span>,<span class="jxr_string">"false"</span>);
+<a class="jxr_linenumber" name="L923" href="#L923">923</a> 
+<a class="jxr_linenumber" name="L924" href="#L924">924</a>     }
+<a class="jxr_linenumber" name="L925" href="#L925">925</a> 
+<a class="jxr_linenumber" name="L926" href="#L926">926</a>     addPivotDoc(oneShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft"</span>,<span class="jxr_string">"pay_i"</span>,4367,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-11-01T12:30:00Z"</span>);
+<a class="jxr_linenumber" name="L927" href="#L927">927</a>     addPivotDoc(oneShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft bbc"</span>,<span class="jxr_string">"pay_i"</span>,8742,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-11-01T12:30:00Z"</span>);
+<a class="jxr_linenumber" name="L928" href="#L928">928</a>     addPivotDoc(oneShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft polecat"</span>,<span class="jxr_string">"pay_i"</span>,5824,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-11-01T12:30:00Z"</span>);
+<a class="jxr_linenumber" name="L929" href="#L929">929</a>     addPivotDoc(oneShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft "</span>,<span class="jxr_string">"pay_i"</span>,6539,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-11-01T12:30:00Z"</span>); 
+<a class="jxr_linenumber" name="L930" href="#L930">930</a>     addPivotDoc(oneShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"medical staffing network holdings, inc."</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft "</span>,<span class="jxr_string">"pay_i"</span>,6539,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-11-01T12:30:00Z"</span>, <span class="jxr_string">"special_s"</span>, <span class="jxr_string">"xxx"</span>);
+<a class="jxr_linenumber" name="L931" href="#L931">931</a>     addPivotDoc(oneShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"polecat"</span>,<span class="jxr_string">"pay_i"</span>,4352,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-1-01T12:30:00Z"</span>, <span class="jxr_string">"special_s"</span>, <span class="jxr_string">"xxx"</span>); 
+<a class="jxr_linenumber" name="L932" href="#L932">932</a>     addPivotDoc(oneShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"krakaw"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"polecat"</span>,<span class="jxr_string">"pay_i"</span>,4352,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-11-01T12:30:00Z"</span>, <span class="jxr_string">"special_s"</span>, SPECIAL); 
+<a class="jxr_linenumber" name="L933" href="#L933">933</a>     
+<a class="jxr_linenumber" name="L934" href="#L934">934</a>     addPivotDoc(twoShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft"</span>,<span class="jxr_string">"pay_i"</span>,12,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-11-01T12:30:00Z"</span>, <span class="jxr_string">"special_s"</span>, SPECIAL);
+<a class="jxr_linenumber" name="L935" href="#L935">935</a>     addPivotDoc(twoShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"place_s"</span>, <span class="jxr_string">"cardiff"</span>, <span class="jxr_string">"company_t"</span>, <span class="jxr_string">"microsoft"</span>,<span class="jxr_string">"pay_i"</span>,543,<span class="jxr_string">"hiredate_dt"</span>, <span class="jxr_string">"2012-11-01T12:30:00Z"</span>, <span class="jxr_string">"special_s"</span>, SPECIAL);
+<a class="jxr_linenumber" name="L936" href="#L936">936</a> 
+<a class="jxr_linenumber" name="L937" href="#L937">937</a> 
+<a class="jxr_linenumber" name="L938" href="#L938">938</a>     <em class="jxr_comment">// two really trivial documents, unrelated to the rest of the tests, </em>
+<a class="jxr_linenumber" name="L939" href="#L939">939</a>     <em class="jxr_comment">// for the purpose of demoing the porblem with mincount=0</em>
+<a class="jxr_linenumber" name="L940" href="#L940">940</a>     addPivotDoc(oneShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"top_s"</span>, <span class="jxr_string">"aaa"</span>, <span class="jxr_string">"sub_s"</span>, <span class="jxr_string">"bbb"</span> );
+<a class="jxr_linenumber" name="L941" href="#L941">941</a>     addPivotDoc(twoShard, <span class="jxr_string">"id"</span>, getDocNum(), <span class="jxr_string">"top_s"</span>, <span class="jxr_string">"xxx"</span>, <span class="jxr_string">"sub_s"</span>, <span class="jxr_string">"yyy"</span> );
+<a class="jxr_linenumber" name="L942" href="#L942">942</a> 
+<a class="jxr_linenumber" name="L943" href="#L943">943</a>       
+<a class="jxr_linenumber" name="L944" href="#L944">944</a>     commit();
+<a class="jxr_linenumber" name="L945" href="#L945">945</a> 
+<a class="jxr_linenumber" name="L946" href="#L946">946</a>     assertEquals(<span class="jxr_string">"shard #3 should never have any docs"</span>,
+<a class="jxr_linenumber" name="L947" href="#L947">947</a>                  0, threeShard.query(params(<span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>)).getResults().getNumFound());
+<a class="jxr_linenumber" name="L948" href="#L948">948</a>   }
+<a class="jxr_linenumber" name="L949" href="#L949">949</a> 
+<a class="jxr_linenumber" name="L950" href="#L950">950</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L951" href="#L951">951</a> <em class="jxr_javadoccomment">   * Builds up a SolrInputDocument using the specified fields, then adds it to the </em>
+<a class="jxr_linenumber" name="L952" href="#L952">952</a> <em class="jxr_javadoccomment">   * specified client as well as the control client </em>
+<a class="jxr_linenumber" name="L953" href="#L953">953</a> <em class="jxr_javadoccomment">   * @see #indexDoc(org.apache.solr.client.solrj.SolrClient,SolrParams,SolrInputDocument...)</em>
+<a class="jxr_linenumber" name="L954" href="#L954">954</a> <em class="jxr_javadoccomment">   * @see #sdoc</em>
+<a class="jxr_linenumber" name="L955" href="#L955">955</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L956" href="#L956">956</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> addPivotDoc(SolrClient client, Object... fields)
+<a class="jxr_linenumber" name="L957" href="#L957">957</a>     <strong class="jxr_keyword">throws</strong> IOException, SolrServerException {
+<a class="jxr_linenumber" name="L958" href="#L958">958</a> 
+<a class="jxr_linenumber" name="L959" href="#L959">959</a>     indexDoc(client, params(), sdoc(fields));
+<a class="jxr_linenumber" name="L960" href="#L960">960</a>   }
+<a class="jxr_linenumber" name="L961" href="#L961">961</a> 
+<a class="jxr_linenumber" name="L962" href="#L962">962</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">int</strong> docNumber = 0;
+<a class="jxr_linenumber" name="L963" href="#L963">963</a>   
+<a class="jxr_linenumber" name="L964" href="#L964">964</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">int</strong> getDocNum(){
+<a class="jxr_linenumber" name="L965" href="#L965">965</a>     docNumber++;
+<a class="jxr_linenumber" name="L966" href="#L966">966</a>     <strong class="jxr_keyword">return</strong> docNumber;
+<a class="jxr_linenumber" name="L967" href="#L967">967</a>   }
+<a class="jxr_linenumber" name="L968" href="#L968">968</a>   
+<a class="jxr_linenumber" name="L969" href="#L969">969</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

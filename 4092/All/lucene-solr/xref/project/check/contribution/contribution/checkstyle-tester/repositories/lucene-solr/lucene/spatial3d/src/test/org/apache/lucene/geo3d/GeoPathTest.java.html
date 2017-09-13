@@ -1,0 +1,284 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>GeoPathTest xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.lucene.geo3d;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> org.junit.Test;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> java.lang.Math.toRadians;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.junit.Assert.assertEquals;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.junit.Assert.assertFalse;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.junit.Assert.assertTrue;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> GeoPathTest {
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>    @Test
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testPathDistance() {
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>      <em class="jxr_comment">// Start with a really simple case</em>
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>      GeoPath p;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>      GeoPoint gp;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>      p = <strong class="jxr_keyword">new</strong> GeoPath(PlanetModel.SPHERE, 0.1);
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>      p.addPoint(0.0, 0.0);
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>      p.addPoint(0.0, 0.1);
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>      p.addPoint(0.0, 0.2);
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>      p.done();
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, Math.PI * 0.5, 0.15);
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>      assertEquals(Double.MAX_VALUE, p.computeDistance(DistanceStyle.ARC,gp), 0.0);
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, 0.05, 0.15);
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>      assertEquals(0.15 + 0.05, p.computeDistance(DistanceStyle.ARC,gp), 0.000001);
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, 0.0, 0.12);
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>      assertEquals(0.12 + 0.0, p.computeDistance(DistanceStyle.ARC,gp), 0.000001);
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, -0.15, 0.05);
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>      assertEquals(Double.MAX_VALUE, p.computeDistance(DistanceStyle.ARC,gp), 0.000001);
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, 0.0, 0.25);
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>      assertEquals(0.20 + 0.05, p.computeDistance(DistanceStyle.ARC,gp), 0.000001);
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, 0.0, -0.05);
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>      assertEquals(0.0 + 0.05, p.computeDistance(DistanceStyle.ARC,gp), 0.000001);
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>  
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>      <em class="jxr_comment">// Compute path distances now</em>
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>      p = <strong class="jxr_keyword">new</strong> GeoPath(PlanetModel.SPHERE, 0.1);
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>      p.addPoint(0.0, 0.0);
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>      p.addPoint(0.0, 0.1);
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>      p.addPoint(0.0, 0.2);
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>      p.done();
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, 0.05, 0.15);
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>      assertEquals(0.15 + 0.05, p.computeDistance(DistanceStyle.ARC,gp), 0.000001);
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, 0.0, 0.12);
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>      assertEquals(0.12, p.computeDistance(DistanceStyle.ARC,gp), 0.000001);
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>  
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>      <em class="jxr_comment">// Now try a vertical path, and make sure distances are as expected</em>
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>      p = <strong class="jxr_keyword">new</strong> GeoPath(PlanetModel.SPHERE, 0.1);
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>      p.addPoint(-Math.PI * 0.25, -0.5);
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>      p.addPoint(Math.PI * 0.25, -0.5);
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>      p.done();
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, 0.0, 0.0);
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>      assertEquals(Double.MAX_VALUE, p.computeDistance(DistanceStyle.ARC,gp), 0.0);
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, -0.1, -1.0);
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>      assertEquals(Double.MAX_VALUE, p.computeDistance(DistanceStyle.ARC,gp), 0.0);
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, Math.PI * 0.25 + 0.05, -0.5);
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>      assertEquals(Math.PI * 0.5 + 0.05, p.computeDistance(DistanceStyle.ARC,gp), 0.000001);
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, -Math.PI * 0.25 - 0.05, -0.5);
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>      assertEquals(0.0 + 0.05, p.computeDistance(DistanceStyle.ARC,gp), 0.000001);
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>    }
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>  
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>    @Test
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testPathPointWithin() {
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>      <em class="jxr_comment">// Tests whether we can properly detect whether a point is within a path or not</em>
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>      GeoPath p;
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>      GeoPoint gp;
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>      p = <strong class="jxr_keyword">new</strong> GeoPath(PlanetModel.SPHERE, 0.1);
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>      <em class="jxr_comment">// Build a diagonal path crossing the equator</em>
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>      p.addPoint(-0.2, -0.2);
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>      p.addPoint(0.2, 0.2);
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>      p.done();
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>      <em class="jxr_comment">// Test points on the path</em>
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, -0.2, -0.2);
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>      assertTrue(p.isWithin(gp));
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, 0.0, 0.0);
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>      assertTrue(p.isWithin(gp));
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, 0.1, 0.1);
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>      assertTrue(p.isWithin(gp));
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>      <em class="jxr_comment">// Test points off the path</em>
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, -0.2, 0.2);
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>      assertFalse(p.isWithin(gp));
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>      gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, -Math.PI * 0.5, 0.0);
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>      assertFalse(p.isWithin(gp));
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>     gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, 0.2, -0.2);
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>     assertFalse(p.isWithin(gp));
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>     gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, 0.0, Math.PI);
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>     assertFalse(p.isWithin(gp));
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>     <em class="jxr_comment">// Repeat the test, but across the terminator</em>
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>     p = <strong class="jxr_keyword">new</strong> GeoPath(PlanetModel.SPHERE, 0.1);
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>     <em class="jxr_comment">// Build a diagonal path crossing the equator</em>
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>     p.addPoint(-0.2, Math.PI - 0.2);
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>     p.addPoint(0.2, -Math.PI + 0.2);
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>     p.done();
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>     <em class="jxr_comment">// Test points on the path</em>
+<a class="jxr_linenumber" name="L111" href="#L111">111</a>     gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, -0.2, Math.PI - 0.2);
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>     assertTrue(p.isWithin(gp));
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>     gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, 0.0, Math.PI);
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>     assertTrue(p.isWithin(gp));
+<a class="jxr_linenumber" name="L115" href="#L115">115</a>     gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, 0.1, -Math.PI + 0.1);
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>     assertTrue(p.isWithin(gp));
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>     <em class="jxr_comment">// Test points off the path</em>
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>     gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, -0.2, -Math.PI + 0.2);
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>     assertFalse(p.isWithin(gp));
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>     gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, -Math.PI * 0.5, 0.0);
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>     assertFalse(p.isWithin(gp));
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>     gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, 0.2, Math.PI - 0.2);
+<a class="jxr_linenumber" name="L123" href="#L123">123</a>     assertFalse(p.isWithin(gp));
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>     gp = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.SPHERE, 0.0, 0.0);
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>     assertFalse(p.isWithin(gp));
+<a class="jxr_linenumber" name="L126" href="#L126">126</a> 
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>   }
+<a class="jxr_linenumber" name="L128" href="#L128">128</a> 
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>   @Test
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testGetRelationship() {
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>     GeoArea rect;
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>     GeoPath p;
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>     GeoPath c;
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>     GeoPoint point;
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>     GeoPoint pointApprox;
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>     <strong class="jxr_keyword">int</strong> relationship;
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>     GeoArea area;
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>     PlanetModel planetModel;
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>     
+<a class="jxr_linenumber" name="L140" href="#L140">140</a>     planetModel = <strong class="jxr_keyword">new</strong> PlanetModel(1.151145876105594, 0.8488541238944061);
+<a class="jxr_linenumber" name="L141" href="#L141">141</a>     c = <strong class="jxr_keyword">new</strong> GeoPath(planetModel, 0.008726646259971648);
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>     c.addPoint(-0.6925658899376476, 0.6316613927914589);
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>     c.addPoint(0.27828548161836364, 0.6785795524104564);
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>     c.done();
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>     point = <strong class="jxr_keyword">new</strong> GeoPoint(planetModel,-0.49298555067758226, 0.9892440995026406);
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>     pointApprox = <strong class="jxr_keyword">new</strong> GeoPoint(0.5110940362119821, 0.7774603209946239, -0.49984312299556544);
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>     area = GeoAreaFactory.makeGeoArea(planetModel, 0.49937141144985997, 0.5161765426256085, 0.3337218719537796,0.8544419570901649, -0.6347692823688085, 0.3069696588119369);
+<a class="jxr_linenumber" name="L148" href="#L148">148</a>     assertTrue(!c.isWithin(point));
+<a class="jxr_linenumber" name="L149" href="#L149">149</a>     
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>     <em class="jxr_comment">// Start by testing the basic kinds of relationship, increasing in order of difficulty.</em>
+<a class="jxr_linenumber" name="L151" href="#L151">151</a> 
+<a class="jxr_linenumber" name="L152" href="#L152">152</a>     p = <strong class="jxr_keyword">new</strong> GeoPath(PlanetModel.SPHERE, 0.1);
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>     p.addPoint(-0.3, -0.3);
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>     p.addPoint(0.3, 0.3);
+<a class="jxr_linenumber" name="L155" href="#L155">155</a>     p.done();
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>     <em class="jxr_comment">// Easiest: The path is wholly contains the georect</em>
+<a class="jxr_linenumber" name="L157" href="#L157">157</a>     rect = <strong class="jxr_keyword">new</strong> GeoRectangle(PlanetModel.SPHERE, 0.05, -0.05, -0.05, 0.05);
+<a class="jxr_linenumber" name="L158" href="#L158">158</a>     assertEquals(GeoArea.CONTAINS, rect.getRelationship(p));
+<a class="jxr_linenumber" name="L159" href="#L159">159</a>     <em class="jxr_comment">// Next easiest: Some endpoints of the rectangle are inside, and some are outside.</em>
+<a class="jxr_linenumber" name="L160" href="#L160">160</a>     rect = <strong class="jxr_keyword">new</strong> GeoRectangle(PlanetModel.SPHERE, 0.05, -0.05, -0.05, 0.5);
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>     assertEquals(GeoArea.OVERLAPS, rect.getRelationship(p));
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>     <em class="jxr_comment">// Now, all points are outside, but the figures intersect</em>
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>     rect = <strong class="jxr_keyword">new</strong> GeoRectangle(PlanetModel.SPHERE, 0.05, -0.05, -0.5, 0.5);
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>     assertEquals(GeoArea.OVERLAPS, rect.getRelationship(p));
+<a class="jxr_linenumber" name="L165" href="#L165">165</a>     <em class="jxr_comment">// Finally, all points are outside, and the figures *do not* intersect</em>
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>     rect = <strong class="jxr_keyword">new</strong> GeoRectangle(PlanetModel.SPHERE, 0.5, -0.5, -0.5, 0.5);
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>     assertEquals(GeoArea.WITHIN, rect.getRelationship(p));
+<a class="jxr_linenumber" name="L168" href="#L168">168</a>     <em class="jxr_comment">// Check that segment edge overlap detection works</em>
+<a class="jxr_linenumber" name="L169" href="#L169">169</a>     rect = <strong class="jxr_keyword">new</strong> GeoRectangle(PlanetModel.SPHERE, 0.1, 0.0, -0.1, 0.0);
+<a class="jxr_linenumber" name="L170" href="#L170">170</a>     assertEquals(GeoArea.OVERLAPS, rect.getRelationship(p));
+<a class="jxr_linenumber" name="L171" href="#L171">171</a>     rect = <strong class="jxr_keyword">new</strong> GeoRectangle(PlanetModel.SPHERE, 0.2, 0.1, -0.2, -0.1);
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>     assertEquals(GeoArea.DISJOINT, rect.getRelationship(p));
+<a class="jxr_linenumber" name="L173" href="#L173">173</a>     <em class="jxr_comment">// Check if overlap at endpoints behaves as expected next</em>
+<a class="jxr_linenumber" name="L174" href="#L174">174</a>     rect = <strong class="jxr_keyword">new</strong> GeoRectangle(PlanetModel.SPHERE, 0.5, -0.5, -0.5, -0.35);
+<a class="jxr_linenumber" name="L175" href="#L175">175</a>     assertEquals(GeoArea.OVERLAPS, rect.getRelationship(p));
+<a class="jxr_linenumber" name="L176" href="#L176">176</a>     rect = <strong class="jxr_keyword">new</strong> GeoRectangle(PlanetModel.SPHERE, 0.5, -0.5, -0.5, -0.45);
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>     assertEquals(GeoArea.DISJOINT, rect.getRelationship(p));
+<a class="jxr_linenumber" name="L178" href="#L178">178</a> 
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>   }
+<a class="jxr_linenumber" name="L180" href="#L180">180</a> 
+<a class="jxr_linenumber" name="L181" href="#L181">181</a>   @Test
+<a class="jxr_linenumber" name="L182" href="#L182">182</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testPathBounds() {
+<a class="jxr_linenumber" name="L183" href="#L183">183</a>     GeoPath c;
+<a class="jxr_linenumber" name="L184" href="#L184">184</a>     LatLonBounds b;
+<a class="jxr_linenumber" name="L185" href="#L185">185</a>     XYZBounds xyzb;
+<a class="jxr_linenumber" name="L186" href="#L186">186</a>     GeoPoint point;
+<a class="jxr_linenumber" name="L187" href="#L187">187</a>     <strong class="jxr_keyword">int</strong> relationship;
+<a class="jxr_linenumber" name="L188" href="#L188">188</a>     GeoArea area;
+<a class="jxr_linenumber" name="L189" href="#L189">189</a>     PlanetModel planetModel;
+<a class="jxr_linenumber" name="L190" href="#L190">190</a>     
+<a class="jxr_linenumber" name="L191" href="#L191">191</a>     planetModel = <strong class="jxr_keyword">new</strong> PlanetModel(0.751521665790406,1.248478334209594);
+<a class="jxr_linenumber" name="L192" href="#L192">192</a>     c = <strong class="jxr_keyword">new</strong> GeoPath(planetModel, 0.7504915783575618);
+<a class="jxr_linenumber" name="L193" href="#L193">193</a>     c.addPoint(0.10869761172400265, 0.08895880215465272);
+<a class="jxr_linenumber" name="L194" href="#L194">194</a>     c.addPoint(0.22467878641991612, 0.10972973084229565);
+<a class="jxr_linenumber" name="L195" href="#L195">195</a>     c.addPoint(-0.7398772468744732, -0.4465812941383364);
+<a class="jxr_linenumber" name="L196" href="#L196">196</a>     c.addPoint(-0.18462055300079366, -0.6713857796763727);
+<a class="jxr_linenumber" name="L197" href="#L197">197</a>     c.done();
+<a class="jxr_linenumber" name="L198" href="#L198">198</a>     point = <strong class="jxr_keyword">new</strong> GeoPoint(planetModel,-0.626645355125733,-1.409304625439381);
+<a class="jxr_linenumber" name="L199" href="#L199">199</a>     xyzb = <strong class="jxr_keyword">new</strong> XYZBounds();
+<a class="jxr_linenumber" name="L200" href="#L200">200</a>     c.getBounds(xyzb);
+<a class="jxr_linenumber" name="L201" href="#L201">201</a>     area = GeoAreaFactory.makeGeoArea(planetModel,
+<a class="jxr_linenumber" name="L202" href="#L202">202</a>       xyzb.getMinimumX(), xyzb.getMaximumX(), xyzb.getMinimumY(), xyzb.getMaximumY(), xyzb.getMinimumZ(), xyzb.getMaximumZ());
+<a class="jxr_linenumber" name="L203" href="#L203">203</a>     relationship = area.getRelationship(c);
+<a class="jxr_linenumber" name="L204" href="#L204">204</a>     assertTrue(relationship == GeoArea.WITHIN || relationship == GeoArea.OVERLAPS);
+<a class="jxr_linenumber" name="L205" href="#L205">205</a>     assertTrue(area.isWithin(point));
+<a class="jxr_linenumber" name="L206" href="#L206">206</a>     <em class="jxr_comment">// No longer true due to fixed GeoPath waypoints.</em>
+<a class="jxr_linenumber" name="L207" href="#L207">207</a>     <em class="jxr_comment">//assertTrue(c.isWithin(point));</em>
+<a class="jxr_linenumber" name="L208" href="#L208">208</a>     
+<a class="jxr_linenumber" name="L209" href="#L209">209</a>     c = <strong class="jxr_keyword">new</strong> GeoPath(PlanetModel.WGS84, 0.6894050545377601);
+<a class="jxr_linenumber" name="L210" href="#L210">210</a>     c.addPoint(-0.0788176065762948, 0.9431251741731624);
+<a class="jxr_linenumber" name="L211" href="#L211">211</a>     c.addPoint(0.510387871458147, 0.5327078872484678);
+<a class="jxr_linenumber" name="L212" href="#L212">212</a>     c.addPoint(-0.5624521609859962, 1.5398841746888388);
+<a class="jxr_linenumber" name="L213" href="#L213">213</a>     c.addPoint(-0.5025171434638661, -0.5895998642788894);
+<a class="jxr_linenumber" name="L214" href="#L214">214</a>     c.done();
+<a class="jxr_linenumber" name="L215" href="#L215">215</a>     point = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.WGS84, 0.023652082107211682, 0.023131910152748437);
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>     <em class="jxr_comment">//System.err.println("Point.x = "+point.x+"; point.y="+point.y+"; point.z="+point.z);</em>
+<a class="jxr_linenumber" name="L217" href="#L217">217</a>     assertTrue(c.isWithin(point));
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>     xyzb = <strong class="jxr_keyword">new</strong> XYZBounds();
+<a class="jxr_linenumber" name="L219" href="#L219">219</a>     c.getBounds(xyzb);
+<a class="jxr_linenumber" name="L220" href="#L220">220</a>     area = GeoAreaFactory.makeGeoArea(PlanetModel.WGS84,
+<a class="jxr_linenumber" name="L221" href="#L221">221</a>       xyzb.getMinimumX(), xyzb.getMaximumX(), xyzb.getMinimumY(), xyzb.getMaximumY(), xyzb.getMinimumZ(), xyzb.getMaximumZ());
+<a class="jxr_linenumber" name="L222" href="#L222">222</a>     <em class="jxr_comment">//System.err.println("minx="+xyzb.getMinimumX()+" maxx="+xyzb.getMaximumX()+" miny="+xyzb.getMinimumY()+" maxy="+xyzb.getMaximumY()+" minz="+xyzb.getMinimumZ()+" maxz="+xyzb.getMaximumZ());</em>
+<a class="jxr_linenumber" name="L223" href="#L223">223</a>     <em class="jxr_comment">//System.err.println("point.x="+point.x+" point.y="+point.y+" point.z="+point.z);</em>
+<a class="jxr_linenumber" name="L224" href="#L224">224</a>     relationship = area.getRelationship(c);
+<a class="jxr_linenumber" name="L225" href="#L225">225</a>     assertTrue(relationship == GeoArea.WITHIN || relationship == GeoArea.OVERLAPS);
+<a class="jxr_linenumber" name="L226" href="#L226">226</a>     assertTrue(area.isWithin(point));
+<a class="jxr_linenumber" name="L227" href="#L227">227</a>     
+<a class="jxr_linenumber" name="L228" href="#L228">228</a>     c = <strong class="jxr_keyword">new</strong> GeoPath(PlanetModel.WGS84, 0.7766715171374766);
+<a class="jxr_linenumber" name="L229" href="#L229">229</a>     c.addPoint(-0.2751718361148076, -0.7786721269011477);
+<a class="jxr_linenumber" name="L230" href="#L230">230</a>     c.addPoint(0.5728375851539309, -1.2700115736820465);
+<a class="jxr_linenumber" name="L231" href="#L231">231</a>     c.done();
+<a class="jxr_linenumber" name="L232" href="#L232">232</a>     point = <strong class="jxr_keyword">new</strong> GeoPoint(PlanetModel.WGS84, -0.01580760332365284, -0.03956004622490505);
+<a class="jxr_linenumber" name="L233" href="#L233">233</a>     assertTrue(c.isWithin(point));
+<a class="jxr_linenumber" name="L234" href="#L234">234</a>     xyzb = <strong class="jxr_keyword">new</strong> XYZBounds();
+<a class="jxr_linenumber" name="L235" href="#L235">235</a>     c.getBounds(xyzb);
+<a class="jxr_linenumber" name="L236" href="#L236">236</a>     area = GeoAreaFactory.makeGeoArea(PlanetModel.WGS84,
+<a class="jxr_linenumber" name="L237" href="#L237">237</a>       xyzb.getMinimumX(), xyzb.getMaximumX(), xyzb.getMinimumY(), xyzb.getMaximumY(), xyzb.getMinimumZ(), xyzb.getMaximumZ());
+<a class="jxr_linenumber" name="L238" href="#L238">238</a>     <em class="jxr_comment">//System.err.println("minx="+xyzb.getMinimumX()+" maxx="+xyzb.getMaximumX()+" miny="+xyzb.getMinimumY()+" maxy="+xyzb.getMaximumY()+" minz="+xyzb.getMinimumZ()+" maxz="+xyzb.getMaximumZ());</em>
+<a class="jxr_linenumber" name="L239" href="#L239">239</a>     <em class="jxr_comment">//System.err.println("point.x="+point.x+" point.y="+point.y+" point.z="+point.z);</em>
+<a class="jxr_linenumber" name="L240" href="#L240">240</a>     relationship = area.getRelationship(c);
+<a class="jxr_linenumber" name="L241" href="#L241">241</a>     assertTrue(relationship == GeoArea.WITHIN || relationship == GeoArea.OVERLAPS);
+<a class="jxr_linenumber" name="L242" href="#L242">242</a>     assertTrue(area.isWithin(point));
+<a class="jxr_linenumber" name="L243" href="#L243">243</a> 
+<a class="jxr_linenumber" name="L244" href="#L244">244</a>     c = <strong class="jxr_keyword">new</strong> GeoPath(PlanetModel.SPHERE, 0.1);
+<a class="jxr_linenumber" name="L245" href="#L245">245</a>     c.addPoint(-0.3, -0.3);
+<a class="jxr_linenumber" name="L246" href="#L246">246</a>     c.addPoint(0.3, 0.3);
+<a class="jxr_linenumber" name="L247" href="#L247">247</a>     c.done();
+<a class="jxr_linenumber" name="L248" href="#L248">248</a> 
+<a class="jxr_linenumber" name="L249" href="#L249">249</a>     b = <strong class="jxr_keyword">new</strong> LatLonBounds();
+<a class="jxr_linenumber" name="L250" href="#L250">250</a>     c.getBounds(b);
+<a class="jxr_linenumber" name="L251" href="#L251">251</a>     assertFalse(b.checkNoLongitudeBound());
+<a class="jxr_linenumber" name="L252" href="#L252">252</a>     assertFalse(b.checkNoTopLatitudeBound());
+<a class="jxr_linenumber" name="L253" href="#L253">253</a>     assertFalse(b.checkNoBottomLatitudeBound());
+<a class="jxr_linenumber" name="L254" href="#L254">254</a>     assertEquals(-0.4046919, b.getLeftLongitude(), 0.000001);
+<a class="jxr_linenumber" name="L255" href="#L255">255</a>     assertEquals(0.4046919, b.getRightLongitude(), 0.000001);
+<a class="jxr_linenumber" name="L256" href="#L256">256</a>     assertEquals(-0.3999999, b.getMinLatitude(), 0.000001);
+<a class="jxr_linenumber" name="L257" href="#L257">257</a>     assertEquals(0.3999999, b.getMaxLatitude(), 0.000001);
+<a class="jxr_linenumber" name="L258" href="#L258">258</a> 
+<a class="jxr_linenumber" name="L259" href="#L259">259</a>   }
+<a class="jxr_linenumber" name="L260" href="#L260">260</a> 
+<a class="jxr_linenumber" name="L261" href="#L261">261</a>   @Test
+<a class="jxr_linenumber" name="L262" href="#L262">262</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testCoLinear() {
+<a class="jxr_linenumber" name="L263" href="#L263">263</a>     <em class="jxr_comment">// p1: (12,-90), p2: (11, -55), (129, -90)</em>
+<a class="jxr_linenumber" name="L264" href="#L264">264</a>     GeoPath p = <strong class="jxr_keyword">new</strong> GeoPath(PlanetModel.SPHERE, 0.1);
+<a class="jxr_linenumber" name="L265" href="#L265">265</a>     p.addPoint(toRadians(-90), toRadians(12));<em class="jxr_comment">//south pole</em>
+<a class="jxr_linenumber" name="L266" href="#L266">266</a>     p.addPoint(toRadians(-55), toRadians(11));
+<a class="jxr_linenumber" name="L267" href="#L267">267</a>     p.addPoint(toRadians(-90), toRadians(129));<em class="jxr_comment">//south pole again</em>
+<a class="jxr_linenumber" name="L268" href="#L268">268</a>     p.done();<em class="jxr_comment">//at least test this doesn't bomb like it used too -- LUCENE-6520</em>
+<a class="jxr_linenumber" name="L269" href="#L269">269</a>   }
+<a class="jxr_linenumber" name="L270" href="#L270">270</a> 
+<a class="jxr_linenumber" name="L271" href="#L271">271</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

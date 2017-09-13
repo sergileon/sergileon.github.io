@@ -1,0 +1,143 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>TestBlockJoinSorter xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.lucene.index;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> java.io.IOException;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> java.util.ArrayList;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> java.util.List;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.MockAnalyzer;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.document.Document;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.document.Field.Store;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.document.NumericDocValuesField;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.document.StringField;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.BlockJoinComparatorSource;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.DocIdSetIterator;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.IndexSearcher;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.Query;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.Sort;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.SortField;
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.TermQuery;
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.Weight;
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.ArrayUtil;
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.BitSet;
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.LuceneTestCase;
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <strong class="jxr_keyword">import</strong> org.junit.Ignore;
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> TestBlockJoinSorter <strong class="jxr_keyword">extends</strong> LuceneTestCase {
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>  
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> test() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>      <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> numParents = atLeast(200);
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>      IndexWriterConfig cfg = newIndexWriterConfig(<strong class="jxr_keyword">new</strong> MockAnalyzer(random()));
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>      cfg.setMergePolicy(newLogMergePolicy());
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>      <strong class="jxr_keyword">final</strong> RandomIndexWriter writer = <strong class="jxr_keyword">new</strong> RandomIndexWriter(random(), newDirectory(), cfg);
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>      <strong class="jxr_keyword">final</strong> Document parentDoc = <strong class="jxr_keyword">new</strong> Document();
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>      <strong class="jxr_keyword">final</strong> NumericDocValuesField parentVal = <strong class="jxr_keyword">new</strong> NumericDocValuesField(<span class="jxr_string">"parent_val"</span>, 0L);
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>      parentDoc.add(parentVal);
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>      <strong class="jxr_keyword">final</strong> StringField parent = <strong class="jxr_keyword">new</strong> StringField(<span class="jxr_string">"parent"</span>, <span class="jxr_string">"true"</span>, Store.YES);
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>      parentDoc.add(parent);
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>      <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; numParents; ++i) {
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>        List&lt;Document&gt; documents = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>        <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> numChildren = random().nextInt(10);
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>        <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> j = 0; j &lt; numChildren; ++j) {
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>          <strong class="jxr_keyword">final</strong> Document childDoc = <strong class="jxr_keyword">new</strong> Document();
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>          childDoc.add(<strong class="jxr_keyword">new</strong> NumericDocValuesField(<span class="jxr_string">"child_val"</span>, random().nextInt(5)));
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>          documents.add(childDoc);
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>        }
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>        parentVal.setLongValue(random().nextInt(50));
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>        documents.add(parentDoc);
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>        writer.addDocuments(documents);
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>      }
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>      writer.forceMerge(1);
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>      IndexReader indexReader = writer.getReader();
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>      writer.close();
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>  
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>      IndexSearcher searcher = newSearcher(indexReader);
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>      indexReader = searcher.getIndexReader(); <em class="jxr_comment">// newSearcher may have wrapped it</em>
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>      assertEquals(1, indexReader.leaves().size());
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>      <strong class="jxr_keyword">final</strong> LeafReader reader = indexReader.leaves().get(0).reader();
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>      <strong class="jxr_keyword">final</strong> Query parentsFilter = <strong class="jxr_keyword">new</strong> TermQuery(<strong class="jxr_keyword">new</strong> Term(<span class="jxr_string">"parent"</span>, <span class="jxr_string">"true"</span>));
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>  
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>      <strong class="jxr_keyword">final</strong> Weight weight = searcher.createNormalizedWeight(parentsFilter, false);
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>      <strong class="jxr_keyword">final</strong> DocIdSetIterator parents = weight.scorer(indexReader.leaves().get(0));
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>      <strong class="jxr_keyword">final</strong> BitSet parentBits = BitSet.of(parents, reader.maxDoc());
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>      <strong class="jxr_keyword">final</strong> NumericDocValues parentValues = reader.getNumericDocValues(<span class="jxr_string">"parent_val"</span>);
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>      <strong class="jxr_keyword">final</strong> NumericDocValues childValues = reader.getNumericDocValues(<span class="jxr_string">"child_val"</span>);
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>  
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>      <strong class="jxr_keyword">final</strong> Sort parentSort = <strong class="jxr_keyword">new</strong> Sort(<strong class="jxr_keyword">new</strong> SortField(<span class="jxr_string">"parent_val"</span>, SortField.Type.LONG));
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>      <strong class="jxr_keyword">final</strong> Sort childSort = <strong class="jxr_keyword">new</strong> Sort(<strong class="jxr_keyword">new</strong> SortField(<span class="jxr_string">"child_val"</span>, SortField.Type.LONG));
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>  
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>      <strong class="jxr_keyword">final</strong> Sort sort = <strong class="jxr_keyword">new</strong> Sort(<strong class="jxr_keyword">new</strong> SortField(<span class="jxr_string">"custom"</span>, <strong class="jxr_keyword">new</strong> BlockJoinComparatorSource(parentsFilter, parentSort, childSort)));
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>      <strong class="jxr_keyword">final</strong> Sorter sorter = <strong class="jxr_keyword">new</strong> Sorter(sort);
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>      <strong class="jxr_keyword">final</strong> Sorter.DocMap docMap = sorter.sort(reader);
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>      assertEquals(reader.maxDoc(), docMap.size());
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>  
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>      <strong class="jxr_keyword">int</strong>[] children = <strong class="jxr_keyword">new</strong> <strong class="jxr_keyword">int</strong>[1];
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>      <strong class="jxr_keyword">int</strong> numChildren = 0;
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>      <strong class="jxr_keyword">int</strong> previousParent = -1;
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>      <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; docMap.size(); ++i) {
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>        <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> oldID = docMap.newToOld(i);
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>        <strong class="jxr_keyword">if</strong> (parentBits.get(oldID)) {
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>          <em class="jxr_comment">// check that we have the right children</em>
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>          <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> j = 0; j &lt; numChildren; ++j) {
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>            assertEquals(oldID, parentBits.nextSetBit(children[j]));
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>          }
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>         <em class="jxr_comment">// check that children are sorted</em>
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>         <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> j = 1; j &lt; numChildren; ++j) {
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>           <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> doc1 = children[j-1];
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>           <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> doc2 = children[j];
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>           <strong class="jxr_keyword">if</strong> (childValues.get(doc1) == childValues.get(doc2)) {
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>             assertTrue(doc1 &lt; doc2); <em class="jxr_comment">// sort is stable</em>
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>           } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>             assertTrue(childValues.get(doc1) &lt; childValues.get(doc2));
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>           }
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>         }
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>         <em class="jxr_comment">// check that parents are sorted</em>
+<a class="jxr_linenumber" name="L111" href="#L111">111</a>         <strong class="jxr_keyword">if</strong> (previousParent != -1) {
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>           <strong class="jxr_keyword">if</strong> (parentValues.get(previousParent) == parentValues.get(oldID)) {
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>             assertTrue(previousParent &lt; oldID);
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>           } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L115" href="#L115">115</a>             assertTrue(parentValues.get(previousParent) &lt; parentValues.get(oldID));
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>           }
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>         }
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>         <em class="jxr_comment">// reset</em>
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>         previousParent = oldID;
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>         numChildren = 0;
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>       } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>         children = ArrayUtil.grow(children, numChildren+1);
+<a class="jxr_linenumber" name="L123" href="#L123">123</a>         children[numChildren++] = oldID;
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>       }
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>     }
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>     indexReader.close();
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>     writer.w.getDirectory().close();
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>   }
+<a class="jxr_linenumber" name="L129" href="#L129">129</a> 
+<a class="jxr_linenumber" name="L130" href="#L130">130</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

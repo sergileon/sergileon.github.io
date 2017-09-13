@@ -1,0 +1,467 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>ComplexPhraseQueryParser xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.lucene.queryparser.complexPhrase;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> java.io.IOException;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> java.util.ArrayList;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> java.util.Collection;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> java.util.Iterator;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> java.util.List;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.Analyzer;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.IndexReader;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.Term;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.queryparser.classic.ParseException;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.queryparser.classic.QueryParser;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.BooleanClause;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.BooleanQuery;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.BoostQuery;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.IndexSearcher;
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.MultiTermQuery;
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.Query;
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.TermQuery;
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.TermRangeQuery;
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.spans.SpanBoostQuery;
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.spans.SpanNearQuery;
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.spans.SpanNotQuery;
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.spans.SpanOrQuery;
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.spans.SpanQuery;
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.spans.SpanTermQuery;
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>  
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>  <em class="jxr_javadoccomment"> * QueryParser which permits complex phrase query syntax eg "(john jon</em>
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>  <em class="jxr_javadoccomment"> * jonathan~) peters*".</em>
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>  <em class="jxr_javadoccomment"> * &lt;p&gt;</em>
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>  <em class="jxr_javadoccomment"> * Performs potentially multiple passes over Query text to parse any nested</em>
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>  <em class="jxr_javadoccomment"> * logic in PhraseQueries. - First pass takes any PhraseQuery content between</em>
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>  <em class="jxr_javadoccomment"> * quotes and stores for subsequent pass. All other query content is parsed as</em>
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>  <em class="jxr_javadoccomment"> * normal - Second pass parses any stored PhraseQuery content, checking all</em>
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>  <em class="jxr_javadoccomment"> * embedded clauses are referring to the same field and therefore can be</em>
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>  <em class="jxr_javadoccomment"> * rewritten as Span queries. All PhraseQuery clauses are expressed as</em>
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>  <em class="jxr_javadoccomment"> * ComplexPhraseQuery objects</em>
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>  <em class="jxr_javadoccomment"> * &lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>  <em class="jxr_javadoccomment"> * &lt;p&gt;</em>
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>  <em class="jxr_javadoccomment"> * This could arguably be done in one pass using a new QueryParser but here I am</em>
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>  <em class="jxr_javadoccomment"> * working within the constraints of the existing parser as a base class. This</em>
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>  <em class="jxr_javadoccomment"> * currently simply feeds all phrase content through an analyzer to select</em>
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>  <em class="jxr_javadoccomment"> * phrase terms - any "special" syntax such as * ~ * etc are not given special</em>
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>  <em class="jxr_javadoccomment"> * status</em>
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>  <em class="jxr_javadoccomment"> * &lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>  <em class="jxr_javadoccomment"> * </em>
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> ComplexPhraseQueryParser <strong class="jxr_keyword">extends</strong> QueryParser {
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>    <strong class="jxr_keyword">private</strong> ArrayList&lt;ComplexPhraseQuery&gt; complexPhrases = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>  
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> isPass2ResolvingPhrases;
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>  
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> inOrder = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>  
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>    <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>  <em class="jxr_javadoccomment">   * When &lt;code&gt;inOrder&lt;/code&gt; is true, the search terms must</em>
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>  <em class="jxr_javadoccomment">   * exists in the documents as the same order as in query.</em>
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>  <em class="jxr_javadoccomment">   *</em>
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>  <em class="jxr_javadoccomment">   * @param inOrder parameter to choose between ordered or un-ordered proximity search</em>
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>  <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> setInOrder(<strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">boolean</strong> inOrder) {
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>      <strong class="jxr_keyword">this</strong>.inOrder = inOrder;
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>    }
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>  
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>    <strong class="jxr_keyword">private</strong> ComplexPhraseQuery currentPhraseQuery = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>  
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>    <strong class="jxr_keyword">public</strong> ComplexPhraseQueryParser(String f, Analyzer a) {
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>      <strong class="jxr_keyword">super</strong>(f, a);
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>    }
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>  
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>    @Override
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>    <strong class="jxr_keyword">protected</strong> Query getFieldQuery(String field, String queryText, <strong class="jxr_keyword">int</strong> slop) {
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>      ComplexPhraseQuery cpq = <strong class="jxr_keyword">new</strong> ComplexPhraseQuery(field, queryText, slop, inOrder);
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>      complexPhrases.add(cpq); <em class="jxr_comment">// add to list of phrases to be parsed once</em>
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>      <em class="jxr_comment">// we</em>
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>      <em class="jxr_comment">// are through with this pass</em>
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>      <strong class="jxr_keyword">return</strong> cpq;
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>    }
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>  
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>    @Override
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>   <strong class="jxr_keyword">public</strong> Query parse(String query) <strong class="jxr_keyword">throws</strong> ParseException {
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>     <strong class="jxr_keyword">if</strong> (isPass2ResolvingPhrases) {
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>       MultiTermQuery.RewriteMethod oldMethod = getMultiTermRewriteMethod();
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>         <em class="jxr_comment">// Temporarily force BooleanQuery rewrite so that Parser will</em>
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>         <em class="jxr_comment">// generate visible</em>
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>         <em class="jxr_comment">// collection of terms which we can convert into SpanQueries.</em>
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>         <em class="jxr_comment">// ConstantScoreRewrite mode produces an</em>
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>         <em class="jxr_comment">// opaque ConstantScoreQuery object which cannot be interrogated for</em>
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>         <em class="jxr_comment">// terms in the same way a BooleanQuery can.</em>
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>         <em class="jxr_comment">// QueryParser is not guaranteed threadsafe anyway so this temporary</em>
+<a class="jxr_linenumber" name="L111" href="#L111">111</a>         <em class="jxr_comment">// state change should not</em>
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>         <em class="jxr_comment">// present an issue</em>
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>         setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_REWRITE);
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">super</strong>.parse(query);
+<a class="jxr_linenumber" name="L115" href="#L115">115</a>       } <strong class="jxr_keyword">finally</strong> {
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>         setMultiTermRewriteMethod(oldMethod);
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>       }
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>     }
+<a class="jxr_linenumber" name="L119" href="#L119">119</a> 
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>     <em class="jxr_comment">// First pass - parse the top-level query recording any PhraseQuerys</em>
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>     <em class="jxr_comment">// which will need to be resolved</em>
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>     complexPhrases = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L123" href="#L123">123</a>     Query q = <strong class="jxr_keyword">super</strong>.parse(query);
+<a class="jxr_linenumber" name="L124" href="#L124">124</a> 
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>     <em class="jxr_comment">// Perform second pass, using this QueryParser to parse any nested</em>
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>     <em class="jxr_comment">// PhraseQueries with different</em>
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>     <em class="jxr_comment">// set of syntax restrictions (i.e. all fields must be same)</em>
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>     isPass2ResolvingPhrases = <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>     <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>       <strong class="jxr_keyword">for</strong> (Iterator&lt;ComplexPhraseQuery&gt; iterator = complexPhrases.iterator(); iterator.hasNext();) {
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>         currentPhraseQuery = iterator.next();
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>         <em class="jxr_comment">// in each phrase, now parse the contents between quotes as a</em>
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>         <em class="jxr_comment">// separate parse operation</em>
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>         currentPhraseQuery.parsePhraseElements(<strong class="jxr_keyword">this</strong>);
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>       }
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>     } <strong class="jxr_keyword">finally</strong> {
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>       isPass2ResolvingPhrases = false;
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>     }
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>     <strong class="jxr_keyword">return</strong> q;
+<a class="jxr_linenumber" name="L140" href="#L140">140</a>   }
+<a class="jxr_linenumber" name="L141" href="#L141">141</a> 
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>   <em class="jxr_comment">// There is No "getTermQuery throws ParseException" method to override so</em>
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>   <em class="jxr_comment">// unfortunately need</em>
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>   <em class="jxr_comment">// to throw a runtime exception here if a term for another field is embedded</em>
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>   <em class="jxr_comment">// in phrase query</em>
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>   @Override
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>   <strong class="jxr_keyword">protected</strong> Query newTermQuery(Term term) {
+<a class="jxr_linenumber" name="L148" href="#L148">148</a>     <strong class="jxr_keyword">if</strong> (isPass2ResolvingPhrases) {
+<a class="jxr_linenumber" name="L149" href="#L149">149</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>         checkPhraseClauseIsForSameField(term.field());
+<a class="jxr_linenumber" name="L151" href="#L151">151</a>       } <strong class="jxr_keyword">catch</strong> (ParseException pe) {
+<a class="jxr_linenumber" name="L152" href="#L152">152</a>         <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> RuntimeException(<span class="jxr_string">"Error parsing complex phrase"</span>, pe);
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>       }
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>     }
+<a class="jxr_linenumber" name="L155" href="#L155">155</a>     <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">super</strong>.newTermQuery(term);
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>   }
+<a class="jxr_linenumber" name="L157" href="#L157">157</a> 
+<a class="jxr_linenumber" name="L158" href="#L158">158</a>   <em class="jxr_comment">// Helper method used to report on any clauses that appear in query syntax</em>
+<a class="jxr_linenumber" name="L159" href="#L159">159</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> checkPhraseClauseIsForSameField(String field)
+<a class="jxr_linenumber" name="L160" href="#L160">160</a>       <strong class="jxr_keyword">throws</strong> ParseException {
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>     <strong class="jxr_keyword">if</strong> (!field.equals(currentPhraseQuery.field)) {
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>       <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> ParseException(<span class="jxr_string">"Cannot have clause for field \&quot;"</span> + field
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>           + <span class="jxr_string">"\&quot; nested in phrase "</span> + <span class="jxr_string">" for field \&quot;"</span> + currentPhraseQuery.field
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>           + <span class="jxr_string">"\&quot;"</span>);
+<a class="jxr_linenumber" name="L165" href="#L165">165</a>     }
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>   }
+<a class="jxr_linenumber" name="L167" href="#L167">167</a> 
+<a class="jxr_linenumber" name="L168" href="#L168">168</a>   @Override
+<a class="jxr_linenumber" name="L169" href="#L169">169</a>   <strong class="jxr_keyword">protected</strong> Query getWildcardQuery(String field, String termStr)
+<a class="jxr_linenumber" name="L170" href="#L170">170</a>       <strong class="jxr_keyword">throws</strong> ParseException {
+<a class="jxr_linenumber" name="L171" href="#L171">171</a>     <strong class="jxr_keyword">if</strong> (isPass2ResolvingPhrases) {
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>       checkPhraseClauseIsForSameField(field);
+<a class="jxr_linenumber" name="L173" href="#L173">173</a>     }
+<a class="jxr_linenumber" name="L174" href="#L174">174</a>     <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">super</strong>.getWildcardQuery(field, termStr);
+<a class="jxr_linenumber" name="L175" href="#L175">175</a>   }
+<a class="jxr_linenumber" name="L176" href="#L176">176</a> 
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>   @Override
+<a class="jxr_linenumber" name="L178" href="#L178">178</a>   <strong class="jxr_keyword">protected</strong> Query getRangeQuery(String field, String part1, String part2,
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>       <strong class="jxr_keyword">boolean</strong> startInclusive, <strong class="jxr_keyword">boolean</strong> endInclusive) <strong class="jxr_keyword">throws</strong> ParseException {
+<a class="jxr_linenumber" name="L180" href="#L180">180</a>     <strong class="jxr_keyword">if</strong> (isPass2ResolvingPhrases) {
+<a class="jxr_linenumber" name="L181" href="#L181">181</a>       checkPhraseClauseIsForSameField(field);
+<a class="jxr_linenumber" name="L182" href="#L182">182</a>     }
+<a class="jxr_linenumber" name="L183" href="#L183">183</a>     <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">super</strong>.getRangeQuery(field, part1, part2, startInclusive, endInclusive);
+<a class="jxr_linenumber" name="L184" href="#L184">184</a>   }
+<a class="jxr_linenumber" name="L185" href="#L185">185</a> 
+<a class="jxr_linenumber" name="L186" href="#L186">186</a>   @Override
+<a class="jxr_linenumber" name="L187" href="#L187">187</a>   <strong class="jxr_keyword">protected</strong> Query newRangeQuery(String field, String part1, String part2,
+<a class="jxr_linenumber" name="L188" href="#L188">188</a>       <strong class="jxr_keyword">boolean</strong> startInclusive, <strong class="jxr_keyword">boolean</strong> endInclusive) {
+<a class="jxr_linenumber" name="L189" href="#L189">189</a>     <strong class="jxr_keyword">if</strong> (isPass2ResolvingPhrases) {
+<a class="jxr_linenumber" name="L190" href="#L190">190</a>       <em class="jxr_comment">// Must use old-style RangeQuery in order to produce a BooleanQuery</em>
+<a class="jxr_linenumber" name="L191" href="#L191">191</a>       <em class="jxr_comment">// that can be turned into SpanOr clause</em>
+<a class="jxr_linenumber" name="L192" href="#L192">192</a>       TermRangeQuery rangeQuery = TermRangeQuery.newStringRange(field, part1, part2, startInclusive, endInclusive);
+<a class="jxr_linenumber" name="L193" href="#L193">193</a>       rangeQuery.setRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_REWRITE);
+<a class="jxr_linenumber" name="L194" href="#L194">194</a>       <strong class="jxr_keyword">return</strong> rangeQuery;
+<a class="jxr_linenumber" name="L195" href="#L195">195</a>     }
+<a class="jxr_linenumber" name="L196" href="#L196">196</a>     <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">super</strong>.newRangeQuery(field, part1, part2, startInclusive, endInclusive);
+<a class="jxr_linenumber" name="L197" href="#L197">197</a>   }
+<a class="jxr_linenumber" name="L198" href="#L198">198</a> 
+<a class="jxr_linenumber" name="L199" href="#L199">199</a>   @Override
+<a class="jxr_linenumber" name="L200" href="#L200">200</a>   <strong class="jxr_keyword">protected</strong> Query getFuzzyQuery(String field, String termStr,
+<a class="jxr_linenumber" name="L201" href="#L201">201</a>       <strong class="jxr_keyword">float</strong> minSimilarity) <strong class="jxr_keyword">throws</strong> ParseException {
+<a class="jxr_linenumber" name="L202" href="#L202">202</a>     <strong class="jxr_keyword">if</strong> (isPass2ResolvingPhrases) {
+<a class="jxr_linenumber" name="L203" href="#L203">203</a>       checkPhraseClauseIsForSameField(field);
+<a class="jxr_linenumber" name="L204" href="#L204">204</a>     }
+<a class="jxr_linenumber" name="L205" href="#L205">205</a>     <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">super</strong>.getFuzzyQuery(field, termStr, minSimilarity);
+<a class="jxr_linenumber" name="L206" href="#L206">206</a>   }
+<a class="jxr_linenumber" name="L207" href="#L207">207</a> 
+<a class="jxr_linenumber" name="L208" href="#L208">208</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L209" href="#L209">209</a> <em class="jxr_comment">   * Used to handle the query content in between quotes and produced Span-based</em>
+<a class="jxr_linenumber" name="L210" href="#L210">210</a> <em class="jxr_comment">   * interpretations of the clauses.</em>
+<a class="jxr_linenumber" name="L211" href="#L211">211</a> <em class="jxr_comment">   */</em>
+<a class="jxr_linenumber" name="L212" href="#L212">212</a>   <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">class</strong> ComplexPhraseQuery <strong class="jxr_keyword">extends</strong> Query {
+<a class="jxr_linenumber" name="L213" href="#L213">213</a> 
+<a class="jxr_linenumber" name="L214" href="#L214">214</a>     <strong class="jxr_keyword">final</strong> String field;
+<a class="jxr_linenumber" name="L215" href="#L215">215</a> 
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>     <strong class="jxr_keyword">final</strong> String phrasedQueryStringContents;
+<a class="jxr_linenumber" name="L217" href="#L217">217</a> 
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>     <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> slopFactor;
+<a class="jxr_linenumber" name="L219" href="#L219">219</a> 
+<a class="jxr_linenumber" name="L220" href="#L220">220</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">boolean</strong> inOrder;
+<a class="jxr_linenumber" name="L221" href="#L221">221</a> 
+<a class="jxr_linenumber" name="L222" href="#L222">222</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> Query[] contents = <strong class="jxr_keyword">new</strong> Query[1];
+<a class="jxr_linenumber" name="L223" href="#L223">223</a> 
+<a class="jxr_linenumber" name="L224" href="#L224">224</a>     <strong class="jxr_keyword">public</strong> ComplexPhraseQuery(String field, String phrasedQueryStringContents,
+<a class="jxr_linenumber" name="L225" href="#L225">225</a>         <strong class="jxr_keyword">int</strong> slopFactor, <strong class="jxr_keyword">boolean</strong> inOrder) {
+<a class="jxr_linenumber" name="L226" href="#L226">226</a>       <strong class="jxr_keyword">super</strong>();
+<a class="jxr_linenumber" name="L227" href="#L227">227</a>       <strong class="jxr_keyword">this</strong>.field = field;
+<a class="jxr_linenumber" name="L228" href="#L228">228</a>       <strong class="jxr_keyword">this</strong>.phrasedQueryStringContents = phrasedQueryStringContents;
+<a class="jxr_linenumber" name="L229" href="#L229">229</a>       <strong class="jxr_keyword">this</strong>.slopFactor = slopFactor;
+<a class="jxr_linenumber" name="L230" href="#L230">230</a>       <strong class="jxr_keyword">this</strong>.inOrder = inOrder;
+<a class="jxr_linenumber" name="L231" href="#L231">231</a>     }
+<a class="jxr_linenumber" name="L232" href="#L232">232</a> 
+<a class="jxr_linenumber" name="L233" href="#L233">233</a>     <em class="jxr_comment">// Called by ComplexPhraseQueryParser for each phrase after the main</em>
+<a class="jxr_linenumber" name="L234" href="#L234">234</a>     <em class="jxr_comment">// parse</em>
+<a class="jxr_linenumber" name="L235" href="#L235">235</a>     <em class="jxr_comment">// thread is through</em>
+<a class="jxr_linenumber" name="L236" href="#L236">236</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">void</strong> parsePhraseElements(ComplexPhraseQueryParser qp) <strong class="jxr_keyword">throws</strong> ParseException {
+<a class="jxr_linenumber" name="L237" href="#L237">237</a>       <em class="jxr_comment">// TODO ensure that field-sensitivity is preserved ie the query</em>
+<a class="jxr_linenumber" name="L238" href="#L238">238</a>       <em class="jxr_comment">// string below is parsed as</em>
+<a class="jxr_linenumber" name="L239" href="#L239">239</a>       <em class="jxr_comment">// field+":("+phrasedQueryStringContents+")"</em>
+<a class="jxr_linenumber" name="L240" href="#L240">240</a>       <em class="jxr_comment">// but this will need code in rewrite to unwrap the first layer of</em>
+<a class="jxr_linenumber" name="L241" href="#L241">241</a>       <em class="jxr_comment">// boolean query</em>
+<a class="jxr_linenumber" name="L242" href="#L242">242</a> 
+<a class="jxr_linenumber" name="L243" href="#L243">243</a>       String oldDefaultParserField = qp.field;
+<a class="jxr_linenumber" name="L244" href="#L244">244</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L245" href="#L245">245</a>         <em class="jxr_comment">//temporarily set the QueryParser to be parsing the default field for this phrase e.g author:"fred* smith"</em>
+<a class="jxr_linenumber" name="L246" href="#L246">246</a>         qp.field = <strong class="jxr_keyword">this</strong>.field;
+<a class="jxr_linenumber" name="L247" href="#L247">247</a>         contents[0] = qp.parse(phrasedQueryStringContents);
+<a class="jxr_linenumber" name="L248" href="#L248">248</a>       }
+<a class="jxr_linenumber" name="L249" href="#L249">249</a>       <strong class="jxr_keyword">finally</strong> {
+<a class="jxr_linenumber" name="L250" href="#L250">250</a>         qp.field = oldDefaultParserField;
+<a class="jxr_linenumber" name="L251" href="#L251">251</a>       }
+<a class="jxr_linenumber" name="L252" href="#L252">252</a>     }
+<a class="jxr_linenumber" name="L253" href="#L253">253</a> 
+<a class="jxr_linenumber" name="L254" href="#L254">254</a>     @Override
+<a class="jxr_linenumber" name="L255" href="#L255">255</a>     <strong class="jxr_keyword">public</strong> Query rewrite(IndexReader reader) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L256" href="#L256">256</a>       <strong class="jxr_keyword">if</strong> (getBoost() != 1f) {
+<a class="jxr_linenumber" name="L257" href="#L257">257</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">super</strong>.rewrite(reader);
+<a class="jxr_linenumber" name="L258" href="#L258">258</a>       }
+<a class="jxr_linenumber" name="L259" href="#L259">259</a>       <strong class="jxr_keyword">final</strong> Query contents = <strong class="jxr_keyword">this</strong>.contents[0];
+<a class="jxr_linenumber" name="L260" href="#L260">260</a>       <em class="jxr_comment">// ArrayList spanClauses = new ArrayList();</em>
+<a class="jxr_linenumber" name="L261" href="#L261">261</a>       <strong class="jxr_keyword">if</strong> (contents instanceof TermQuery) {
+<a class="jxr_linenumber" name="L262" href="#L262">262</a>         <strong class="jxr_keyword">return</strong> contents;
+<a class="jxr_linenumber" name="L263" href="#L263">263</a>       }
+<a class="jxr_linenumber" name="L264" href="#L264">264</a>       <em class="jxr_comment">// Build a sequence of Span clauses arranged in a SpanNear - child</em>
+<a class="jxr_linenumber" name="L265" href="#L265">265</a>       <em class="jxr_comment">// clauses can be complex</em>
+<a class="jxr_linenumber" name="L266" href="#L266">266</a>       <em class="jxr_comment">// Booleans e.g. nots and ors etc</em>
+<a class="jxr_linenumber" name="L267" href="#L267">267</a>       <strong class="jxr_keyword">int</strong> numNegatives = 0;
+<a class="jxr_linenumber" name="L268" href="#L268">268</a>       <strong class="jxr_keyword">if</strong> (!(contents instanceof BooleanQuery)) {
+<a class="jxr_linenumber" name="L269" href="#L269">269</a>         <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> IllegalArgumentException(<span class="jxr_string">"Unknown query type \&quot;"</span>
+<a class="jxr_linenumber" name="L270" href="#L270">270</a>             + contents.getClass().getName()
+<a class="jxr_linenumber" name="L271" href="#L271">271</a>             + <span class="jxr_string">"\&quot; found in phrase query string \&quot;"</span> + phrasedQueryStringContents
+<a class="jxr_linenumber" name="L272" href="#L272">272</a>             + <span class="jxr_string">"\&quot;"</span>);
+<a class="jxr_linenumber" name="L273" href="#L273">273</a>       }
+<a class="jxr_linenumber" name="L274" href="#L274">274</a>       BooleanQuery bq = (BooleanQuery) contents;
+<a class="jxr_linenumber" name="L275" href="#L275">275</a>       SpanQuery[] allSpanClauses = <strong class="jxr_keyword">new</strong> SpanQuery[bq.clauses().size()];
+<a class="jxr_linenumber" name="L276" href="#L276">276</a>       <em class="jxr_comment">// For all clauses e.g. one* two~</em>
+<a class="jxr_linenumber" name="L277" href="#L277">277</a>       <strong class="jxr_keyword">int</strong> i = 0;
+<a class="jxr_linenumber" name="L278" href="#L278">278</a>       <strong class="jxr_keyword">for</strong> (BooleanClause clause : bq) {
+<a class="jxr_linenumber" name="L279" href="#L279">279</a>         <em class="jxr_comment">// HashSet bclauseterms=new HashSet();</em>
+<a class="jxr_linenumber" name="L280" href="#L280">280</a>         Query qc = clause.getQuery();
+<a class="jxr_linenumber" name="L281" href="#L281">281</a>         <em class="jxr_comment">// Rewrite this clause e.g one* becomes (one OR onerous)</em>
+<a class="jxr_linenumber" name="L282" href="#L282">282</a>         qc = <strong class="jxr_keyword">new</strong> IndexSearcher(reader).rewrite(qc);
+<a class="jxr_linenumber" name="L283" href="#L283">283</a>         <strong class="jxr_keyword">if</strong> (clause.getOccur().equals(BooleanClause.Occur.MUST_NOT)) {
+<a class="jxr_linenumber" name="L284" href="#L284">284</a>           numNegatives++;
+<a class="jxr_linenumber" name="L285" href="#L285">285</a>         }
+<a class="jxr_linenumber" name="L286" href="#L286">286</a> 
+<a class="jxr_linenumber" name="L287" href="#L287">287</a>         <strong class="jxr_keyword">while</strong> (qc instanceof BoostQuery) {
+<a class="jxr_linenumber" name="L288" href="#L288">288</a>           qc = ((BoostQuery) qc).getQuery();
+<a class="jxr_linenumber" name="L289" href="#L289">289</a>         }
+<a class="jxr_linenumber" name="L290" href="#L290">290</a> 
+<a class="jxr_linenumber" name="L291" href="#L291">291</a>         <strong class="jxr_keyword">if</strong> (qc instanceof BooleanQuery) {
+<a class="jxr_linenumber" name="L292" href="#L292">292</a>           ArrayList&lt;SpanQuery&gt; sc = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L293" href="#L293">293</a>           addComplexPhraseClause(sc, (BooleanQuery) qc);
+<a class="jxr_linenumber" name="L294" href="#L294">294</a>           <strong class="jxr_keyword">if</strong> (sc.size() &gt; 0) {
+<a class="jxr_linenumber" name="L295" href="#L295">295</a>             allSpanClauses[i] = sc.get(0);
+<a class="jxr_linenumber" name="L296" href="#L296">296</a>           } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L297" href="#L297">297</a>             <em class="jxr_comment">// Insert fake term e.g. phrase query was for "Fred Smithe*" and</em>
+<a class="jxr_linenumber" name="L298" href="#L298">298</a>             <em class="jxr_comment">// there were no "Smithe*" terms - need to</em>
+<a class="jxr_linenumber" name="L299" href="#L299">299</a>             <em class="jxr_comment">// prevent match on just "Fred".</em>
+<a class="jxr_linenumber" name="L300" href="#L300">300</a>             allSpanClauses[i] = <strong class="jxr_keyword">new</strong> SpanTermQuery(<strong class="jxr_keyword">new</strong> Term(field,
+<a class="jxr_linenumber" name="L301" href="#L301">301</a>                 <span class="jxr_string">"Dummy clause because no terms found - must match nothing"</span>));
+<a class="jxr_linenumber" name="L302" href="#L302">302</a>           }
+<a class="jxr_linenumber" name="L303" href="#L303">303</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L304" href="#L304">304</a>           <strong class="jxr_keyword">if</strong> (qc instanceof TermQuery) {
+<a class="jxr_linenumber" name="L305" href="#L305">305</a>             TermQuery tq = (TermQuery) qc;
+<a class="jxr_linenumber" name="L306" href="#L306">306</a>             allSpanClauses[i] = <strong class="jxr_keyword">new</strong> SpanTermQuery(tq.getTerm());
+<a class="jxr_linenumber" name="L307" href="#L307">307</a>           } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L308" href="#L308">308</a>             <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> IllegalArgumentException(<span class="jxr_string">"Unknown query type \&quot;"</span>
+<a class="jxr_linenumber" name="L309" href="#L309">309</a>                 + qc.getClass().getName()
+<a class="jxr_linenumber" name="L310" href="#L310">310</a>                 + <span class="jxr_string">"\&quot; found in phrase query string \&quot;"</span>
+<a class="jxr_linenumber" name="L311" href="#L311">311</a>                 + phrasedQueryStringContents + <span class="jxr_string">"\&quot;"</span>);
+<a class="jxr_linenumber" name="L312" href="#L312">312</a>           }
+<a class="jxr_linenumber" name="L313" href="#L313">313</a> 
+<a class="jxr_linenumber" name="L314" href="#L314">314</a>         }
+<a class="jxr_linenumber" name="L315" href="#L315">315</a>         i += 1;
+<a class="jxr_linenumber" name="L316" href="#L316">316</a>       }
+<a class="jxr_linenumber" name="L317" href="#L317">317</a>       <strong class="jxr_keyword">if</strong> (numNegatives == 0) {
+<a class="jxr_linenumber" name="L318" href="#L318">318</a>         <em class="jxr_comment">// The simple case - no negative elements in phrase</em>
+<a class="jxr_linenumber" name="L319" href="#L319">319</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> SpanNearQuery(allSpanClauses, slopFactor, inOrder);
+<a class="jxr_linenumber" name="L320" href="#L320">320</a>       }
+<a class="jxr_linenumber" name="L321" href="#L321">321</a>       <em class="jxr_comment">// Complex case - we have mixed positives and negatives in the</em>
+<a class="jxr_linenumber" name="L322" href="#L322">322</a>       <em class="jxr_comment">// sequence.</em>
+<a class="jxr_linenumber" name="L323" href="#L323">323</a>       <em class="jxr_comment">// Need to return a SpanNotQuery</em>
+<a class="jxr_linenumber" name="L324" href="#L324">324</a>       ArrayList&lt;SpanQuery&gt; positiveClauses = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L325" href="#L325">325</a>       i = 0;
+<a class="jxr_linenumber" name="L326" href="#L326">326</a>       <strong class="jxr_keyword">for</strong> (BooleanClause clause : bq) {
+<a class="jxr_linenumber" name="L327" href="#L327">327</a>         <strong class="jxr_keyword">if</strong> (!clause.getOccur().equals(BooleanClause.Occur.MUST_NOT)) {
+<a class="jxr_linenumber" name="L328" href="#L328">328</a>           positiveClauses.add(allSpanClauses[i]);
+<a class="jxr_linenumber" name="L329" href="#L329">329</a>         }
+<a class="jxr_linenumber" name="L330" href="#L330">330</a>         i += 1;
+<a class="jxr_linenumber" name="L331" href="#L331">331</a>       }
+<a class="jxr_linenumber" name="L332" href="#L332">332</a> 
+<a class="jxr_linenumber" name="L333" href="#L333">333</a>       SpanQuery[] includeClauses = positiveClauses
+<a class="jxr_linenumber" name="L334" href="#L334">334</a>           .toArray(<strong class="jxr_keyword">new</strong> SpanQuery[positiveClauses.size()]);
+<a class="jxr_linenumber" name="L335" href="#L335">335</a> 
+<a class="jxr_linenumber" name="L336" href="#L336">336</a>       SpanQuery include = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L337" href="#L337">337</a>       <strong class="jxr_keyword">if</strong> (includeClauses.length == 1) {
+<a class="jxr_linenumber" name="L338" href="#L338">338</a>         include = includeClauses[0]; <em class="jxr_comment">// only one positive clause</em>
+<a class="jxr_linenumber" name="L339" href="#L339">339</a>       } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L340" href="#L340">340</a>         <em class="jxr_comment">// need to increase slop factor based on gaps introduced by</em>
+<a class="jxr_linenumber" name="L341" href="#L341">341</a>         <em class="jxr_comment">// negatives</em>
+<a class="jxr_linenumber" name="L342" href="#L342">342</a>         include = <strong class="jxr_keyword">new</strong> SpanNearQuery(includeClauses, slopFactor + numNegatives,
+<a class="jxr_linenumber" name="L343" href="#L343">343</a>             inOrder);
+<a class="jxr_linenumber" name="L344" href="#L344">344</a>       }
+<a class="jxr_linenumber" name="L345" href="#L345">345</a>       <em class="jxr_comment">// Use sequence of positive and negative values as the exclude.</em>
+<a class="jxr_linenumber" name="L346" href="#L346">346</a>       SpanNearQuery exclude = <strong class="jxr_keyword">new</strong> SpanNearQuery(allSpanClauses, slopFactor,
+<a class="jxr_linenumber" name="L347" href="#L347">347</a>           inOrder);
+<a class="jxr_linenumber" name="L348" href="#L348">348</a>       SpanNotQuery snot = <strong class="jxr_keyword">new</strong> SpanNotQuery(include, exclude);
+<a class="jxr_linenumber" name="L349" href="#L349">349</a>       <strong class="jxr_keyword">return</strong> snot;
+<a class="jxr_linenumber" name="L350" href="#L350">350</a>     }
+<a class="jxr_linenumber" name="L351" href="#L351">351</a> 
+<a class="jxr_linenumber" name="L352" href="#L352">352</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> addComplexPhraseClause(List&lt;SpanQuery&gt; spanClauses, BooleanQuery qc) {
+<a class="jxr_linenumber" name="L353" href="#L353">353</a>       ArrayList&lt;SpanQuery&gt; ors = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L354" href="#L354">354</a>       ArrayList&lt;SpanQuery&gt; nots = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L355" href="#L355">355</a> 
+<a class="jxr_linenumber" name="L356" href="#L356">356</a>       <em class="jxr_comment">// For all clauses e.g. one* two~</em>
+<a class="jxr_linenumber" name="L357" href="#L357">357</a>       <strong class="jxr_keyword">for</strong> (BooleanClause clause : qc) {
+<a class="jxr_linenumber" name="L358" href="#L358">358</a>         Query childQuery = clause.getQuery();
+<a class="jxr_linenumber" name="L359" href="#L359">359</a> 
+<a class="jxr_linenumber" name="L360" href="#L360">360</a>         <strong class="jxr_keyword">float</strong> boost = 1f;
+<a class="jxr_linenumber" name="L361" href="#L361">361</a>         <strong class="jxr_keyword">while</strong> (childQuery instanceof BoostQuery) {
+<a class="jxr_linenumber" name="L362" href="#L362">362</a>           BoostQuery bq = (BoostQuery) childQuery;
+<a class="jxr_linenumber" name="L363" href="#L363">363</a>           boost *= bq.getBoost();
+<a class="jxr_linenumber" name="L364" href="#L364">364</a>           childQuery = bq.getQuery();
+<a class="jxr_linenumber" name="L365" href="#L365">365</a>         }
+<a class="jxr_linenumber" name="L366" href="#L366">366</a> 
+<a class="jxr_linenumber" name="L367" href="#L367">367</a>         <em class="jxr_comment">// select the list to which we will add these options</em>
+<a class="jxr_linenumber" name="L368" href="#L368">368</a>         ArrayList&lt;SpanQuery&gt; chosenList = ors;
+<a class="jxr_linenumber" name="L369" href="#L369">369</a>         <strong class="jxr_keyword">if</strong> (clause.getOccur() == BooleanClause.Occur.MUST_NOT) {
+<a class="jxr_linenumber" name="L370" href="#L370">370</a>           chosenList = nots;
+<a class="jxr_linenumber" name="L371" href="#L371">371</a>         }
+<a class="jxr_linenumber" name="L372" href="#L372">372</a> 
+<a class="jxr_linenumber" name="L373" href="#L373">373</a>         <strong class="jxr_keyword">if</strong> (childQuery instanceof TermQuery) {
+<a class="jxr_linenumber" name="L374" href="#L374">374</a>           TermQuery tq = (TermQuery) childQuery;
+<a class="jxr_linenumber" name="L375" href="#L375">375</a>           SpanQuery stq = <strong class="jxr_keyword">new</strong> SpanTermQuery(tq.getTerm());
+<a class="jxr_linenumber" name="L376" href="#L376">376</a>           <strong class="jxr_keyword">if</strong> (boost != 1f) {
+<a class="jxr_linenumber" name="L377" href="#L377">377</a>             stq = <strong class="jxr_keyword">new</strong> SpanBoostQuery(stq, boost);
+<a class="jxr_linenumber" name="L378" href="#L378">378</a>           }
+<a class="jxr_linenumber" name="L379" href="#L379">379</a>           chosenList.add(stq);
+<a class="jxr_linenumber" name="L380" href="#L380">380</a>         } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (childQuery instanceof BooleanQuery) {
+<a class="jxr_linenumber" name="L381" href="#L381">381</a>           BooleanQuery cbq = (BooleanQuery) childQuery;
+<a class="jxr_linenumber" name="L382" href="#L382">382</a>           addComplexPhraseClause(chosenList, cbq);
+<a class="jxr_linenumber" name="L383" href="#L383">383</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L384" href="#L384">384</a>           <em class="jxr_comment">// TODO alternatively could call extract terms here?</em>
+<a class="jxr_linenumber" name="L385" href="#L385">385</a>           <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> IllegalArgumentException(<span class="jxr_string">"Unknown query type:"</span>
+<a class="jxr_linenumber" name="L386" href="#L386">386</a>               + childQuery.getClass().getName());
+<a class="jxr_linenumber" name="L387" href="#L387">387</a>         }
+<a class="jxr_linenumber" name="L388" href="#L388">388</a>       }
+<a class="jxr_linenumber" name="L389" href="#L389">389</a>       <strong class="jxr_keyword">if</strong> (ors.size() == 0) {
+<a class="jxr_linenumber" name="L390" href="#L390">390</a>         <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L391" href="#L391">391</a>       }
+<a class="jxr_linenumber" name="L392" href="#L392">392</a>       SpanOrQuery soq = <strong class="jxr_keyword">new</strong> SpanOrQuery(ors
+<a class="jxr_linenumber" name="L393" href="#L393">393</a>           .toArray(<strong class="jxr_keyword">new</strong> SpanQuery[ors.size()]));
+<a class="jxr_linenumber" name="L394" href="#L394">394</a>       <strong class="jxr_keyword">if</strong> (nots.size() == 0) {
+<a class="jxr_linenumber" name="L395" href="#L395">395</a>         spanClauses.add(soq);
+<a class="jxr_linenumber" name="L396" href="#L396">396</a>       } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L397" href="#L397">397</a>         SpanOrQuery snqs = <strong class="jxr_keyword">new</strong> SpanOrQuery(nots
+<a class="jxr_linenumber" name="L398" href="#L398">398</a>             .toArray(<strong class="jxr_keyword">new</strong> SpanQuery[nots.size()]));
+<a class="jxr_linenumber" name="L399" href="#L399">399</a>         SpanNotQuery snq = <strong class="jxr_keyword">new</strong> SpanNotQuery(soq, snqs);
+<a class="jxr_linenumber" name="L400" href="#L400">400</a>         spanClauses.add(snq);
+<a class="jxr_linenumber" name="L401" href="#L401">401</a>       }
+<a class="jxr_linenumber" name="L402" href="#L402">402</a>     }
+<a class="jxr_linenumber" name="L403" href="#L403">403</a> 
+<a class="jxr_linenumber" name="L404" href="#L404">404</a>     @Override
+<a class="jxr_linenumber" name="L405" href="#L405">405</a>     <strong class="jxr_keyword">public</strong> String toString(String field) {
+<a class="jxr_linenumber" name="L406" href="#L406">406</a>       <strong class="jxr_keyword">if</strong> (slopFactor == 0)
+<a class="jxr_linenumber" name="L407" href="#L407">407</a>         <strong class="jxr_keyword">return</strong> <span class="jxr_string">"\&quot;"</span> + phrasedQueryStringContents + <span class="jxr_string">"\&quot;"</span>;
+<a class="jxr_linenumber" name="L408" href="#L408">408</a>       <strong class="jxr_keyword">else</strong>
+<a class="jxr_linenumber" name="L409" href="#L409">409</a>         <strong class="jxr_keyword">return</strong> <span class="jxr_string">"\&quot;"</span> + phrasedQueryStringContents + <span class="jxr_string">"\&quot;"</span> + <span class="jxr_string">"~"</span> + slopFactor;
+<a class="jxr_linenumber" name="L410" href="#L410">410</a>     }
+<a class="jxr_linenumber" name="L411" href="#L411">411</a> 
+<a class="jxr_linenumber" name="L412" href="#L412">412</a>     @Override
+<a class="jxr_linenumber" name="L413" href="#L413">413</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">int</strong> hashCode() {
+<a class="jxr_linenumber" name="L414" href="#L414">414</a>       <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> prime = 31;
+<a class="jxr_linenumber" name="L415" href="#L415">415</a>       <strong class="jxr_keyword">int</strong> result = <strong class="jxr_keyword">super</strong>.hashCode();
+<a class="jxr_linenumber" name="L416" href="#L416">416</a>       result = prime * result + ((field == <strong class="jxr_keyword">null</strong>) ? 0 : field.hashCode());
+<a class="jxr_linenumber" name="L417" href="#L417">417</a>       result = prime
+<a class="jxr_linenumber" name="L418" href="#L418">418</a>           * result
+<a class="jxr_linenumber" name="L419" href="#L419">419</a>           + ((phrasedQueryStringContents == <strong class="jxr_keyword">null</strong>) ? 0
+<a class="jxr_linenumber" name="L420" href="#L420">420</a>               : phrasedQueryStringContents.hashCode());
+<a class="jxr_linenumber" name="L421" href="#L421">421</a>       result = prime * result + slopFactor;
+<a class="jxr_linenumber" name="L422" href="#L422">422</a>       result = prime * result + (inOrder ? 1 : 0);
+<a class="jxr_linenumber" name="L423" href="#L423">423</a>       <strong class="jxr_keyword">return</strong> result;
+<a class="jxr_linenumber" name="L424" href="#L424">424</a>     }
+<a class="jxr_linenumber" name="L425" href="#L425">425</a> 
+<a class="jxr_linenumber" name="L426" href="#L426">426</a>     @Override
+<a class="jxr_linenumber" name="L427" href="#L427">427</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> equals(Object obj) {
+<a class="jxr_linenumber" name="L428" href="#L428">428</a>       <strong class="jxr_keyword">if</strong> (<strong class="jxr_keyword">this</strong> == obj)
+<a class="jxr_linenumber" name="L429" href="#L429">429</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L430" href="#L430">430</a>       <strong class="jxr_keyword">if</strong> (obj == <strong class="jxr_keyword">null</strong>)
+<a class="jxr_linenumber" name="L431" href="#L431">431</a>         <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L432" href="#L432">432</a>       <strong class="jxr_keyword">if</strong> (getClass() != obj.getClass())
+<a class="jxr_linenumber" name="L433" href="#L433">433</a>         <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L434" href="#L434">434</a>       <strong class="jxr_keyword">if</strong> (!<strong class="jxr_keyword">super</strong>.equals(obj)) {
+<a class="jxr_linenumber" name="L435" href="#L435">435</a>         <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L436" href="#L436">436</a>       }
+<a class="jxr_linenumber" name="L437" href="#L437">437</a>       ComplexPhraseQuery other = (ComplexPhraseQuery) obj;
+<a class="jxr_linenumber" name="L438" href="#L438">438</a>       <strong class="jxr_keyword">if</strong> (field == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L439" href="#L439">439</a>         <strong class="jxr_keyword">if</strong> (other.field != <strong class="jxr_keyword">null</strong>)
+<a class="jxr_linenumber" name="L440" href="#L440">440</a>           <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L441" href="#L441">441</a>       } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (!field.equals(other.field))
+<a class="jxr_linenumber" name="L442" href="#L442">442</a>         <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L443" href="#L443">443</a>       <strong class="jxr_keyword">if</strong> (phrasedQueryStringContents == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L444" href="#L444">444</a>         <strong class="jxr_keyword">if</strong> (other.phrasedQueryStringContents != <strong class="jxr_keyword">null</strong>)
+<a class="jxr_linenumber" name="L445" href="#L445">445</a>           <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L446" href="#L446">446</a>       } <strong class="jxr_keyword">else</strong> <strong class="jxr_keyword">if</strong> (!phrasedQueryStringContents
+<a class="jxr_linenumber" name="L447" href="#L447">447</a>           .equals(other.phrasedQueryStringContents))
+<a class="jxr_linenumber" name="L448" href="#L448">448</a>         <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L449" href="#L449">449</a>       <strong class="jxr_keyword">if</strong> (slopFactor != other.slopFactor)
+<a class="jxr_linenumber" name="L450" href="#L450">450</a>         <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L451" href="#L451">451</a>       <strong class="jxr_keyword">return</strong> inOrder == other.inOrder;
+<a class="jxr_linenumber" name="L452" href="#L452">452</a>     }
+<a class="jxr_linenumber" name="L453" href="#L453">453</a>   }
+<a class="jxr_linenumber" name="L454" href="#L454">454</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

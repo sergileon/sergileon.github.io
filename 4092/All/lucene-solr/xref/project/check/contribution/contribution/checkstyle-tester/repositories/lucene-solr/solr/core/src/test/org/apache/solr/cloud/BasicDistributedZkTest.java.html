@@ -1,0 +1,1151 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>BasicDistributedZkTest xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.solr.cloud;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> org.apache.commons.lang.StringUtils;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.IOUtils;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.LuceneTestCase.Slow;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.JSONTestUtil;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.SolrTestCaseJ4.SuppressSSL;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.SolrClient;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.SolrQuery;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.SolrRequest;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.SolrServerException;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.impl.CloudSolrClient;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.impl.HttpSolrClient;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.request.AbstractUpdateRequest;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.request.ContentStreamUpdateRequest;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.request.CoreAdminRequest.Create;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.request.CoreAdminRequest.Unload;
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.request.QueryRequest;
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.response.CollectionAdminResponse;
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.response.QueryResponse;
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.client.solrj.response.UpdateResponse;
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.SolrDocument;
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.SolrException;
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.SolrInputDocument;
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.cloud.ClusterState;
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.cloud.Slice;
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.cloud.ZkCoreNodeProps;
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.cloud.ZkNodeProps;
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.cloud.ZkStateReader;
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.params.CollectionParams.CollectionAction;
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.params.CommonParams;
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.params.ModifiableSolrParams;
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.params.UpdateParams;
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.util.ExecutorUtil;
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.common.util.NamedList;
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.update.DirectUpdateHandler2;
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.util.DefaultSolrThreadFactory;
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>  <strong class="jxr_keyword">import</strong> org.apache.solr.util.TimeOut;
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>  <strong class="jxr_keyword">import</strong> org.junit.BeforeClass;
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>  <strong class="jxr_keyword">import</strong> org.junit.Test;
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>  <strong class="jxr_keyword">import</strong> org.slf4j.Logger;
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>  <strong class="jxr_keyword">import</strong> org.slf4j.LoggerFactory;
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>  
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>  <strong class="jxr_keyword">import</strong> java.io.IOException;
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>  <strong class="jxr_keyword">import</strong> java.lang.invoke.MethodHandles;
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>  <strong class="jxr_keyword">import</strong> java.util.ArrayList;
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>  <strong class="jxr_keyword">import</strong> java.util.Collections;
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>  <strong class="jxr_keyword">import</strong> java.util.HashMap;
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>  <strong class="jxr_keyword">import</strong> java.util.HashSet;
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>  <strong class="jxr_keyword">import</strong> java.util.List;
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>  <strong class="jxr_keyword">import</strong> java.util.Map;
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>  <strong class="jxr_keyword">import</strong> java.util.Set;
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>  <strong class="jxr_keyword">import</strong> java.util.concurrent.Callable;
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>  <strong class="jxr_keyword">import</strong> java.util.concurrent.CompletionService;
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>  <strong class="jxr_keyword">import</strong> java.util.concurrent.ExecutorCompletionService;
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>  <strong class="jxr_keyword">import</strong> java.util.concurrent.Future;
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>  <strong class="jxr_keyword">import</strong> java.util.concurrent.SynchronousQueue;
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>  <strong class="jxr_keyword">import</strong> java.util.concurrent.ThreadPoolExecutor;
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>  <strong class="jxr_keyword">import</strong> java.util.concurrent.TimeUnit;
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>  <strong class="jxr_keyword">import</strong> java.util.concurrent.atomic.AtomicInteger;
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>  
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>  
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>  <em class="jxr_javadoccomment"> * This test simply does a bunch of basic things in solrcloud mode and asserts things</em>
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>  <em class="jxr_javadoccomment"> * work as expected.</em>
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>  @Slow 
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>  @SuppressSSL(bugUrl = <span class="jxr_string">"https://issues.apache.org/jira/browse/SOLR-5776"</span>)
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> BasicDistributedZkTest <strong class="jxr_keyword">extends</strong> AbstractFullDistribZkTestBase {
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>  
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> Logger log = LoggerFactory.getLogger(MethodHandles.lookup().lookupClass());
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>  
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>    <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String DEFAULT_COLLECTION = <span class="jxr_string">"collection1"</span>;
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>    <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">boolean</strong> DEBUG = false;
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>    String t1=<span class="jxr_string">"a_t"</span>;
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>    String i1=<span class="jxr_string">"a_i1"</span>;
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>    String tlong = <span class="jxr_string">"other_tl1"</span>;
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>  
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>    String oddField=<span class="jxr_string">"oddField_s"</span>;
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>    String missingField=<span class="jxr_string">"ignore_exception__missing_but_valid_field_t"</span>;
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>  
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>    <strong class="jxr_keyword">private</strong> Map&lt;String,List&lt;SolrClient&gt;&gt; otherCollectionClients = <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;();
+<a class="jxr_linenumber" name="L100" href="#L100">100</a> 
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>   <strong class="jxr_keyword">private</strong> String oneInstanceCollection = <span class="jxr_string">"oneInstanceCollection"</span>;
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>   <strong class="jxr_keyword">private</strong> String oneInstanceCollection2 = <span class="jxr_string">"oneInstanceCollection2"</span>;
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>   
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>   <strong class="jxr_keyword">private</strong> AtomicInteger nodeCounter = <strong class="jxr_keyword">new</strong> AtomicInteger();
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>   
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>   ThreadPoolExecutor executor = <strong class="jxr_keyword">new</strong> ExecutorUtil.MDCAwareThreadPoolExecutor(0,
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>       Integer.MAX_VALUE, 5, TimeUnit.SECONDS, <strong class="jxr_keyword">new</strong> SynchronousQueue&lt;Runnable&gt;(),
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>       <strong class="jxr_keyword">new</strong> DefaultSolrThreadFactory(<span class="jxr_string">"testExecutor"</span>));
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>   
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>   CompletionService&lt;Object&gt; completionService;
+<a class="jxr_linenumber" name="L111" href="#L111">111</a>   Set&lt;Future&lt;Object&gt;&gt; pending;
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>   
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>   <strong class="jxr_keyword">public</strong> BasicDistributedZkTest() {
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>     sliceCount = 2;
+<a class="jxr_linenumber" name="L115" href="#L115">115</a>     completionService = <strong class="jxr_keyword">new</strong> ExecutorCompletionService&lt;&gt;(executor);
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>     pending = <strong class="jxr_keyword">new</strong> HashSet&lt;&gt;();
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>     
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>   }
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>   
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>   @Override
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>   <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">void</strong> setDistributedParams(ModifiableSolrParams params) {
+<a class="jxr_linenumber" name="L122" href="#L122">122</a> 
+<a class="jxr_linenumber" name="L123" href="#L123">123</a>     <strong class="jxr_keyword">if</strong> (r.nextBoolean()) {
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>       <em class="jxr_comment">// don't set shards, let that be figured out from the cloud state</em>
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>     } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>       <em class="jxr_comment">// use shard ids rather than physical locations</em>
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>       StringBuilder sb = <strong class="jxr_keyword">new</strong> StringBuilder();
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>       <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; getShardCount(); i++) {
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>         <strong class="jxr_keyword">if</strong> (i &gt; 0)
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>           sb.append(',');
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>         sb.append(<span class="jxr_string">"shard"</span> + (i + 3));
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>       }
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>       params.set(<span class="jxr_string">"shards"</span>, sb.toString());
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>     }
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>   }
+<a class="jxr_linenumber" name="L136" href="#L136">136</a> 
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>   @Test
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>   @ShardsFixed(num = 4)
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> test() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L140" href="#L140">140</a>     <em class="jxr_comment">// setLoggingLevel(null);</em>
+<a class="jxr_linenumber" name="L141" href="#L141">141</a> 
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>     ZkStateReader zkStateReader = cloudClient.getZkStateReader();
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>     <em class="jxr_comment">// make sure we have leaders for each shard</em>
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> j = 1; j &lt; sliceCount; j++) {
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>       zkStateReader.getLeaderRetry(DEFAULT_COLLECTION, <span class="jxr_string">"shard"</span> + j, 10000);
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>     }      <em class="jxr_comment">// make sure we again have leaders for each shard</em>
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>     
+<a class="jxr_linenumber" name="L148" href="#L148">148</a>     waitForRecoveriesToFinish(false);
+<a class="jxr_linenumber" name="L149" href="#L149">149</a>     
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>     handle.clear();
+<a class="jxr_linenumber" name="L151" href="#L151">151</a>     handle.put(<span class="jxr_string">"timestamp"</span>, SKIPVAL);
+<a class="jxr_linenumber" name="L152" href="#L152">152</a> 
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>     del(<span class="jxr_string">"*:*"</span>);
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>     queryAndCompareShards(params(<span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>, <span class="jxr_string">"distrib"</span>, <span class="jxr_string">"false"</span>, <span class="jxr_string">"sanity_check"</span>, <span class="jxr_string">"is_empty"</span>));
+<a class="jxr_linenumber" name="L155" href="#L155">155</a> 
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>     <em class="jxr_comment">// ask every individual replica of every shard to update+commit the same doc id</em>
+<a class="jxr_linenumber" name="L157" href="#L157">157</a>     <em class="jxr_comment">// with an incrementing counter on each update+commit</em>
+<a class="jxr_linenumber" name="L158" href="#L158">158</a>     <strong class="jxr_keyword">int</strong> foo_i_counter = 0;
+<a class="jxr_linenumber" name="L159" href="#L159">159</a>     <strong class="jxr_keyword">for</strong> (SolrClient client : clients) {
+<a class="jxr_linenumber" name="L160" href="#L160">160</a>       foo_i_counter++;
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>       indexDoc(client, params(<span class="jxr_string">"commit"</span>, <span class="jxr_string">"true"</span>), <em class="jxr_comment">// SOLR-4923</em>
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>                sdoc(id,1, i1,100, tlong,100, <span class="jxr_string">"foo_i"</span>, foo_i_counter));
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>       <em class="jxr_comment">// after every update+commit, check all the shards consistency</em>
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>       queryAndCompareShards(params(<span class="jxr_string">"q"</span>, <span class="jxr_string">"id:1"</span>, <span class="jxr_string">"distrib"</span>, <span class="jxr_string">"false"</span>, 
+<a class="jxr_linenumber" name="L165" href="#L165">165</a>                                    <span class="jxr_string">"sanity_check"</span>, <span class="jxr_string">"non_distrib_id_1_lookup"</span>));
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>       queryAndCompareShards(params(<span class="jxr_string">"q"</span>, <span class="jxr_string">"id:1"</span>, 
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>                                    <span class="jxr_string">"sanity_check"</span>, <span class="jxr_string">"distrib_id_1_lookup"</span>));
+<a class="jxr_linenumber" name="L168" href="#L168">168</a>     }
+<a class="jxr_linenumber" name="L169" href="#L169">169</a> 
+<a class="jxr_linenumber" name="L170" href="#L170">170</a>     indexr(id,1, i1, 100, tlong, 100,t1,<span class="jxr_string">"now is the time for all good men"</span>
+<a class="jxr_linenumber" name="L171" href="#L171">171</a>             ,<span class="jxr_string">"foo_f"</span>, 1.414f, <span class="jxr_string">"foo_b"</span>, <span class="jxr_string">"true"</span>, <span class="jxr_string">"foo_d"</span>, 1.414d);
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>     indexr(id,2, i1, 50 , tlong, 50,t1,<span class="jxr_string">"to come to the aid of their country."</span>
+<a class="jxr_linenumber" name="L173" href="#L173">173</a>     );
+<a class="jxr_linenumber" name="L174" href="#L174">174</a>     indexr(id,3, i1, 2, tlong, 2,t1,<span class="jxr_string">"how now brown cow"</span>
+<a class="jxr_linenumber" name="L175" href="#L175">175</a>     );
+<a class="jxr_linenumber" name="L176" href="#L176">176</a>     indexr(id,4, i1, -100 ,tlong, 101,t1,<span class="jxr_string">"the quick fox jumped over the lazy dog"</span>
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>     );
+<a class="jxr_linenumber" name="L178" href="#L178">178</a>     indexr(id,5, i1, 500, tlong, 500 ,t1,<span class="jxr_string">"the quick fox jumped way over the lazy dog"</span>
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>     );
+<a class="jxr_linenumber" name="L180" href="#L180">180</a>     indexr(id,6, i1, -600, tlong, 600 ,t1,<span class="jxr_string">"humpty dumpy sat on a wall"</span>);
+<a class="jxr_linenumber" name="L181" href="#L181">181</a>     indexr(id,7, i1, 123, tlong, 123 ,t1,<span class="jxr_string">"humpty dumpy had a great fall"</span>);
+<a class="jxr_linenumber" name="L182" href="#L182">182</a>     indexr(id,8, i1, 876, tlong, 876,t1,<span class="jxr_string">"all the kings horses and all the kings men"</span>);
+<a class="jxr_linenumber" name="L183" href="#L183">183</a>     indexr(id,9, i1, 7, tlong, 7,t1,<span class="jxr_string">"couldn't put humpty together again"</span>);
+<a class="jxr_linenumber" name="L184" href="#L184">184</a>     indexr(id,10, i1, 4321, tlong, 4321,t1,<span class="jxr_string">"this too shall pass"</span>);
+<a class="jxr_linenumber" name="L185" href="#L185">185</a>     indexr(id,11, i1, -987, tlong, 987,t1,<span class="jxr_string">"An eye for eye only ends up making the whole world blind."</span>);
+<a class="jxr_linenumber" name="L186" href="#L186">186</a>     indexr(id,12, i1, 379, tlong, 379,t1,<span class="jxr_string">"Great works are performed, not by strength, but by perseverance."</span>);
+<a class="jxr_linenumber" name="L187" href="#L187">187</a>     indexr(id,13, i1, 232, tlong, 232,t1,<span class="jxr_string">"no eggs on wall, lesson learned"</span>, oddField, <span class="jxr_string">"odd man out"</span>);
+<a class="jxr_linenumber" name="L188" href="#L188">188</a> 
+<a class="jxr_linenumber" name="L189" href="#L189">189</a>     indexr(id, 14, <span class="jxr_string">"SubjectTerms_mfacet"</span>, <strong class="jxr_keyword">new</strong> String[]  {<span class="jxr_string">"mathematical models"</span>, <span class="jxr_string">"mathematical analysis"</span>});
+<a class="jxr_linenumber" name="L190" href="#L190">190</a>     indexr(id, 15, <span class="jxr_string">"SubjectTerms_mfacet"</span>, <strong class="jxr_keyword">new</strong> String[]  {<span class="jxr_string">"test 1"</span>, <span class="jxr_string">"test 2"</span>, <span class="jxr_string">"test3"</span>});
+<a class="jxr_linenumber" name="L191" href="#L191">191</a>     indexr(id, 16, <span class="jxr_string">"SubjectTerms_mfacet"</span>, <strong class="jxr_keyword">new</strong> String[]  {<span class="jxr_string">"test 1"</span>, <span class="jxr_string">"test 2"</span>, <span class="jxr_string">"test3"</span>});
+<a class="jxr_linenumber" name="L192" href="#L192">192</a>     String[] vals = <strong class="jxr_keyword">new</strong> String[100];
+<a class="jxr_linenumber" name="L193" href="#L193">193</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i=0; i&lt;100; i++) {
+<a class="jxr_linenumber" name="L194" href="#L194">194</a>       vals[i] = <span class="jxr_string">"test "</span> + i;
+<a class="jxr_linenumber" name="L195" href="#L195">195</a>     }
+<a class="jxr_linenumber" name="L196" href="#L196">196</a>     indexr(id, 17, <span class="jxr_string">"SubjectTerms_mfacet"</span>, vals);
+<a class="jxr_linenumber" name="L197" href="#L197">197</a> 
+<a class="jxr_linenumber" name="L198" href="#L198">198</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i=100; i&lt;150; i++) {
+<a class="jxr_linenumber" name="L199" href="#L199">199</a>       indexr(id, i);      
+<a class="jxr_linenumber" name="L200" href="#L200">200</a>     }
+<a class="jxr_linenumber" name="L201" href="#L201">201</a> 
+<a class="jxr_linenumber" name="L202" href="#L202">202</a>     commit();
+<a class="jxr_linenumber" name="L203" href="#L203">203</a>     queryAndCompareShards(params(<span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>, 
+<a class="jxr_linenumber" name="L204" href="#L204">204</a>                                  <span class="jxr_string">"sort"</span>, <span class="jxr_string">"id desc"</span>,
+<a class="jxr_linenumber" name="L205" href="#L205">205</a>                                  <span class="jxr_string">"distrib"</span>, <span class="jxr_string">"false"</span>, 
+<a class="jxr_linenumber" name="L206" href="#L206">206</a>                                  <span class="jxr_string">"sanity_check"</span>, <span class="jxr_string">"is_empty"</span>));
+<a class="jxr_linenumber" name="L207" href="#L207">207</a> 
+<a class="jxr_linenumber" name="L208" href="#L208">208</a>     <em class="jxr_comment">// random value sort</em>
+<a class="jxr_linenumber" name="L209" href="#L209">209</a>     <strong class="jxr_keyword">for</strong> (String f : fieldNames) {
+<a class="jxr_linenumber" name="L210" href="#L210">210</a>       query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"sort"</span>,f+<span class="jxr_string">" desc"</span>});
+<a class="jxr_linenumber" name="L211" href="#L211">211</a>       query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"sort"</span>,f+<span class="jxr_string">" asc"</span>});
+<a class="jxr_linenumber" name="L212" href="#L212">212</a>     }
+<a class="jxr_linenumber" name="L213" href="#L213">213</a> 
+<a class="jxr_linenumber" name="L214" href="#L214">214</a>     <em class="jxr_comment">// these queries should be exactly ordered and scores should exactly match</em>
+<a class="jxr_linenumber" name="L215" href="#L215">215</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"sort"</span>,i1+<span class="jxr_string">" desc"</span>});
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"sort"</span>,i1+<span class="jxr_string">" asc"</span>});
+<a class="jxr_linenumber" name="L217" href="#L217">217</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"sort"</span>,i1+<span class="jxr_string">" desc"</span>, <span class="jxr_string">"fl"</span>,<span class="jxr_string">"*,score"</span>});
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"sort"</span>,<span class="jxr_string">"n_tl1 asc"</span>, <span class="jxr_string">"fl"</span>,<span class="jxr_string">"*,score"</span>}); 
+<a class="jxr_linenumber" name="L219" href="#L219">219</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"sort"</span>,<span class="jxr_string">"n_tl1 desc"</span>});
+<a class="jxr_linenumber" name="L220" href="#L220">220</a>     handle.put(<span class="jxr_string">"maxScore"</span>, SKIPVAL);
+<a class="jxr_linenumber" name="L221" href="#L221">221</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"{!func}"</span>+i1});<em class="jxr_comment">// does not expect maxScore. So if it comes ,ignore it. JavaBinCodec.writeSolrDocumentList()</em>
+<a class="jxr_linenumber" name="L222" href="#L222">222</a>     <em class="jxr_comment">//is agnostic of request params.</em>
+<a class="jxr_linenumber" name="L223" href="#L223">223</a>     handle.remove(<span class="jxr_string">"maxScore"</span>);
+<a class="jxr_linenumber" name="L224" href="#L224">224</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"{!func}"</span>+i1, <span class="jxr_string">"fl"</span>,<span class="jxr_string">"*,score"</span>});  <em class="jxr_comment">// even scores should match exactly here</em>
+<a class="jxr_linenumber" name="L225" href="#L225">225</a> 
+<a class="jxr_linenumber" name="L226" href="#L226">226</a>     handle.put(<span class="jxr_string">"highlighting"</span>, UNORDERED);
+<a class="jxr_linenumber" name="L227" href="#L227">227</a>     handle.put(<span class="jxr_string">"response"</span>, UNORDERED);
+<a class="jxr_linenumber" name="L228" href="#L228">228</a> 
+<a class="jxr_linenumber" name="L229" href="#L229">229</a>     handle.put(<span class="jxr_string">"maxScore"</span>, SKIPVAL);
+<a class="jxr_linenumber" name="L230" href="#L230">230</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"quick"</span>});
+<a class="jxr_linenumber" name="L231" href="#L231">231</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"all"</span>,<span class="jxr_string">"fl"</span>,<span class="jxr_string">"id"</span>,<span class="jxr_string">"start"</span>,<span class="jxr_string">"0"</span>});
+<a class="jxr_linenumber" name="L232" href="#L232">232</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"all"</span>,<span class="jxr_string">"fl"</span>,<span class="jxr_string">"foofoofoo"</span>,<span class="jxr_string">"start"</span>,<span class="jxr_string">"0"</span>});  <em class="jxr_comment">// no fields in returned docs</em>
+<a class="jxr_linenumber" name="L233" href="#L233">233</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"all"</span>,<span class="jxr_string">"fl"</span>,<span class="jxr_string">"id"</span>,<span class="jxr_string">"start"</span>,<span class="jxr_string">"100"</span>});
+<a class="jxr_linenumber" name="L234" href="#L234">234</a> 
+<a class="jxr_linenumber" name="L235" href="#L235">235</a>     handle.put(<span class="jxr_string">"score"</span>, SKIPVAL);
+<a class="jxr_linenumber" name="L236" href="#L236">236</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"quick"</span>,<span class="jxr_string">"fl"</span>,<span class="jxr_string">"*,score"</span>});
+<a class="jxr_linenumber" name="L237" href="#L237">237</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"all"</span>,<span class="jxr_string">"fl"</span>,<span class="jxr_string">"*,score"</span>,<span class="jxr_string">"start"</span>,<span class="jxr_string">"1"</span>});
+<a class="jxr_linenumber" name="L238" href="#L238">238</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"all"</span>,<span class="jxr_string">"fl"</span>,<span class="jxr_string">"*,score"</span>,<span class="jxr_string">"start"</span>,<span class="jxr_string">"100"</span>});
+<a class="jxr_linenumber" name="L239" href="#L239">239</a> 
+<a class="jxr_linenumber" name="L240" href="#L240">240</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"now their fox sat had put"</span>,<span class="jxr_string">"fl"</span>,<span class="jxr_string">"*,score"</span>,
+<a class="jxr_linenumber" name="L241" href="#L241">241</a>             <span class="jxr_string">"hl"</span>,<span class="jxr_string">"true"</span>,<span class="jxr_string">"hl.fl"</span>,t1});
+<a class="jxr_linenumber" name="L242" href="#L242">242</a> 
+<a class="jxr_linenumber" name="L243" href="#L243">243</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"now their fox sat had put"</span>,<span class="jxr_string">"fl"</span>,<span class="jxr_string">"foofoofoo"</span>,
+<a class="jxr_linenumber" name="L244" href="#L244">244</a>             <span class="jxr_string">"hl"</span>,<span class="jxr_string">"true"</span>,<span class="jxr_string">"hl.fl"</span>,t1});
+<a class="jxr_linenumber" name="L245" href="#L245">245</a> 
+<a class="jxr_linenumber" name="L246" href="#L246">246</a>     query(false, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"matchesnothing"</span>,<span class="jxr_string">"fl"</span>,<span class="jxr_string">"*,score"</span>});  
+<a class="jxr_linenumber" name="L247" href="#L247">247</a> 
+<a class="jxr_linenumber" name="L248" href="#L248">248</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,100, <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.field"</span>,t1});
+<a class="jxr_linenumber" name="L249" href="#L249">249</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,100, <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.field"</span>,t1, <span class="jxr_string">"facet.limit"</span>,-1, <span class="jxr_string">"facet.sort"</span>,<span class="jxr_string">"count"</span>});
+<a class="jxr_linenumber" name="L250" href="#L250">250</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,100, <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.field"</span>,t1, <span class="jxr_string">"facet.limit"</span>,-1, <span class="jxr_string">"facet.sort"</span>,<span class="jxr_string">"count"</span>, <span class="jxr_string">"facet.mincount"</span>,2});
+<a class="jxr_linenumber" name="L251" href="#L251">251</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,100, <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.field"</span>,t1, <span class="jxr_string">"facet.limit"</span>,-1, <span class="jxr_string">"facet.sort"</span>,<span class="jxr_string">"index"</span>});
+<a class="jxr_linenumber" name="L252" href="#L252">252</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,100, <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.field"</span>,t1, <span class="jxr_string">"facet.limit"</span>,-1, <span class="jxr_string">"facet.sort"</span>,<span class="jxr_string">"index"</span>, <span class="jxr_string">"facet.mincount"</span>,2});
+<a class="jxr_linenumber" name="L253" href="#L253">253</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,100, <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.field"</span>,t1,<span class="jxr_string">"facet.limit"</span>,1});
+<a class="jxr_linenumber" name="L254" href="#L254">254</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,100, <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.query"</span>,<span class="jxr_string">"quick"</span>, <span class="jxr_string">"facet.query"</span>,<span class="jxr_string">"all"</span>, <span class="jxr_string">"facet.query"</span>,<span class="jxr_string">"*:*"</span>});
+<a class="jxr_linenumber" name="L255" href="#L255">255</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,100, <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.field"</span>,t1, <span class="jxr_string">"facet.offset"</span>,1});
+<a class="jxr_linenumber" name="L256" href="#L256">256</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,100, <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.field"</span>,t1, <span class="jxr_string">"facet.mincount"</span>,2});
+<a class="jxr_linenumber" name="L257" href="#L257">257</a> 
+<a class="jxr_linenumber" name="L258" href="#L258">258</a>     <em class="jxr_comment">// test faceting multiple things at once</em>
+<a class="jxr_linenumber" name="L259" href="#L259">259</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,100, <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.query"</span>,<span class="jxr_string">"quick"</span>, <span class="jxr_string">"facet.query"</span>,<span class="jxr_string">"all"</span>, <span class="jxr_string">"facet.query"</span>,<span class="jxr_string">"*:*"</span>
+<a class="jxr_linenumber" name="L260" href="#L260">260</a>     ,<span class="jxr_string">"facet.field"</span>,t1});
+<a class="jxr_linenumber" name="L261" href="#L261">261</a> 
+<a class="jxr_linenumber" name="L262" href="#L262">262</a>     <em class="jxr_comment">// test filter tagging, facet exclusion, and naming (multi-select facet support)</em>
+<a class="jxr_linenumber" name="L263" href="#L263">263</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,100, <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.query"</span>,<span class="jxr_string">"{!key=myquick}quick"</span>, <span class="jxr_string">"facet.query"</span>,<span class="jxr_string">"{!key=myall ex=a}all"</span>, <span class="jxr_string">"facet.query"</span>,<span class="jxr_string">"*:*"</span>
+<a class="jxr_linenumber" name="L264" href="#L264">264</a>     ,<span class="jxr_string">"facet.field"</span>,<span class="jxr_string">"{!key=mykey ex=a}"</span>+t1
+<a class="jxr_linenumber" name="L265" href="#L265">265</a>     ,<span class="jxr_string">"facet.field"</span>,<span class="jxr_string">"{!key=other ex=b}"</span>+t1
+<a class="jxr_linenumber" name="L266" href="#L266">266</a>     ,<span class="jxr_string">"facet.field"</span>,<span class="jxr_string">"{!key=again ex=a,b}"</span>+t1
+<a class="jxr_linenumber" name="L267" href="#L267">267</a>     ,<span class="jxr_string">"facet.field"</span>,t1
+<a class="jxr_linenumber" name="L268" href="#L268">268</a>     ,<span class="jxr_string">"fq"</span>,<span class="jxr_string">"{!tag=a}id:[1 TO 7]"</span>, <span class="jxr_string">"fq"</span>,<span class="jxr_string">"{!tag=b}id:[3 TO 9]"</span>}
+<a class="jxr_linenumber" name="L269" href="#L269">269</a>     );
+<a class="jxr_linenumber" name="L270" href="#L270">270</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>, <span class="jxr_string">"*:*"</span>, <span class="jxr_string">"facet"</span>, <span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.field"</span>, <span class="jxr_string">"{!ex=t1}SubjectTerms_mfacet"</span>, <span class="jxr_string">"fq"</span>, <span class="jxr_string">"{!tag=t1}SubjectTerms_mfacet:(test 1)"</span>, <span class="jxr_string">"facet.limit"</span>, <span class="jxr_string">"10"</span>, <span class="jxr_string">"facet.mincount"</span>, <span class="jxr_string">"1"</span>});
+<a class="jxr_linenumber" name="L271" href="#L271">271</a> 
+<a class="jxr_linenumber" name="L272" href="#L272">272</a>     <em class="jxr_comment">// test field that is valid in schema but missing in all shards</em>
+<a class="jxr_linenumber" name="L273" href="#L273">273</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,100, <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.field"</span>,missingField, <span class="jxr_string">"facet.mincount"</span>,2});
+<a class="jxr_linenumber" name="L274" href="#L274">274</a>     <em class="jxr_comment">// test field that is valid in schema and missing in some shards</em>
+<a class="jxr_linenumber" name="L275" href="#L275">275</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,100, <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.field"</span>,oddField, <span class="jxr_string">"facet.mincount"</span>,2});
+<a class="jxr_linenumber" name="L276" href="#L276">276</a> 
+<a class="jxr_linenumber" name="L277" href="#L277">277</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"sort"</span>,i1+<span class="jxr_string">" desc"</span>, <span class="jxr_string">"stats"</span>, <span class="jxr_string">"true"</span>, <span class="jxr_string">"stats.field"</span>, i1});
+<a class="jxr_linenumber" name="L278" href="#L278">278</a> 
+<a class="jxr_linenumber" name="L279" href="#L279">279</a>     <em class="jxr_javadoccomment">/*** TODO: the failure may come back in "exception"</em>
+<a class="jxr_linenumber" name="L280" href="#L280">280</a> <em class="jxr_javadoccomment">    try {</em>
+<a class="jxr_linenumber" name="L281" href="#L281">281</a> <em class="jxr_javadoccomment">      // test error produced for field that is invalid for schema</em>
+<a class="jxr_linenumber" name="L282" href="#L282">282</a> <em class="jxr_javadoccomment">      query("q","*:*", "rows",100, "facet","true", "facet.field",invalidField, "facet.mincount",2);</em>
+<a class="jxr_linenumber" name="L283" href="#L283">283</a> <em class="jxr_javadoccomment">      TestCase.fail("SolrServerException expected for invalid field that is not in schema");</em>
+<a class="jxr_linenumber" name="L284" href="#L284">284</a> <em class="jxr_javadoccomment">    } catch (SolrServerException ex) {</em>
+<a class="jxr_linenumber" name="L285" href="#L285">285</a> <em class="jxr_javadoccomment">      // expected</em>
+<a class="jxr_linenumber" name="L286" href="#L286">286</a> <em class="jxr_javadoccomment">    }</em>
+<a class="jxr_linenumber" name="L287" href="#L287">287</a> <em class="jxr_javadoccomment">    ***/</em>
+<a class="jxr_linenumber" name="L288" href="#L288">288</a> 
+<a class="jxr_linenumber" name="L289" href="#L289">289</a>     <em class="jxr_comment">// Try to get better coverage for refinement queries by turning off over requesting.</em>
+<a class="jxr_linenumber" name="L290" href="#L290">290</a>     <em class="jxr_comment">// This makes it much more likely that we may not get the top facet values and hence</em>
+<a class="jxr_linenumber" name="L291" href="#L291">291</a>     <em class="jxr_comment">// we turn of that checking.</em>
+<a class="jxr_linenumber" name="L292" href="#L292">292</a>     handle.put(<span class="jxr_string">"facet_fields"</span>, SKIPVAL);    
+<a class="jxr_linenumber" name="L293" href="#L293">293</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,0, <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.field"</span>,t1,<span class="jxr_string">"facet.limit"</span>,5, <span class="jxr_string">"facet.shard.limit"</span>,5});
+<a class="jxr_linenumber" name="L294" href="#L294">294</a>     <em class="jxr_comment">// check a complex key name</em>
+<a class="jxr_linenumber" name="L295" href="#L295">295</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,0, <span class="jxr_string">"facet"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"facet.field"</span>,<span class="jxr_string">"{!key='a b/c &#92;&#92;' &#92;&#92;} foo'}"</span>+t1,<span class="jxr_string">"facet.limit"</span>,5, <span class="jxr_string">"facet.shard.limit"</span>,5});
+<a class="jxr_linenumber" name="L296" href="#L296">296</a>     handle.remove(<span class="jxr_string">"facet_fields"</span>);
+<a class="jxr_linenumber" name="L297" href="#L297">297</a> 
+<a class="jxr_linenumber" name="L298" href="#L298">298</a> 
+<a class="jxr_linenumber" name="L299" href="#L299">299</a>     <em class="jxr_comment">// index the same document to two servers and make sure things</em>
+<a class="jxr_linenumber" name="L300" href="#L300">300</a>     <em class="jxr_comment">// don't blow up.</em>
+<a class="jxr_linenumber" name="L301" href="#L301">301</a>     <strong class="jxr_keyword">if</strong> (clients.size()&gt;=2) {
+<a class="jxr_linenumber" name="L302" href="#L302">302</a>       index(id,100, i1, 107 ,t1,<span class="jxr_string">"oh no, a duplicate!"</span>);
+<a class="jxr_linenumber" name="L303" href="#L303">303</a>       <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i=0; i&lt;clients.size(); i++) {
+<a class="jxr_linenumber" name="L304" href="#L304">304</a>         index_specific(i, id,100, i1, 107 ,t1,<span class="jxr_string">"oh no, a duplicate!"</span>);
+<a class="jxr_linenumber" name="L305" href="#L305">305</a>       }
+<a class="jxr_linenumber" name="L306" href="#L306">306</a>       commit();
+<a class="jxr_linenumber" name="L307" href="#L307">307</a>       query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"duplicate"</span>, <span class="jxr_string">"hl"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"hl.fl"</span>, t1});
+<a class="jxr_linenumber" name="L308" href="#L308">308</a>       query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"fox duplicate horses"</span>, <span class="jxr_string">"hl"</span>,<span class="jxr_string">"true"</span>, <span class="jxr_string">"hl.fl"</span>, t1});
+<a class="jxr_linenumber" name="L309" href="#L309">309</a>       query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"*:*"</span>, <span class="jxr_string">"rows"</span>,100});
+<a class="jxr_linenumber" name="L310" href="#L310">310</a>     }
+<a class="jxr_linenumber" name="L311" href="#L311">311</a> 
+<a class="jxr_linenumber" name="L312" href="#L312">312</a>     <em class="jxr_comment">// test debugging</em>
+<a class="jxr_linenumber" name="L313" href="#L313">313</a>     handle.put(<span class="jxr_string">"explain"</span>, SKIPVAL);
+<a class="jxr_linenumber" name="L314" href="#L314">314</a>     handle.put(<span class="jxr_string">"debug"</span>, UNORDERED);
+<a class="jxr_linenumber" name="L315" href="#L315">315</a>     handle.put(<span class="jxr_string">"time"</span>, SKIPVAL);
+<a class="jxr_linenumber" name="L316" href="#L316">316</a>     handle.put(<span class="jxr_string">"track"</span>, SKIP);
+<a class="jxr_linenumber" name="L317" href="#L317">317</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>,<span class="jxr_string">"now their fox sat had put"</span>,<span class="jxr_string">"fl"</span>,<span class="jxr_string">"*,score"</span>,CommonParams.DEBUG_QUERY, <span class="jxr_string">"true"</span>});
+<a class="jxr_linenumber" name="L318" href="#L318">318</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>, <span class="jxr_string">"id:[1 TO 5]"</span>, CommonParams.DEBUG_QUERY, <span class="jxr_string">"true"</span>});
+<a class="jxr_linenumber" name="L319" href="#L319">319</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>, <span class="jxr_string">"id:[1 TO 5]"</span>, CommonParams.DEBUG, CommonParams.TIMING});
+<a class="jxr_linenumber" name="L320" href="#L320">320</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>, <span class="jxr_string">"id:[1 TO 5]"</span>, CommonParams.DEBUG, CommonParams.RESULTS});
+<a class="jxr_linenumber" name="L321" href="#L321">321</a>     query(false, <strong class="jxr_keyword">new</strong> Object[] {<span class="jxr_string">"q"</span>, <span class="jxr_string">"id:[1 TO 5]"</span>, CommonParams.DEBUG, CommonParams.QUERY});
+<a class="jxr_linenumber" name="L322" href="#L322">322</a> 
+<a class="jxr_linenumber" name="L323" href="#L323">323</a>     <em class="jxr_comment">// try commitWithin</em>
+<a class="jxr_linenumber" name="L324" href="#L324">324</a>     <strong class="jxr_keyword">long</strong> before = cloudClient.query(<strong class="jxr_keyword">new</strong> SolrQuery(<span class="jxr_string">"*:*"</span>)).getResults().getNumFound();
+<a class="jxr_linenumber" name="L325" href="#L325">325</a>     ModifiableSolrParams params = <strong class="jxr_keyword">new</strong> ModifiableSolrParams();
+<a class="jxr_linenumber" name="L326" href="#L326">326</a>     params.set(<span class="jxr_string">"commitWithin"</span>, 10);
+<a class="jxr_linenumber" name="L327" href="#L327">327</a>     add(cloudClient, params, getDoc(<span class="jxr_string">"id"</span>, 300));
+<a class="jxr_linenumber" name="L328" href="#L328">328</a> 
+<a class="jxr_linenumber" name="L329" href="#L329">329</a>     TimeOut timeout = <strong class="jxr_keyword">new</strong> TimeOut(45, TimeUnit.SECONDS);
+<a class="jxr_linenumber" name="L330" href="#L330">330</a>     <strong class="jxr_keyword">while</strong> (cloudClient.query(<strong class="jxr_keyword">new</strong> SolrQuery(<span class="jxr_string">"*:*"</span>)).getResults().getNumFound() != before + 1) {
+<a class="jxr_linenumber" name="L331" href="#L331">331</a>       <strong class="jxr_keyword">if</strong> (timeout.hasTimedOut()) {
+<a class="jxr_linenumber" name="L332" href="#L332">332</a>         fail(<span class="jxr_string">"commitWithin did not work"</span>);
+<a class="jxr_linenumber" name="L333" href="#L333">333</a>       }
+<a class="jxr_linenumber" name="L334" href="#L334">334</a>       Thread.sleep(100);
+<a class="jxr_linenumber" name="L335" href="#L335">335</a>     }
+<a class="jxr_linenumber" name="L336" href="#L336">336</a>     
+<a class="jxr_linenumber" name="L337" href="#L337">337</a>     <strong class="jxr_keyword">for</strong> (SolrClient client : clients) {
+<a class="jxr_linenumber" name="L338" href="#L338">338</a>       assertEquals(<span class="jxr_string">"commitWithin did not work on node: "</span> + ((HttpSolrClient)client).getBaseURL(), before + 1, client.query(<strong class="jxr_keyword">new</strong> SolrQuery(<span class="jxr_string">"*:*"</span>)).getResults().getNumFound());
+<a class="jxr_linenumber" name="L339" href="#L339">339</a>     }
+<a class="jxr_linenumber" name="L340" href="#L340">340</a>     
+<a class="jxr_linenumber" name="L341" href="#L341">341</a>     <em class="jxr_comment">// TODO: This test currently fails because debug info is obtained only</em>
+<a class="jxr_linenumber" name="L342" href="#L342">342</a>     <em class="jxr_comment">// on shards with matches.</em>
+<a class="jxr_linenumber" name="L343" href="#L343">343</a>     <em class="jxr_comment">// query("q","matchesnothing","fl","*,score", "debugQuery", "true");</em>
+<a class="jxr_linenumber" name="L344" href="#L344">344</a> 
+<a class="jxr_linenumber" name="L345" href="#L345">345</a>     <em class="jxr_comment">// would be better if these where all separate tests - but much, much</em>
+<a class="jxr_linenumber" name="L346" href="#L346">346</a>     <em class="jxr_comment">// slower</em>
+<a class="jxr_linenumber" name="L347" href="#L347">347</a>     doOptimisticLockingAndUpdating();
+<a class="jxr_linenumber" name="L348" href="#L348">348</a>     testShardParamVariations();
+<a class="jxr_linenumber" name="L349" href="#L349">349</a>     testMultipleCollections();
+<a class="jxr_linenumber" name="L350" href="#L350">350</a>     testANewCollectionInOneInstance();
+<a class="jxr_linenumber" name="L351" href="#L351">351</a>     testSearchByCollectionName();
+<a class="jxr_linenumber" name="L352" href="#L352">352</a>     testUpdateByCollectionName();
+<a class="jxr_linenumber" name="L353" href="#L353">353</a>     testANewCollectionInOneInstanceWithManualShardAssignement();
+<a class="jxr_linenumber" name="L354" href="#L354">354</a>     testNumberOfCommitsWithCommitAfterAdd();
+<a class="jxr_linenumber" name="L355" href="#L355">355</a> 
+<a class="jxr_linenumber" name="L356" href="#L356">356</a>     testUpdateProcessorsRunOnlyOnce(<span class="jxr_string">"distrib-dup-test-chain-explicit"</span>);
+<a class="jxr_linenumber" name="L357" href="#L357">357</a>     testUpdateProcessorsRunOnlyOnce(<span class="jxr_string">"distrib-dup-test-chain-implicit"</span>);
+<a class="jxr_linenumber" name="L358" href="#L358">358</a> 
+<a class="jxr_linenumber" name="L359" href="#L359">359</a>     testStopAndStartCoresInOneInstance();
+<a class="jxr_linenumber" name="L360" href="#L360">360</a>     testFailedCoreCreateCleansUp();
+<a class="jxr_linenumber" name="L361" href="#L361">361</a>     <em class="jxr_comment">// Thread.sleep(10000000000L);</em>
+<a class="jxr_linenumber" name="L362" href="#L362">362</a>     <strong class="jxr_keyword">if</strong> (DEBUG) {
+<a class="jxr_linenumber" name="L363" href="#L363">363</a>       <strong class="jxr_keyword">super</strong>.printLayout();
+<a class="jxr_linenumber" name="L364" href="#L364">364</a>     }
+<a class="jxr_linenumber" name="L365" href="#L365">365</a>   }
+<a class="jxr_linenumber" name="L366" href="#L366">366</a>   
+<a class="jxr_linenumber" name="L367" href="#L367">367</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> testFailedCoreCreateCleansUp() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L368" href="#L368">368</a>     Create createCmd = <strong class="jxr_keyword">new</strong> Create();
+<a class="jxr_linenumber" name="L369" href="#L369">369</a>     createCmd.setCoreName(<span class="jxr_string">"core1"</span>);
+<a class="jxr_linenumber" name="L370" href="#L370">370</a>     createCmd.setCollection(<span class="jxr_string">"the_core_collection"</span>);
+<a class="jxr_linenumber" name="L371" href="#L371">371</a>     String coredataDir = createTempDir().toFile().getAbsolutePath();
+<a class="jxr_linenumber" name="L372" href="#L372">372</a>     createCmd.setDataDir(coredataDir);
+<a class="jxr_linenumber" name="L373" href="#L373">373</a>     createCmd.setNumShards(1);
+<a class="jxr_linenumber" name="L374" href="#L374">374</a>     createCmd.setSchemaName(<span class="jxr_string">"nonexistent_schema.xml"</span>);
+<a class="jxr_linenumber" name="L375" href="#L375">375</a>     
+<a class="jxr_linenumber" name="L376" href="#L376">376</a>     String url = getBaseUrl(clients.get(0));
+<a class="jxr_linenumber" name="L377" href="#L377">377</a>     <strong class="jxr_keyword">try</strong> (<strong class="jxr_keyword">final</strong> HttpSolrClient client = <strong class="jxr_keyword">new</strong> HttpSolrClient(url)) {
+<a class="jxr_linenumber" name="L378" href="#L378">378</a>       client.request(createCmd);
+<a class="jxr_linenumber" name="L379" href="#L379">379</a>       fail(<span class="jxr_string">"Expected SolrCore create to fail"</span>);
+<a class="jxr_linenumber" name="L380" href="#L380">380</a>     } <strong class="jxr_keyword">catch</strong> (Exception e) {
+<a class="jxr_linenumber" name="L381" href="#L381">381</a>       
+<a class="jxr_linenumber" name="L382" href="#L382">382</a>     }
+<a class="jxr_linenumber" name="L383" href="#L383">383</a> 
+<a class="jxr_linenumber" name="L384" href="#L384">384</a>     TimeOut timeout = <strong class="jxr_keyword">new</strong> TimeOut(15, TimeUnit.SECONDS);
+<a class="jxr_linenumber" name="L385" href="#L385">385</a>     <strong class="jxr_keyword">while</strong> (cloudClient.getZkStateReader().getZkClient().exists(<span class="jxr_string">"/collections/the_core_collection"</span>, <strong class="jxr_keyword">true</strong>)) {
+<a class="jxr_linenumber" name="L386" href="#L386">386</a>       <strong class="jxr_keyword">if</strong> (timeout.hasTimedOut()) {
+<a class="jxr_linenumber" name="L387" href="#L387">387</a>         fail(cloudClient.getZkStateReader().getZkClient().getChildren(<span class="jxr_string">"/collections"</span>, <strong class="jxr_keyword">null</strong>, <strong class="jxr_keyword">true</strong>).toString() + <span class="jxr_string">" Collection zk node still exists"</span>);
+<a class="jxr_linenumber" name="L388" href="#L388">388</a>       }
+<a class="jxr_linenumber" name="L389" href="#L389">389</a>       Thread.sleep(100);
+<a class="jxr_linenumber" name="L390" href="#L390">390</a>     }
+<a class="jxr_linenumber" name="L391" href="#L391">391</a>     
+<a class="jxr_linenumber" name="L392" href="#L392">392</a>     
+<a class="jxr_linenumber" name="L393" href="#L393">393</a>     assertFalse(<span class="jxr_string">"Collection zk node still exists"</span>, cloudClient.getZkStateReader().getZkClient().exists(<span class="jxr_string">"/collections/the_core_collection"</span>, <strong class="jxr_keyword">true</strong>));
+<a class="jxr_linenumber" name="L394" href="#L394">394</a>   }
+<a class="jxr_linenumber" name="L395" href="#L395">395</a>   
+<a class="jxr_linenumber" name="L396" href="#L396">396</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> testShardParamVariations() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L397" href="#L397">397</a>     SolrQuery query = <strong class="jxr_keyword">new</strong> SolrQuery(<span class="jxr_string">"*:*"</span>);
+<a class="jxr_linenumber" name="L398" href="#L398">398</a>     Map&lt;String,Long&gt; shardCounts = <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;();
+<a class="jxr_linenumber" name="L399" href="#L399">399</a> 
+<a class="jxr_linenumber" name="L400" href="#L400">400</a>     <strong class="jxr_keyword">for</strong> (String shard : shardToJetty.keySet()) {
+<a class="jxr_linenumber" name="L401" href="#L401">401</a>       <em class="jxr_comment">// every client should give the same numDocs for this shard</em>
+<a class="jxr_linenumber" name="L402" href="#L402">402</a>       <em class="jxr_comment">// shffle the clients in a diff order for each shard</em>
+<a class="jxr_linenumber" name="L403" href="#L403">403</a>       List&lt;SolrClient&gt; solrclients = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;(<strong class="jxr_keyword">this</strong>.clients);
+<a class="jxr_linenumber" name="L404" href="#L404">404</a>       Collections.shuffle(solrclients, random());
+<a class="jxr_linenumber" name="L405" href="#L405">405</a>       <strong class="jxr_keyword">for</strong> (SolrClient client : solrclients) {
+<a class="jxr_linenumber" name="L406" href="#L406">406</a>         query.set(<span class="jxr_string">"shards"</span>, shard);
+<a class="jxr_linenumber" name="L407" href="#L407">407</a>         <strong class="jxr_keyword">long</strong> numDocs = client.query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L408" href="#L408">408</a>         assertTrue(<span class="jxr_string">"numDocs &lt; 0 for shard "</span>+shard+<span class="jxr_string">" via "</span>+client,
+<a class="jxr_linenumber" name="L409" href="#L409">409</a>                    0 &lt;= numDocs);
+<a class="jxr_linenumber" name="L410" href="#L410">410</a>         <strong class="jxr_keyword">if</strong> (!shardCounts.containsKey(shard)) {
+<a class="jxr_linenumber" name="L411" href="#L411">411</a>           shardCounts.put(shard, numDocs);
+<a class="jxr_linenumber" name="L412" href="#L412">412</a>         }
+<a class="jxr_linenumber" name="L413" href="#L413">413</a>         assertEquals(<span class="jxr_string">"inconsitent numDocs for shard "</span>+shard+<span class="jxr_string">" via "</span>+client,
+<a class="jxr_linenumber" name="L414" href="#L414">414</a>                      shardCounts.get(shard).longValue(), numDocs);
+<a class="jxr_linenumber" name="L415" href="#L415">415</a>         
+<a class="jxr_linenumber" name="L416" href="#L416">416</a>         List&lt;CloudJettyRunner&gt; replicaJetties 
+<a class="jxr_linenumber" name="L417" href="#L417">417</a>           = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;(shardToJetty.get(shard));
+<a class="jxr_linenumber" name="L418" href="#L418">418</a>         Collections.shuffle(replicaJetties, random());
+<a class="jxr_linenumber" name="L419" href="#L419">419</a> 
+<a class="jxr_linenumber" name="L420" href="#L420">420</a>         <em class="jxr_comment">// each replica should also give the same numDocs</em>
+<a class="jxr_linenumber" name="L421" href="#L421">421</a>         ArrayList&lt;String&gt; replicaAlts = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;(replicaJetties.size() * 2);
+<a class="jxr_linenumber" name="L422" href="#L422">422</a>         <strong class="jxr_keyword">for</strong> (CloudJettyRunner replicaJetty : shardToJetty.get(shard)) {
+<a class="jxr_linenumber" name="L423" href="#L423">423</a>           String replica = replicaJetty.url;
+<a class="jxr_linenumber" name="L424" href="#L424">424</a>           query.set(<span class="jxr_string">"shards"</span>, replica);
+<a class="jxr_linenumber" name="L425" href="#L425">425</a> 
+<a class="jxr_linenumber" name="L426" href="#L426">426</a>           <em class="jxr_comment">// replicas already shuffled, use this in the alternative check below</em>
+<a class="jxr_linenumber" name="L427" href="#L427">427</a>           <strong class="jxr_keyword">if</strong> (0 == random().nextInt(3) || replicaAlts.size() &lt; 2) {
+<a class="jxr_linenumber" name="L428" href="#L428">428</a>             replicaAlts.add(replica);
+<a class="jxr_linenumber" name="L429" href="#L429">429</a>           }
+<a class="jxr_linenumber" name="L430" href="#L430">430</a> 
+<a class="jxr_linenumber" name="L431" href="#L431">431</a>           numDocs = client.query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L432" href="#L432">432</a>           assertTrue(<span class="jxr_string">"numDocs &lt; 0 for replica "</span>+replica+<span class="jxr_string">" via "</span>+client,
+<a class="jxr_linenumber" name="L433" href="#L433">433</a>                      0 &lt;= numDocs);
+<a class="jxr_linenumber" name="L434" href="#L434">434</a>           assertEquals(<span class="jxr_string">"inconsitent numDocs for shard "</span>+shard+
+<a class="jxr_linenumber" name="L435" href="#L435">435</a>                        <span class="jxr_string">" in replica "</span>+replica+<span class="jxr_string">" via "</span>+client,
+<a class="jxr_linenumber" name="L436" href="#L436">436</a>                        shardCounts.get(shard).longValue(), numDocs);
+<a class="jxr_linenumber" name="L437" href="#L437">437</a>         }
+<a class="jxr_linenumber" name="L438" href="#L438">438</a> 
+<a class="jxr_linenumber" name="L439" href="#L439">439</a>         <em class="jxr_comment">// any combination of replica alternatives should give same numDocs</em>
+<a class="jxr_linenumber" name="L440" href="#L440">440</a>         String replicas = StringUtils.join(replicaAlts.toArray(), <span class="jxr_string">"|"</span>);
+<a class="jxr_linenumber" name="L441" href="#L441">441</a>         query.set(<span class="jxr_string">"shards"</span>, replicas);
+<a class="jxr_linenumber" name="L442" href="#L442">442</a>         numDocs = client.query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L443" href="#L443">443</a>         assertTrue(<span class="jxr_string">"numDocs &lt; 0 for replicas "</span>+replicas+<span class="jxr_string">" via "</span>+client,
+<a class="jxr_linenumber" name="L444" href="#L444">444</a>                    0 &lt;= numDocs);
+<a class="jxr_linenumber" name="L445" href="#L445">445</a>           assertEquals(<span class="jxr_string">"inconsitent numDocs for replicas "</span>+replicas+
+<a class="jxr_linenumber" name="L446" href="#L446">446</a>                        <span class="jxr_string">" via "</span>+client,
+<a class="jxr_linenumber" name="L447" href="#L447">447</a>                        shardCounts.get(shard).longValue(), numDocs);
+<a class="jxr_linenumber" name="L448" href="#L448">448</a>       }
+<a class="jxr_linenumber" name="L449" href="#L449">449</a>     }
+<a class="jxr_linenumber" name="L450" href="#L450">450</a> 
+<a class="jxr_linenumber" name="L451" href="#L451">451</a>     <em class="jxr_comment">// sums of multiple shards should add up regardless of how we </em>
+<a class="jxr_linenumber" name="L452" href="#L452">452</a>     <em class="jxr_comment">// query those shards or which client we use</em>
+<a class="jxr_linenumber" name="L453" href="#L453">453</a>     <strong class="jxr_keyword">long</strong> randomShardCountsExpected = 0;
+<a class="jxr_linenumber" name="L454" href="#L454">454</a>     ArrayList&lt;String&gt; randomShards = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;(shardCounts.size());
+<a class="jxr_linenumber" name="L455" href="#L455">455</a>     <strong class="jxr_keyword">for</strong> (Map.Entry&lt;String,Long&gt; shardData : shardCounts.entrySet()) {
+<a class="jxr_linenumber" name="L456" href="#L456">456</a>       <strong class="jxr_keyword">if</strong> (random().nextBoolean() || randomShards.size() &lt; 2) {
+<a class="jxr_linenumber" name="L457" href="#L457">457</a>         String shard = shardData.getKey();
+<a class="jxr_linenumber" name="L458" href="#L458">458</a>         randomShardCountsExpected += shardData.getValue();
+<a class="jxr_linenumber" name="L459" href="#L459">459</a>         <strong class="jxr_keyword">if</strong> (random().nextBoolean()) {
+<a class="jxr_linenumber" name="L460" href="#L460">460</a>           <em class="jxr_comment">// use shard id</em>
+<a class="jxr_linenumber" name="L461" href="#L461">461</a>           randomShards.add(shard);
+<a class="jxr_linenumber" name="L462" href="#L462">462</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L463" href="#L463">463</a>           <em class="jxr_comment">// use some set explicit replicas</em>
+<a class="jxr_linenumber" name="L464" href="#L464">464</a>           ArrayList&lt;String&gt; replicas = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;(7);
+<a class="jxr_linenumber" name="L465" href="#L465">465</a>           <strong class="jxr_keyword">for</strong> (CloudJettyRunner replicaJetty : shardToJetty.get(shard)) {
+<a class="jxr_linenumber" name="L466" href="#L466">466</a>             <strong class="jxr_keyword">if</strong> (0 == random().nextInt(3) || 0 == replicas.size()) {
+<a class="jxr_linenumber" name="L467" href="#L467">467</a>               replicas.add(replicaJetty.url);
+<a class="jxr_linenumber" name="L468" href="#L468">468</a>             }
+<a class="jxr_linenumber" name="L469" href="#L469">469</a>           }
+<a class="jxr_linenumber" name="L470" href="#L470">470</a>           Collections.shuffle(replicas, random());
+<a class="jxr_linenumber" name="L471" href="#L471">471</a>           randomShards.add(StringUtils.join(replicas, <span class="jxr_string">"|"</span>));
+<a class="jxr_linenumber" name="L472" href="#L472">472</a>         }
+<a class="jxr_linenumber" name="L473" href="#L473">473</a>       }
+<a class="jxr_linenumber" name="L474" href="#L474">474</a>     }
+<a class="jxr_linenumber" name="L475" href="#L475">475</a>     String randShards = StringUtils.join(randomShards, <span class="jxr_string">","</span>);
+<a class="jxr_linenumber" name="L476" href="#L476">476</a>     query.set(<span class="jxr_string">"shards"</span>, randShards);
+<a class="jxr_linenumber" name="L477" href="#L477">477</a>     <strong class="jxr_keyword">for</strong> (SolrClient client : <strong class="jxr_keyword">this</strong>.clients) {
+<a class="jxr_linenumber" name="L478" href="#L478">478</a>       assertEquals(<span class="jxr_string">"numDocs for "</span>+randShards+<span class="jxr_string">" via "</span>+client,
+<a class="jxr_linenumber" name="L479" href="#L479">479</a>                    randomShardCountsExpected, 
+<a class="jxr_linenumber" name="L480" href="#L480">480</a>                    client.query(query).getResults().getNumFound());
+<a class="jxr_linenumber" name="L481" href="#L481">481</a>     }
+<a class="jxr_linenumber" name="L482" href="#L482">482</a> 
+<a class="jxr_linenumber" name="L483" href="#L483">483</a>     <em class="jxr_comment">// total num docs must match sum of every shard's numDocs</em>
+<a class="jxr_linenumber" name="L484" href="#L484">484</a>     query = <strong class="jxr_keyword">new</strong> SolrQuery(<span class="jxr_string">"*:*"</span>);
+<a class="jxr_linenumber" name="L485" href="#L485">485</a>     <strong class="jxr_keyword">long</strong> totalShardNumDocs = 0;
+<a class="jxr_linenumber" name="L486" href="#L486">486</a>     <strong class="jxr_keyword">for</strong> (Long c : shardCounts.values()) {
+<a class="jxr_linenumber" name="L487" href="#L487">487</a>       totalShardNumDocs += c;
+<a class="jxr_linenumber" name="L488" href="#L488">488</a>     }
+<a class="jxr_linenumber" name="L489" href="#L489">489</a>     <strong class="jxr_keyword">for</strong> (SolrClient client : clients) {
+<a class="jxr_linenumber" name="L490" href="#L490">490</a>       assertEquals(<span class="jxr_string">"sum of shard numDocs on client: "</span> + client, 
+<a class="jxr_linenumber" name="L491" href="#L491">491</a>                    totalShardNumDocs,
+<a class="jxr_linenumber" name="L492" href="#L492">492</a>                    client.query(query).getResults().getNumFound());
+<a class="jxr_linenumber" name="L493" href="#L493">493</a>     }
+<a class="jxr_linenumber" name="L494" href="#L494">494</a>     assertTrue(<span class="jxr_string">"total numDocs &lt;= 0, WTF? Test is useless"</span>,
+<a class="jxr_linenumber" name="L495" href="#L495">495</a>         0 &lt; totalShardNumDocs);
+<a class="jxr_linenumber" name="L496" href="#L496">496</a> 
+<a class="jxr_linenumber" name="L497" href="#L497">497</a>   }
+<a class="jxr_linenumber" name="L498" href="#L498">498</a> 
+<a class="jxr_linenumber" name="L499" href="#L499">499</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> testStopAndStartCoresInOneInstance() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L500" href="#L500">500</a>     SolrClient client = clients.get(0);
+<a class="jxr_linenumber" name="L501" href="#L501">501</a>     String url3 = getBaseUrl(client);
+<a class="jxr_linenumber" name="L502" href="#L502">502</a>     <strong class="jxr_keyword">try</strong> (<strong class="jxr_keyword">final</strong> HttpSolrClient httpSolrClient = <strong class="jxr_keyword">new</strong> HttpSolrClient(url3)) {
+<a class="jxr_linenumber" name="L503" href="#L503">503</a>       httpSolrClient.setConnectionTimeout(15000);
+<a class="jxr_linenumber" name="L504" href="#L504">504</a>       httpSolrClient.setSoTimeout(60000);
+<a class="jxr_linenumber" name="L505" href="#L505">505</a>       ThreadPoolExecutor executor = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L506" href="#L506">506</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L507" href="#L507">507</a>         executor = <strong class="jxr_keyword">new</strong> ExecutorUtil.MDCAwareThreadPoolExecutor(0, Integer.MAX_VALUE,
+<a class="jxr_linenumber" name="L508" href="#L508">508</a>             5, TimeUnit.SECONDS, <strong class="jxr_keyword">new</strong> SynchronousQueue&lt;Runnable&gt;(),
+<a class="jxr_linenumber" name="L509" href="#L509">509</a>             <strong class="jxr_keyword">new</strong> DefaultSolrThreadFactory(<span class="jxr_string">"testExecutor"</span>));
+<a class="jxr_linenumber" name="L510" href="#L510">510</a>         <strong class="jxr_keyword">int</strong> cnt = 3;
+<a class="jxr_linenumber" name="L511" href="#L511">511</a> 
+<a class="jxr_linenumber" name="L512" href="#L512">512</a>         <em class="jxr_comment">// create the cores</em>
+<a class="jxr_linenumber" name="L513" href="#L513">513</a>         createCores(httpSolrClient, executor, <span class="jxr_string">"multiunload2"</span>, 1, cnt);
+<a class="jxr_linenumber" name="L514" href="#L514">514</a>       } <strong class="jxr_keyword">finally</strong> {
+<a class="jxr_linenumber" name="L515" href="#L515">515</a>         <strong class="jxr_keyword">if</strong> (executor != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L516" href="#L516">516</a>           ExecutorUtil.shutdownAndAwaitTermination(executor);
+<a class="jxr_linenumber" name="L517" href="#L517">517</a>         }
+<a class="jxr_linenumber" name="L518" href="#L518">518</a>       }
+<a class="jxr_linenumber" name="L519" href="#L519">519</a>     }
+<a class="jxr_linenumber" name="L520" href="#L520">520</a>     
+<a class="jxr_linenumber" name="L521" href="#L521">521</a>     ChaosMonkey.stop(cloudJettys.get(0).jetty);
+<a class="jxr_linenumber" name="L522" href="#L522">522</a>     printLayout();
+<a class="jxr_linenumber" name="L523" href="#L523">523</a> 
+<a class="jxr_linenumber" name="L524" href="#L524">524</a>     Thread.sleep(5000);
+<a class="jxr_linenumber" name="L525" href="#L525">525</a>     ChaosMonkey.start(cloudJettys.get(0).jetty);
+<a class="jxr_linenumber" name="L526" href="#L526">526</a>     cloudClient.getZkStateReader().updateClusterState();
+<a class="jxr_linenumber" name="L527" href="#L527">527</a>     <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L528" href="#L528">528</a>       cloudClient.getZkStateReader().getLeaderRetry(<span class="jxr_string">"multiunload2"</span>, <span class="jxr_string">"shard1"</span>, 30000);
+<a class="jxr_linenumber" name="L529" href="#L529">529</a>     } <strong class="jxr_keyword">catch</strong> (SolrException e) {
+<a class="jxr_linenumber" name="L530" href="#L530">530</a>       printLayout();
+<a class="jxr_linenumber" name="L531" href="#L531">531</a>       <strong class="jxr_keyword">throw</strong> e;
+<a class="jxr_linenumber" name="L532" href="#L532">532</a>     }
+<a class="jxr_linenumber" name="L533" href="#L533">533</a>     
+<a class="jxr_linenumber" name="L534" href="#L534">534</a>     printLayout();
+<a class="jxr_linenumber" name="L535" href="#L535">535</a> 
+<a class="jxr_linenumber" name="L536" href="#L536">536</a>   }
+<a class="jxr_linenumber" name="L537" href="#L537">537</a> 
+<a class="jxr_linenumber" name="L538" href="#L538">538</a>   <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">void</strong> createCores(<strong class="jxr_keyword">final</strong> HttpSolrClient client,
+<a class="jxr_linenumber" name="L539" href="#L539">539</a>       ThreadPoolExecutor executor, <strong class="jxr_keyword">final</strong> String collection, <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> numShards, <strong class="jxr_keyword">int</strong> cnt) {
+<a class="jxr_linenumber" name="L540" href="#L540">540</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 0; i &lt; cnt; i++) {
+<a class="jxr_linenumber" name="L541" href="#L541">541</a>       <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> freezeI = i;
+<a class="jxr_linenumber" name="L542" href="#L542">542</a>       executor.execute(<strong class="jxr_keyword">new</strong> Runnable() {
+<a class="jxr_linenumber" name="L543" href="#L543">543</a>         
+<a class="jxr_linenumber" name="L544" href="#L544">544</a>         @Override
+<a class="jxr_linenumber" name="L545" href="#L545">545</a>         <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> run() {
+<a class="jxr_linenumber" name="L546" href="#L546">546</a>           Create createCmd = <strong class="jxr_keyword">new</strong> Create();
+<a class="jxr_linenumber" name="L547" href="#L547">547</a>           createCmd.setCoreName(collection + freezeI);
+<a class="jxr_linenumber" name="L548" href="#L548">548</a>           createCmd.setCollection(collection);
+<a class="jxr_linenumber" name="L549" href="#L549">549</a> 
+<a class="jxr_linenumber" name="L550" href="#L550">550</a>           createCmd.setNumShards(numShards);
+<a class="jxr_linenumber" name="L551" href="#L551">551</a>           <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L552" href="#L552">552</a>             String core3dataDir = createTempDir(collection).toFile().getAbsolutePath();
+<a class="jxr_linenumber" name="L553" href="#L553">553</a>             createCmd.setDataDir(getDataDir(core3dataDir));
+<a class="jxr_linenumber" name="L554" href="#L554">554</a> 
+<a class="jxr_linenumber" name="L555" href="#L555">555</a>             client.request(createCmd);
+<a class="jxr_linenumber" name="L556" href="#L556">556</a>           } <strong class="jxr_keyword">catch</strong> (SolrServerException | IOException e) {
+<a class="jxr_linenumber" name="L557" href="#L557">557</a>             <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> RuntimeException(e);
+<a class="jxr_linenumber" name="L558" href="#L558">558</a>           }
+<a class="jxr_linenumber" name="L559" href="#L559">559</a>         }
+<a class="jxr_linenumber" name="L560" href="#L560">560</a>         
+<a class="jxr_linenumber" name="L561" href="#L561">561</a>       });
+<a class="jxr_linenumber" name="L562" href="#L562">562</a>     }
+<a class="jxr_linenumber" name="L563" href="#L563">563</a>   }
+<a class="jxr_linenumber" name="L564" href="#L564">564</a> 
+<a class="jxr_linenumber" name="L565" href="#L565">565</a>   <strong class="jxr_keyword">protected</strong> String getBaseUrl(SolrClient client) {
+<a class="jxr_linenumber" name="L566" href="#L566">566</a>     String url2 = ((HttpSolrClient) client).getBaseURL()
+<a class="jxr_linenumber" name="L567" href="#L567">567</a>         .substring(
+<a class="jxr_linenumber" name="L568" href="#L568">568</a>             0,
+<a class="jxr_linenumber" name="L569" href="#L569">569</a>             ((HttpSolrClient) client).getBaseURL().length()
+<a class="jxr_linenumber" name="L570" href="#L570">570</a>                 - DEFAULT_COLLECTION.length() -1);
+<a class="jxr_linenumber" name="L571" href="#L571">571</a>     <strong class="jxr_keyword">return</strong> url2;
+<a class="jxr_linenumber" name="L572" href="#L572">572</a>   }
+<a class="jxr_linenumber" name="L573" href="#L573">573</a> 
+<a class="jxr_linenumber" name="L574" href="#L574">574</a>   <strong class="jxr_keyword">protected</strong> CollectionAdminResponse createCollection(Map&lt;String, List&lt;Integer&gt;&gt; collectionInfos,
+<a class="jxr_linenumber" name="L575" href="#L575">575</a>                                                      String collectionName, <strong class="jxr_keyword">int</strong> numShards, <strong class="jxr_keyword">int</strong> numReplicas, <strong class="jxr_keyword">int</strong> maxShardsPerNode, SolrClient client, String createNodeSetStr) <strong class="jxr_keyword">throws</strong> SolrServerException, IOException {
+<a class="jxr_linenumber" name="L576" href="#L576">576</a>     <em class="jxr_comment">// TODO: Use CollectionAdminRequest for this test</em>
+<a class="jxr_linenumber" name="L577" href="#L577">577</a>     ModifiableSolrParams params = <strong class="jxr_keyword">new</strong> ModifiableSolrParams();
+<a class="jxr_linenumber" name="L578" href="#L578">578</a>     params.set(<span class="jxr_string">"action"</span>, CollectionAction.CREATE.toString());
+<a class="jxr_linenumber" name="L579" href="#L579">579</a> 
+<a class="jxr_linenumber" name="L580" href="#L580">580</a>     params.set(OverseerCollectionMessageHandler.NUM_SLICES, numShards);
+<a class="jxr_linenumber" name="L581" href="#L581">581</a>     params.set(ZkStateReader.REPLICATION_FACTOR, numReplicas);
+<a class="jxr_linenumber" name="L582" href="#L582">582</a>     params.set(ZkStateReader.MAX_SHARDS_PER_NODE, maxShardsPerNode);
+<a class="jxr_linenumber" name="L583" href="#L583">583</a>     <strong class="jxr_keyword">if</strong> (createNodeSetStr != <strong class="jxr_keyword">null</strong>) params.set(OverseerCollectionMessageHandler.CREATE_NODE_SET, createNodeSetStr);
+<a class="jxr_linenumber" name="L584" href="#L584">584</a> 
+<a class="jxr_linenumber" name="L585" href="#L585">585</a>     <strong class="jxr_keyword">int</strong> clientIndex = clients.size() &gt; 1 ? random().nextInt(2) : 0;
+<a class="jxr_linenumber" name="L586" href="#L586">586</a>     List&lt;Integer&gt; list = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L587" href="#L587">587</a>     list.add(numShards);
+<a class="jxr_linenumber" name="L588" href="#L588">588</a>     list.add(numReplicas);
+<a class="jxr_linenumber" name="L589" href="#L589">589</a>     <strong class="jxr_keyword">if</strong> (collectionInfos != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L590" href="#L590">590</a>       collectionInfos.put(collectionName, list);
+<a class="jxr_linenumber" name="L591" href="#L591">591</a>     }
+<a class="jxr_linenumber" name="L592" href="#L592">592</a>     params.set(<span class="jxr_string">"name"</span>, collectionName);
+<a class="jxr_linenumber" name="L593" href="#L593">593</a>     SolrRequest request = <strong class="jxr_keyword">new</strong> QueryRequest(params);
+<a class="jxr_linenumber" name="L594" href="#L594">594</a>     request.setPath(<span class="jxr_string">"/admin/collections"</span>);
+<a class="jxr_linenumber" name="L595" href="#L595">595</a> 
+<a class="jxr_linenumber" name="L596" href="#L596">596</a>     CollectionAdminResponse res = <strong class="jxr_keyword">new</strong> CollectionAdminResponse();
+<a class="jxr_linenumber" name="L597" href="#L597">597</a>     <strong class="jxr_keyword">if</strong> (client == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L598" href="#L598">598</a>       <strong class="jxr_keyword">final</strong> String baseUrl = ((HttpSolrClient) clients.get(clientIndex)).getBaseURL().substring(
+<a class="jxr_linenumber" name="L599" href="#L599">599</a>           0,
+<a class="jxr_linenumber" name="L600" href="#L600">600</a>           ((HttpSolrClient) clients.get(clientIndex)).getBaseURL().length()
+<a class="jxr_linenumber" name="L601" href="#L601">601</a>               - DEFAULT_COLLECTION.length() - 1);
+<a class="jxr_linenumber" name="L602" href="#L602">602</a>       
+<a class="jxr_linenumber" name="L603" href="#L603">603</a>       <strong class="jxr_keyword">try</strong> (SolrClient aClient = createNewSolrClient(<span class="jxr_string">""</span>, baseUrl)) {
+<a class="jxr_linenumber" name="L604" href="#L604">604</a>         res.setResponse(aClient.request(request));
+<a class="jxr_linenumber" name="L605" href="#L605">605</a>       }
+<a class="jxr_linenumber" name="L606" href="#L606">606</a>     } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L607" href="#L607">607</a>       res.setResponse(client.request(request));
+<a class="jxr_linenumber" name="L608" href="#L608">608</a>     }
+<a class="jxr_linenumber" name="L609" href="#L609">609</a>     <strong class="jxr_keyword">return</strong> res;
+<a class="jxr_linenumber" name="L610" href="#L610">610</a>   }
+<a class="jxr_linenumber" name="L611" href="#L611">611</a>   
+<a class="jxr_linenumber" name="L612" href="#L612">612</a>   <strong class="jxr_keyword">protected</strong> ZkCoreNodeProps getLeaderUrlFromZk(String collection, String slice) {
+<a class="jxr_linenumber" name="L613" href="#L613">613</a>     ClusterState clusterState = getCommonCloudSolrClient().getZkStateReader().getClusterState();
+<a class="jxr_linenumber" name="L614" href="#L614">614</a>     ZkNodeProps leader = clusterState.getLeader(collection, slice);
+<a class="jxr_linenumber" name="L615" href="#L615">615</a>     <strong class="jxr_keyword">if</strong> (leader == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L616" href="#L616">616</a>       <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> RuntimeException(<span class="jxr_string">"Could not find leader:"</span> + collection + <span class="jxr_string">" "</span> + slice);
+<a class="jxr_linenumber" name="L617" href="#L617">617</a>     }
+<a class="jxr_linenumber" name="L618" href="#L618">618</a>     <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">new</strong> ZkCoreNodeProps(leader);
+<a class="jxr_linenumber" name="L619" href="#L619">619</a>   }
+<a class="jxr_linenumber" name="L620" href="#L620">620</a>   
+<a class="jxr_linenumber" name="L621" href="#L621">621</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L622" href="#L622">622</a> <em class="jxr_javadoccomment">   * Expects a RegexReplaceProcessorFactories in the chain which will</em>
+<a class="jxr_linenumber" name="L623" href="#L623">623</a> <em class="jxr_javadoccomment">   * "double up" the values in two (stored) string fields.</em>
+<a class="jxr_linenumber" name="L624" href="#L624">624</a> <em class="jxr_javadoccomment">   * &lt;p&gt;</em>
+<a class="jxr_linenumber" name="L625" href="#L625">625</a> <em class="jxr_javadoccomment">   * If the values are "double-doubled" or "not-doubled" then we know </em>
+<a class="jxr_linenumber" name="L626" href="#L626">626</a> <em class="jxr_javadoccomment">   * the processor was not run the appropriate number of times</em>
+<a class="jxr_linenumber" name="L627" href="#L627">627</a> <em class="jxr_javadoccomment">   * &lt;/p&gt;</em>
+<a class="jxr_linenumber" name="L628" href="#L628">628</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L629" href="#L629">629</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> testUpdateProcessorsRunOnlyOnce(<strong class="jxr_keyword">final</strong> String chain) <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L630" href="#L630">630</a> 
+<a class="jxr_linenumber" name="L631" href="#L631">631</a>     <strong class="jxr_keyword">final</strong> String fieldA = <span class="jxr_string">"regex_dup_A_s"</span>;
+<a class="jxr_linenumber" name="L632" href="#L632">632</a>     <strong class="jxr_keyword">final</strong> String fieldB = <span class="jxr_string">"regex_dup_B_s"</span>;
+<a class="jxr_linenumber" name="L633" href="#L633">633</a>     <strong class="jxr_keyword">final</strong> String val = <span class="jxr_string">"x"</span>;
+<a class="jxr_linenumber" name="L634" href="#L634">634</a>     <strong class="jxr_keyword">final</strong> String expected = <span class="jxr_string">"x_x"</span>;
+<a class="jxr_linenumber" name="L635" href="#L635">635</a>     <strong class="jxr_keyword">final</strong> ModifiableSolrParams updateParams = <strong class="jxr_keyword">new</strong> ModifiableSolrParams();
+<a class="jxr_linenumber" name="L636" href="#L636">636</a>     updateParams.add(UpdateParams.UPDATE_CHAIN, chain);
+<a class="jxr_linenumber" name="L637" href="#L637">637</a>     
+<a class="jxr_linenumber" name="L638" href="#L638">638</a>     <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> numLoops = atLeast(50);
+<a class="jxr_linenumber" name="L639" href="#L639">639</a>     
+<a class="jxr_linenumber" name="L640" href="#L640">640</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 1; i &lt; numLoops; i++) {
+<a class="jxr_linenumber" name="L641" href="#L641">641</a>       <em class="jxr_comment">// add doc to random client</em>
+<a class="jxr_linenumber" name="L642" href="#L642">642</a>       SolrClient updateClient = clients.get(random().nextInt(clients.size()));
+<a class="jxr_linenumber" name="L643" href="#L643">643</a>       SolrInputDocument doc = <strong class="jxr_keyword">new</strong> SolrInputDocument();
+<a class="jxr_linenumber" name="L644" href="#L644">644</a>       addFields(doc, id, i, fieldA, val, fieldB, val);
+<a class="jxr_linenumber" name="L645" href="#L645">645</a>       UpdateResponse ures = add(updateClient, updateParams, doc);
+<a class="jxr_linenumber" name="L646" href="#L646">646</a>       assertEquals(chain + <span class="jxr_string">": update failed"</span>, 0, ures.getStatus());
+<a class="jxr_linenumber" name="L647" href="#L647">647</a>       ures = updateClient.commit();
+<a class="jxr_linenumber" name="L648" href="#L648">648</a>       assertEquals(chain + <span class="jxr_string">": commit failed"</span>, 0, ures.getStatus());
+<a class="jxr_linenumber" name="L649" href="#L649">649</a>     }
+<a class="jxr_linenumber" name="L650" href="#L650">650</a> 
+<a class="jxr_linenumber" name="L651" href="#L651">651</a>     <em class="jxr_comment">// query for each doc, and check both fields to ensure the value is correct</em>
+<a class="jxr_linenumber" name="L652" href="#L652">652</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">int</strong> i = 1; i &lt; numLoops; i++) {
+<a class="jxr_linenumber" name="L653" href="#L653">653</a>       <strong class="jxr_keyword">final</strong> String query = id + <span class="jxr_string">":"</span> + i;
+<a class="jxr_linenumber" name="L654" href="#L654">654</a>       QueryResponse qres = queryServer(<strong class="jxr_keyword">new</strong> SolrQuery(query));
+<a class="jxr_linenumber" name="L655" href="#L655">655</a>       assertEquals(chain + <span class="jxr_string">": query failed: "</span> + query, 
+<a class="jxr_linenumber" name="L656" href="#L656">656</a>                    0, qres.getStatus());
+<a class="jxr_linenumber" name="L657" href="#L657">657</a>       assertEquals(chain + <span class="jxr_string">": didn't find correct # docs with query: "</span> + query,
+<a class="jxr_linenumber" name="L658" href="#L658">658</a>                    1, qres.getResults().getNumFound());
+<a class="jxr_linenumber" name="L659" href="#L659">659</a>       SolrDocument doc = qres.getResults().get(0);
+<a class="jxr_linenumber" name="L660" href="#L660">660</a> 
+<a class="jxr_linenumber" name="L661" href="#L661">661</a>       <strong class="jxr_keyword">for</strong> (String field : <strong class="jxr_keyword">new</strong> String[] {fieldA, fieldB}) { 
+<a class="jxr_linenumber" name="L662" href="#L662">662</a>         assertEquals(chain + <span class="jxr_string">": doc#"</span> + i+ <span class="jxr_string">" has wrong value for "</span> + field,
+<a class="jxr_linenumber" name="L663" href="#L663">663</a>                      expected, doc.getFirstValue(field));
+<a class="jxr_linenumber" name="L664" href="#L664">664</a>       }
+<a class="jxr_linenumber" name="L665" href="#L665">665</a>     }
+<a class="jxr_linenumber" name="L666" href="#L666">666</a> 
+<a class="jxr_linenumber" name="L667" href="#L667">667</a>   }
+<a class="jxr_linenumber" name="L668" href="#L668">668</a> 
+<a class="jxr_linenumber" name="L669" href="#L669">669</a>   <em class="jxr_comment">// cloud level test mainly needed just to make sure that versions and errors are propagated correctly</em>
+<a class="jxr_linenumber" name="L670" href="#L670">670</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> doOptimisticLockingAndUpdating() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L671" href="#L671">671</a>     log.info(<span class="jxr_string">"### STARTING doOptimisticLockingAndUpdating"</span>);
+<a class="jxr_linenumber" name="L672" href="#L672">672</a>     printLayout();
+<a class="jxr_linenumber" name="L673" href="#L673">673</a>     
+<a class="jxr_linenumber" name="L674" href="#L674">674</a>     SolrInputDocument sd =  sdoc(<span class="jxr_string">"id"</span>, 1000, <span class="jxr_string">"_version_"</span>, -1);
+<a class="jxr_linenumber" name="L675" href="#L675">675</a>     indexDoc(sd);
+<a class="jxr_linenumber" name="L676" href="#L676">676</a> 
+<a class="jxr_linenumber" name="L677" href="#L677">677</a>     ignoreException(<span class="jxr_string">"version conflict"</span>);
+<a class="jxr_linenumber" name="L678" href="#L678">678</a>     <strong class="jxr_keyword">for</strong> (SolrClient client : clients) {
+<a class="jxr_linenumber" name="L679" href="#L679">679</a>       <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L680" href="#L680">680</a>         client.add(sd);
+<a class="jxr_linenumber" name="L681" href="#L681">681</a>         fail();
+<a class="jxr_linenumber" name="L682" href="#L682">682</a>       } <strong class="jxr_keyword">catch</strong> (SolrException e) {
+<a class="jxr_linenumber" name="L683" href="#L683">683</a>         assertEquals(409, e.code());
+<a class="jxr_linenumber" name="L684" href="#L684">684</a>       }
+<a class="jxr_linenumber" name="L685" href="#L685">685</a>     }
+<a class="jxr_linenumber" name="L686" href="#L686">686</a>     unIgnoreException(<span class="jxr_string">"version conflict"</span>);
+<a class="jxr_linenumber" name="L687" href="#L687">687</a> 
+<a class="jxr_linenumber" name="L688" href="#L688">688</a>     <em class="jxr_comment">// TODO: test deletes.  SolrJ needs a good way to pass version for delete...</em>
+<a class="jxr_linenumber" name="L689" href="#L689">689</a> 
+<a class="jxr_linenumber" name="L690" href="#L690">690</a>     sd =  sdoc(<span class="jxr_string">"id"</span>, 1000, <span class="jxr_string">"foo_i"</span>,5);
+<a class="jxr_linenumber" name="L691" href="#L691">691</a>     clients.get(0).add(sd);
+<a class="jxr_linenumber" name="L692" href="#L692">692</a> 
+<a class="jxr_linenumber" name="L693" href="#L693">693</a>     List&lt;Integer&gt; expected = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L694" href="#L694">694</a>     <strong class="jxr_keyword">int</strong> val = 0;
+<a class="jxr_linenumber" name="L695" href="#L695">695</a>     <strong class="jxr_keyword">for</strong> (SolrClient client : clients) {
+<a class="jxr_linenumber" name="L696" href="#L696">696</a>       val += 10;
+<a class="jxr_linenumber" name="L697" href="#L697">697</a>       client.add(sdoc(<span class="jxr_string">"id"</span>, 1000, <span class="jxr_string">"val_i"</span>, map(<span class="jxr_string">"add"</span>,val), <span class="jxr_string">"foo_i"</span>,val));
+<a class="jxr_linenumber" name="L698" href="#L698">698</a>       expected.add(val);
+<a class="jxr_linenumber" name="L699" href="#L699">699</a>     }
+<a class="jxr_linenumber" name="L700" href="#L700">700</a> 
+<a class="jxr_linenumber" name="L701" href="#L701">701</a>     QueryRequest qr = <strong class="jxr_keyword">new</strong> QueryRequest(params(<span class="jxr_string">"qt"</span>, <span class="jxr_string">"/get"</span>, <span class="jxr_string">"id"</span>,<span class="jxr_string">"1000"</span>));
+<a class="jxr_linenumber" name="L702" href="#L702">702</a>     <strong class="jxr_keyword">for</strong> (SolrClient client : clients) {
+<a class="jxr_linenumber" name="L703" href="#L703">703</a>       val += 10;
+<a class="jxr_linenumber" name="L704" href="#L704">704</a>       NamedList rsp = client.request(qr);
+<a class="jxr_linenumber" name="L705" href="#L705">705</a>       String match = JSONTestUtil.matchObj(<span class="jxr_string">"/val_i"</span>, rsp.get(<span class="jxr_string">"doc"</span>), expected);
+<a class="jxr_linenumber" name="L706" href="#L706">706</a>       <strong class="jxr_keyword">if</strong> (match != <strong class="jxr_keyword">null</strong>) <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> RuntimeException(match);
+<a class="jxr_linenumber" name="L707" href="#L707">707</a>     }
+<a class="jxr_linenumber" name="L708" href="#L708">708</a>   }
+<a class="jxr_linenumber" name="L709" href="#L709">709</a> 
+<a class="jxr_linenumber" name="L710" href="#L710">710</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> testNumberOfCommitsWithCommitAfterAdd()
+<a class="jxr_linenumber" name="L711" href="#L711">711</a>       <strong class="jxr_keyword">throws</strong> SolrServerException, IOException {
+<a class="jxr_linenumber" name="L712" href="#L712">712</a>     log.info(<span class="jxr_string">"### STARTING testNumberOfCommitsWithCommitAfterAdd"</span>);
+<a class="jxr_linenumber" name="L713" href="#L713">713</a>     <strong class="jxr_keyword">long</strong> startCommits = getNumCommits((HttpSolrClient) clients.get(0));
+<a class="jxr_linenumber" name="L714" href="#L714">714</a>     
+<a class="jxr_linenumber" name="L715" href="#L715">715</a>     ContentStreamUpdateRequest up = <strong class="jxr_keyword">new</strong> ContentStreamUpdateRequest(<span class="jxr_string">"/update"</span>);
+<a class="jxr_linenumber" name="L716" href="#L716">716</a>     up.addFile(getFile(<span class="jxr_string">"books_numeric_ids.csv"</span>), <span class="jxr_string">"application/csv"</span>);
+<a class="jxr_linenumber" name="L717" href="#L717">717</a>     up.setCommitWithin(900000);
+<a class="jxr_linenumber" name="L718" href="#L718">718</a>     up.setAction(AbstractUpdateRequest.ACTION.COMMIT, <strong class="jxr_keyword">true</strong>, <strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L719" href="#L719">719</a>     NamedList&lt;Object&gt; result = clients.get(0).request(up);
+<a class="jxr_linenumber" name="L720" href="#L720">720</a>     
+<a class="jxr_linenumber" name="L721" href="#L721">721</a>     <strong class="jxr_keyword">long</strong> endCommits = getNumCommits((HttpSolrClient) clients.get(0));
+<a class="jxr_linenumber" name="L722" href="#L722">722</a> 
+<a class="jxr_linenumber" name="L723" href="#L723">723</a>     assertEquals(startCommits + 1L, endCommits);
+<a class="jxr_linenumber" name="L724" href="#L724">724</a>   }
+<a class="jxr_linenumber" name="L725" href="#L725">725</a> 
+<a class="jxr_linenumber" name="L726" href="#L726">726</a>   <strong class="jxr_keyword">private</strong> Long getNumCommits(HttpSolrClient sourceClient) <strong class="jxr_keyword">throws</strong>
+<a class="jxr_linenumber" name="L727" href="#L727">727</a>       SolrServerException, IOException {
+<a class="jxr_linenumber" name="L728" href="#L728">728</a>     <strong class="jxr_keyword">try</strong> (HttpSolrClient client = <strong class="jxr_keyword">new</strong> HttpSolrClient(sourceClient.getBaseURL())) {
+<a class="jxr_linenumber" name="L729" href="#L729">729</a>       client.setConnectionTimeout(15000);
+<a class="jxr_linenumber" name="L730" href="#L730">730</a>       client.setSoTimeout(60000);
+<a class="jxr_linenumber" name="L731" href="#L731">731</a>       ModifiableSolrParams params = <strong class="jxr_keyword">new</strong> ModifiableSolrParams();
+<a class="jxr_linenumber" name="L732" href="#L732">732</a>       params.set(<span class="jxr_string">"qt"</span>, <span class="jxr_string">"/admin/mbeans?key=updateHandler&amp;stats=true"</span>);
+<a class="jxr_linenumber" name="L733" href="#L733">733</a>       <em class="jxr_comment">// use generic request to avoid extra processing of queries</em>
+<a class="jxr_linenumber" name="L734" href="#L734">734</a>       QueryRequest req = <strong class="jxr_keyword">new</strong> QueryRequest(params);
+<a class="jxr_linenumber" name="L735" href="#L735">735</a>       NamedList&lt;Object&gt; resp = client.request(req);
+<a class="jxr_linenumber" name="L736" href="#L736">736</a>       NamedList mbeans = (NamedList) resp.get(<span class="jxr_string">"solr-mbeans"</span>);
+<a class="jxr_linenumber" name="L737" href="#L737">737</a>       NamedList uhandlerCat = (NamedList) mbeans.get(<span class="jxr_string">"UPDATEHANDLER"</span>);
+<a class="jxr_linenumber" name="L738" href="#L738">738</a>       NamedList uhandler = (NamedList) uhandlerCat.get(<span class="jxr_string">"updateHandler"</span>);
+<a class="jxr_linenumber" name="L739" href="#L739">739</a>       NamedList stats = (NamedList) uhandler.get(<span class="jxr_string">"stats"</span>);
+<a class="jxr_linenumber" name="L740" href="#L740">740</a>       <strong class="jxr_keyword">return</strong> (Long) stats.get(<span class="jxr_string">"commits"</span>);
+<a class="jxr_linenumber" name="L741" href="#L741">741</a>     }
+<a class="jxr_linenumber" name="L742" href="#L742">742</a>   }
+<a class="jxr_linenumber" name="L743" href="#L743">743</a> 
+<a class="jxr_linenumber" name="L744" href="#L744">744</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> testANewCollectionInOneInstanceWithManualShardAssignement() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L745" href="#L745">745</a>     log.info(<span class="jxr_string">"### STARTING testANewCollectionInOneInstanceWithManualShardAssignement"</span>);
+<a class="jxr_linenumber" name="L746" href="#L746">746</a>     System.clearProperty(<span class="jxr_string">"numShards"</span>);
+<a class="jxr_linenumber" name="L747" href="#L747">747</a>     List&lt;SolrClient&gt; collectionClients = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L748" href="#L748">748</a>     SolrClient client = clients.get(0);
+<a class="jxr_linenumber" name="L749" href="#L749">749</a>     <strong class="jxr_keyword">final</strong> String baseUrl = ((HttpSolrClient) client).getBaseURL().substring(
+<a class="jxr_linenumber" name="L750" href="#L750">750</a>         0,
+<a class="jxr_linenumber" name="L751" href="#L751">751</a>         ((HttpSolrClient) client).getBaseURL().length()
+<a class="jxr_linenumber" name="L752" href="#L752">752</a>             - DEFAULT_COLLECTION.length() - 1);
+<a class="jxr_linenumber" name="L753" href="#L753">753</a>     createSolrCore(oneInstanceCollection2, collectionClients, baseUrl, 1, <span class="jxr_string">"slice1"</span>);
+<a class="jxr_linenumber" name="L754" href="#L754">754</a>     createSolrCore(oneInstanceCollection2, collectionClients, baseUrl, 2, <span class="jxr_string">"slice2"</span>);
+<a class="jxr_linenumber" name="L755" href="#L755">755</a>     createSolrCore(oneInstanceCollection2, collectionClients, baseUrl, 3, <span class="jxr_string">"slice2"</span>);
+<a class="jxr_linenumber" name="L756" href="#L756">756</a>     createSolrCore(oneInstanceCollection2, collectionClients, baseUrl, 4, <span class="jxr_string">"slice1"</span>);
+<a class="jxr_linenumber" name="L757" href="#L757">757</a>     
+<a class="jxr_linenumber" name="L758" href="#L758">758</a>    <strong class="jxr_keyword">while</strong> (pending != <strong class="jxr_keyword">null</strong> &amp;&amp; pending.size() &gt; 0) {
+<a class="jxr_linenumber" name="L759" href="#L759">759</a>       
+<a class="jxr_linenumber" name="L760" href="#L760">760</a>       Future&lt;Object&gt; future = completionService.take();
+<a class="jxr_linenumber" name="L761" href="#L761">761</a>       pending.remove(future);
+<a class="jxr_linenumber" name="L762" href="#L762">762</a>     }
+<a class="jxr_linenumber" name="L763" href="#L763">763</a>     
+<a class="jxr_linenumber" name="L764" href="#L764">764</a>     SolrClient client1 = collectionClients.get(0);
+<a class="jxr_linenumber" name="L765" href="#L765">765</a>     SolrClient client2 = collectionClients.get(1);
+<a class="jxr_linenumber" name="L766" href="#L766">766</a>     SolrClient client3 = collectionClients.get(2);
+<a class="jxr_linenumber" name="L767" href="#L767">767</a>     SolrClient client4 = collectionClients.get(3);
+<a class="jxr_linenumber" name="L768" href="#L768">768</a>     
+<a class="jxr_linenumber" name="L769" href="#L769">769</a> 
+<a class="jxr_linenumber" name="L770" href="#L770">770</a>     <em class="jxr_comment">// no one should be recovering</em>
+<a class="jxr_linenumber" name="L771" href="#L771">771</a>     waitForRecoveriesToFinish(oneInstanceCollection2, getCommonCloudSolrClient().getZkStateReader(), false, <strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L772" href="#L772">772</a>     
+<a class="jxr_linenumber" name="L773" href="#L773">773</a>     assertAllActive(oneInstanceCollection2, getCommonCloudSolrClient().getZkStateReader());
+<a class="jxr_linenumber" name="L774" href="#L774">774</a>     
+<a class="jxr_linenumber" name="L775" href="#L775">775</a>     <em class="jxr_comment">//printLayout();</em>
+<a class="jxr_linenumber" name="L776" href="#L776">776</a>     
+<a class="jxr_linenumber" name="L777" href="#L777">777</a>    <em class="jxr_comment">// TODO: enable when we don't falsely get slice1...</em>
+<a class="jxr_linenumber" name="L778" href="#L778">778</a>    <em class="jxr_comment">// solrj.getZkStateReader().getLeaderUrl(oneInstanceCollection2, "slice1", 30000);</em>
+<a class="jxr_linenumber" name="L779" href="#L779">779</a>    <em class="jxr_comment">// solrj.getZkStateReader().getLeaderUrl(oneInstanceCollection2, "slice2", 30000);</em>
+<a class="jxr_linenumber" name="L780" href="#L780">780</a>     client2.add(getDoc(id, <span class="jxr_string">"1"</span>)); 
+<a class="jxr_linenumber" name="L781" href="#L781">781</a>     client3.add(getDoc(id, <span class="jxr_string">"2"</span>)); 
+<a class="jxr_linenumber" name="L782" href="#L782">782</a>     client4.add(getDoc(id, <span class="jxr_string">"3"</span>)); 
+<a class="jxr_linenumber" name="L783" href="#L783">783</a>     
+<a class="jxr_linenumber" name="L784" href="#L784">784</a>     client1.commit();
+<a class="jxr_linenumber" name="L785" href="#L785">785</a>     SolrQuery query = <strong class="jxr_keyword">new</strong> SolrQuery(<span class="jxr_string">"*:*"</span>);
+<a class="jxr_linenumber" name="L786" href="#L786">786</a>     query.set(<span class="jxr_string">"distrib"</span>, false);
+<a class="jxr_linenumber" name="L787" href="#L787">787</a>     <strong class="jxr_keyword">long</strong> oneDocs = client1.query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L788" href="#L788">788</a>     <strong class="jxr_keyword">long</strong> twoDocs = client2.query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L789" href="#L789">789</a>     <strong class="jxr_keyword">long</strong> threeDocs = client3.query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L790" href="#L790">790</a>     <strong class="jxr_keyword">long</strong> fourDocs = client4.query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L791" href="#L791">791</a>     
+<a class="jxr_linenumber" name="L792" href="#L792">792</a>     query.set(<span class="jxr_string">"collection"</span>, oneInstanceCollection2);
+<a class="jxr_linenumber" name="L793" href="#L793">793</a>     query.set(<span class="jxr_string">"distrib"</span>, <strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L794" href="#L794">794</a>     <strong class="jxr_keyword">long</strong> allDocs = getCommonCloudSolrClient().query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L795" href="#L795">795</a>     
+<a class="jxr_linenumber" name="L796" href="#L796">796</a> <em class="jxr_comment">//    System.out.println("1:" + oneDocs);</em>
+<a class="jxr_linenumber" name="L797" href="#L797">797</a> <em class="jxr_comment">//    System.out.println("2:" + twoDocs);</em>
+<a class="jxr_linenumber" name="L798" href="#L798">798</a> <em class="jxr_comment">//    System.out.println("3:" + threeDocs);</em>
+<a class="jxr_linenumber" name="L799" href="#L799">799</a> <em class="jxr_comment">//    System.out.println("4:" + fourDocs);</em>
+<a class="jxr_linenumber" name="L800" href="#L800">800</a> <em class="jxr_comment">//    System.out.println("All Docs:" + allDocs);</em>
+<a class="jxr_linenumber" name="L801" href="#L801">801</a>     
+<a class="jxr_linenumber" name="L802" href="#L802">802</a> <em class="jxr_comment">//    assertEquals(oneDocs, threeDocs);</em>
+<a class="jxr_linenumber" name="L803" href="#L803">803</a> <em class="jxr_comment">//    assertEquals(twoDocs, fourDocs);</em>
+<a class="jxr_linenumber" name="L804" href="#L804">804</a> <em class="jxr_comment">//    assertNotSame(oneDocs, twoDocs);</em>
+<a class="jxr_linenumber" name="L805" href="#L805">805</a>     assertEquals(3, allDocs);
+<a class="jxr_linenumber" name="L806" href="#L806">806</a>     
+<a class="jxr_linenumber" name="L807" href="#L807">807</a>     <em class="jxr_comment">// we added a role of none on these creates - check for it</em>
+<a class="jxr_linenumber" name="L808" href="#L808">808</a>     ZkStateReader zkStateReader = getCommonCloudSolrClient().getZkStateReader();
+<a class="jxr_linenumber" name="L809" href="#L809">809</a>     zkStateReader.updateClusterState();
+<a class="jxr_linenumber" name="L810" href="#L810">810</a>     Map&lt;String,Slice&gt; slices = zkStateReader.getClusterState().getSlicesMap(oneInstanceCollection2);
+<a class="jxr_linenumber" name="L811" href="#L811">811</a>     assertNotNull(slices);
+<a class="jxr_linenumber" name="L812" href="#L812">812</a>     String roles = slices.get(<span class="jxr_string">"slice1"</span>).getReplicasMap().values().iterator().next().getStr(ZkStateReader.ROLES_PROP);
+<a class="jxr_linenumber" name="L813" href="#L813">813</a>     assertEquals(<span class="jxr_string">"none"</span>, roles);
+<a class="jxr_linenumber" name="L814" href="#L814">814</a>     
+<a class="jxr_linenumber" name="L815" href="#L815">815</a>     
+<a class="jxr_linenumber" name="L816" href="#L816">816</a>     ZkCoreNodeProps props = <strong class="jxr_keyword">new</strong> ZkCoreNodeProps(getCommonCloudSolrClient().getZkStateReader().getClusterState().getLeader(oneInstanceCollection2, <span class="jxr_string">"slice1"</span>));
+<a class="jxr_linenumber" name="L817" href="#L817">817</a>     
+<a class="jxr_linenumber" name="L818" href="#L818">818</a>     <em class="jxr_comment">// now test that unloading a core gets us a new leader</em>
+<a class="jxr_linenumber" name="L819" href="#L819">819</a>     <strong class="jxr_keyword">try</strong> (HttpSolrClient unloadClient = <strong class="jxr_keyword">new</strong> HttpSolrClient(baseUrl)) {
+<a class="jxr_linenumber" name="L820" href="#L820">820</a>       unloadClient.setConnectionTimeout(15000);
+<a class="jxr_linenumber" name="L821" href="#L821">821</a>       unloadClient.setSoTimeout(60000);
+<a class="jxr_linenumber" name="L822" href="#L822">822</a>       Unload unloadCmd = <strong class="jxr_keyword">new</strong> Unload(<strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L823" href="#L823">823</a>       unloadCmd.setCoreName(props.getCoreName());
+<a class="jxr_linenumber" name="L824" href="#L824">824</a> 
+<a class="jxr_linenumber" name="L825" href="#L825">825</a>       String leader = props.getCoreUrl();
+<a class="jxr_linenumber" name="L826" href="#L826">826</a> 
+<a class="jxr_linenumber" name="L827" href="#L827">827</a>       unloadClient.request(unloadCmd);
+<a class="jxr_linenumber" name="L828" href="#L828">828</a> 
+<a class="jxr_linenumber" name="L829" href="#L829">829</a>       <strong class="jxr_keyword">int</strong> tries = 50;
+<a class="jxr_linenumber" name="L830" href="#L830">830</a>       <strong class="jxr_keyword">while</strong> (leader.equals(zkStateReader.getLeaderUrl(oneInstanceCollection2, <span class="jxr_string">"slice1"</span>, 10000))) {
+<a class="jxr_linenumber" name="L831" href="#L831">831</a>         Thread.sleep(100);
+<a class="jxr_linenumber" name="L832" href="#L832">832</a>         <strong class="jxr_keyword">if</strong> (tries-- == 0) {
+<a class="jxr_linenumber" name="L833" href="#L833">833</a>           fail(<span class="jxr_string">"Leader never changed"</span>);
+<a class="jxr_linenumber" name="L834" href="#L834">834</a>         }
+<a class="jxr_linenumber" name="L835" href="#L835">835</a>       }
+<a class="jxr_linenumber" name="L836" href="#L836">836</a>     }
+<a class="jxr_linenumber" name="L837" href="#L837">837</a> 
+<a class="jxr_linenumber" name="L838" href="#L838">838</a>     IOUtils.close(collectionClients);
+<a class="jxr_linenumber" name="L839" href="#L839">839</a> 
+<a class="jxr_linenumber" name="L840" href="#L840">840</a>   }
+<a class="jxr_linenumber" name="L841" href="#L841">841</a> 
+<a class="jxr_linenumber" name="L842" href="#L842">842</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> testSearchByCollectionName() <strong class="jxr_keyword">throws</strong> SolrServerException, IOException {
+<a class="jxr_linenumber" name="L843" href="#L843">843</a>     log.info(<span class="jxr_string">"### STARTING testSearchByCollectionName"</span>);
+<a class="jxr_linenumber" name="L844" href="#L844">844</a>     SolrClient client = clients.get(0);
+<a class="jxr_linenumber" name="L845" href="#L845">845</a>     <strong class="jxr_keyword">final</strong> String baseUrl = ((HttpSolrClient) client).getBaseURL().substring(
+<a class="jxr_linenumber" name="L846" href="#L846">846</a>         0,
+<a class="jxr_linenumber" name="L847" href="#L847">847</a>         ((HttpSolrClient) client).getBaseURL().length()
+<a class="jxr_linenumber" name="L848" href="#L848">848</a>             - DEFAULT_COLLECTION.length() - 1);
+<a class="jxr_linenumber" name="L849" href="#L849">849</a>     
+<a class="jxr_linenumber" name="L850" href="#L850">850</a>     <em class="jxr_comment">// the cores each have different names, but if we add the collection name to the url</em>
+<a class="jxr_linenumber" name="L851" href="#L851">851</a>     <em class="jxr_comment">// we should get mapped to the right core</em>
+<a class="jxr_linenumber" name="L852" href="#L852">852</a>     <strong class="jxr_keyword">try</strong> (SolrClient client1 = createNewSolrClient(oneInstanceCollection, baseUrl)) {
+<a class="jxr_linenumber" name="L853" href="#L853">853</a>       SolrQuery query = <strong class="jxr_keyword">new</strong> SolrQuery(<span class="jxr_string">"*:*"</span>);
+<a class="jxr_linenumber" name="L854" href="#L854">854</a>       <strong class="jxr_keyword">long</strong> oneDocs = client1.query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L855" href="#L855">855</a>       assertEquals(3, oneDocs);
+<a class="jxr_linenumber" name="L856" href="#L856">856</a>     }
+<a class="jxr_linenumber" name="L857" href="#L857">857</a>   }
+<a class="jxr_linenumber" name="L858" href="#L858">858</a>   
+<a class="jxr_linenumber" name="L859" href="#L859">859</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> testUpdateByCollectionName() <strong class="jxr_keyword">throws</strong> SolrServerException, IOException {
+<a class="jxr_linenumber" name="L860" href="#L860">860</a>     log.info(<span class="jxr_string">"### STARTING testUpdateByCollectionName"</span>);
+<a class="jxr_linenumber" name="L861" href="#L861">861</a>     SolrClient client = clients.get(0);
+<a class="jxr_linenumber" name="L862" href="#L862">862</a>     <strong class="jxr_keyword">final</strong> String baseUrl = ((HttpSolrClient) client).getBaseURL().substring(
+<a class="jxr_linenumber" name="L863" href="#L863">863</a>         0,
+<a class="jxr_linenumber" name="L864" href="#L864">864</a>         ((HttpSolrClient) client).getBaseURL().length()
+<a class="jxr_linenumber" name="L865" href="#L865">865</a>             - DEFAULT_COLLECTION.length() - 1);
+<a class="jxr_linenumber" name="L866" href="#L866">866</a>     
+<a class="jxr_linenumber" name="L867" href="#L867">867</a>     <em class="jxr_comment">// the cores each have different names, but if we add the collection name to the url</em>
+<a class="jxr_linenumber" name="L868" href="#L868">868</a>     <em class="jxr_comment">// we should get mapped to the right core</em>
+<a class="jxr_linenumber" name="L869" href="#L869">869</a>     <em class="jxr_comment">// test hitting an update url</em>
+<a class="jxr_linenumber" name="L870" href="#L870">870</a>     <strong class="jxr_keyword">try</strong> (SolrClient client1 = createNewSolrClient(oneInstanceCollection, baseUrl)) {
+<a class="jxr_linenumber" name="L871" href="#L871">871</a>       client1.commit();
+<a class="jxr_linenumber" name="L872" href="#L872">872</a>     }
+<a class="jxr_linenumber" name="L873" href="#L873">873</a>   }
+<a class="jxr_linenumber" name="L874" href="#L874">874</a> 
+<a class="jxr_linenumber" name="L875" href="#L875">875</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> testANewCollectionInOneInstance() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L876" href="#L876">876</a>     log.info(<span class="jxr_string">"### STARTING testANewCollectionInOneInstance"</span>);
+<a class="jxr_linenumber" name="L877" href="#L877">877</a>     List&lt;SolrClient&gt; collectionClients = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L878" href="#L878">878</a>     SolrClient client = clients.get(0);
+<a class="jxr_linenumber" name="L879" href="#L879">879</a>     <strong class="jxr_keyword">final</strong> String baseUrl = ((HttpSolrClient) client).getBaseURL().substring(
+<a class="jxr_linenumber" name="L880" href="#L880">880</a>         0,
+<a class="jxr_linenumber" name="L881" href="#L881">881</a>         ((HttpSolrClient) client).getBaseURL().length()
+<a class="jxr_linenumber" name="L882" href="#L882">882</a>             - DEFAULT_COLLECTION.length() - 1);
+<a class="jxr_linenumber" name="L883" href="#L883">883</a>     createCollection(oneInstanceCollection, collectionClients, baseUrl, 1);
+<a class="jxr_linenumber" name="L884" href="#L884">884</a>     createCollection(oneInstanceCollection, collectionClients, baseUrl, 2);
+<a class="jxr_linenumber" name="L885" href="#L885">885</a>     createCollection(oneInstanceCollection, collectionClients, baseUrl, 3);
+<a class="jxr_linenumber" name="L886" href="#L886">886</a>     createCollection(oneInstanceCollection, collectionClients, baseUrl, 4);
+<a class="jxr_linenumber" name="L887" href="#L887">887</a>     
+<a class="jxr_linenumber" name="L888" href="#L888">888</a>    <strong class="jxr_keyword">while</strong> (pending != <strong class="jxr_keyword">null</strong> &amp;&amp; pending.size() &gt; 0) {
+<a class="jxr_linenumber" name="L889" href="#L889">889</a>       
+<a class="jxr_linenumber" name="L890" href="#L890">890</a>       Future&lt;Object&gt; future = completionService.take();
+<a class="jxr_linenumber" name="L891" href="#L891">891</a>       <strong class="jxr_keyword">if</strong> (future == <strong class="jxr_keyword">null</strong>) <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L892" href="#L892">892</a>       pending.remove(future);
+<a class="jxr_linenumber" name="L893" href="#L893">893</a>     }
+<a class="jxr_linenumber" name="L894" href="#L894">894</a>    
+<a class="jxr_linenumber" name="L895" href="#L895">895</a>     SolrClient client1 = collectionClients.get(0);
+<a class="jxr_linenumber" name="L896" href="#L896">896</a>     SolrClient client2 = collectionClients.get(1);
+<a class="jxr_linenumber" name="L897" href="#L897">897</a>     SolrClient client3 = collectionClients.get(2);
+<a class="jxr_linenumber" name="L898" href="#L898">898</a>     SolrClient client4 = collectionClients.get(3);
+<a class="jxr_linenumber" name="L899" href="#L899">899</a>  
+<a class="jxr_linenumber" name="L900" href="#L900">900</a>     waitForRecoveriesToFinish(oneInstanceCollection, getCommonCloudSolrClient().getZkStateReader(), false);
+<a class="jxr_linenumber" name="L901" href="#L901">901</a>     assertAllActive(oneInstanceCollection, getCommonCloudSolrClient().getZkStateReader());
+<a class="jxr_linenumber" name="L902" href="#L902">902</a>     
+<a class="jxr_linenumber" name="L903" href="#L903">903</a>     client2.add(getDoc(id, <span class="jxr_string">"1"</span>)); 
+<a class="jxr_linenumber" name="L904" href="#L904">904</a>     client3.add(getDoc(id, <span class="jxr_string">"2"</span>)); 
+<a class="jxr_linenumber" name="L905" href="#L905">905</a>     client4.add(getDoc(id, <span class="jxr_string">"3"</span>)); 
+<a class="jxr_linenumber" name="L906" href="#L906">906</a>     
+<a class="jxr_linenumber" name="L907" href="#L907">907</a>     client1.commit();
+<a class="jxr_linenumber" name="L908" href="#L908">908</a>     SolrQuery query = <strong class="jxr_keyword">new</strong> SolrQuery(<span class="jxr_string">"*:*"</span>);
+<a class="jxr_linenumber" name="L909" href="#L909">909</a>     query.set(<span class="jxr_string">"distrib"</span>, false);
+<a class="jxr_linenumber" name="L910" href="#L910">910</a>     <strong class="jxr_keyword">long</strong> oneDocs = client1.query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L911" href="#L911">911</a>     <strong class="jxr_keyword">long</strong> twoDocs = client2.query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L912" href="#L912">912</a>     <strong class="jxr_keyword">long</strong> threeDocs = client3.query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L913" href="#L913">913</a>     <strong class="jxr_keyword">long</strong> fourDocs = client4.query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L914" href="#L914">914</a>     
+<a class="jxr_linenumber" name="L915" href="#L915">915</a>     query.set(<span class="jxr_string">"collection"</span>, oneInstanceCollection);
+<a class="jxr_linenumber" name="L916" href="#L916">916</a>     query.set(<span class="jxr_string">"distrib"</span>, <strong class="jxr_keyword">true</strong>);
+<a class="jxr_linenumber" name="L917" href="#L917">917</a>     <strong class="jxr_keyword">long</strong> allDocs = getCommonCloudSolrClient().query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L918" href="#L918">918</a>     
+<a class="jxr_linenumber" name="L919" href="#L919">919</a> <em class="jxr_comment">//    System.out.println("1:" + oneDocs);</em>
+<a class="jxr_linenumber" name="L920" href="#L920">920</a> <em class="jxr_comment">//    System.out.println("2:" + twoDocs);</em>
+<a class="jxr_linenumber" name="L921" href="#L921">921</a> <em class="jxr_comment">//    System.out.println("3:" + threeDocs);</em>
+<a class="jxr_linenumber" name="L922" href="#L922">922</a> <em class="jxr_comment">//    System.out.println("4:" + fourDocs);</em>
+<a class="jxr_linenumber" name="L923" href="#L923">923</a> <em class="jxr_comment">//    System.out.println("All Docs:" + allDocs);</em>
+<a class="jxr_linenumber" name="L924" href="#L924">924</a>     
+<a class="jxr_linenumber" name="L925" href="#L925">925</a>     assertEquals(3, allDocs);
+<a class="jxr_linenumber" name="L926" href="#L926">926</a>     IOUtils.close(collectionClients);
+<a class="jxr_linenumber" name="L927" href="#L927">927</a> 
+<a class="jxr_linenumber" name="L928" href="#L928">928</a>   }
+<a class="jxr_linenumber" name="L929" href="#L929">929</a> 
+<a class="jxr_linenumber" name="L930" href="#L930">930</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> createCollection(String collection,
+<a class="jxr_linenumber" name="L931" href="#L931">931</a>       List&lt;SolrClient&gt; collectionClients, String baseUrl, <strong class="jxr_keyword">int</strong> num) {
+<a class="jxr_linenumber" name="L932" href="#L932">932</a>     createSolrCore(collection, collectionClients, baseUrl, num, <strong class="jxr_keyword">null</strong>);
+<a class="jxr_linenumber" name="L933" href="#L933">933</a>   }
+<a class="jxr_linenumber" name="L934" href="#L934">934</a>   
+<a class="jxr_linenumber" name="L935" href="#L935">935</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> createSolrCore(<strong class="jxr_keyword">final</strong> String collection,
+<a class="jxr_linenumber" name="L936" href="#L936">936</a>       List&lt;SolrClient&gt; collectionClients, <strong class="jxr_keyword">final</strong> String baseUrl, <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> num,
+<a class="jxr_linenumber" name="L937" href="#L937">937</a>       <strong class="jxr_keyword">final</strong> String shardId) {
+<a class="jxr_linenumber" name="L938" href="#L938">938</a>     Callable call = <strong class="jxr_keyword">new</strong> Callable() {
+<a class="jxr_linenumber" name="L939" href="#L939">939</a>       @Override
+<a class="jxr_linenumber" name="L940" href="#L940">940</a>       <strong class="jxr_keyword">public</strong> Object call() {
+<a class="jxr_linenumber" name="L941" href="#L941">941</a>         <strong class="jxr_keyword">try</strong> (HttpSolrClient client = <strong class="jxr_keyword">new</strong> HttpSolrClient(baseUrl)) {
+<a class="jxr_linenumber" name="L942" href="#L942">942</a>           client.setConnectionTimeout(15000);
+<a class="jxr_linenumber" name="L943" href="#L943">943</a>           Create createCmd = <strong class="jxr_keyword">new</strong> Create();
+<a class="jxr_linenumber" name="L944" href="#L944">944</a>           createCmd.setRoles(<span class="jxr_string">"none"</span>);
+<a class="jxr_linenumber" name="L945" href="#L945">945</a>           createCmd.setCoreName(collection + num);
+<a class="jxr_linenumber" name="L946" href="#L946">946</a>           createCmd.setCollection(collection);
+<a class="jxr_linenumber" name="L947" href="#L947">947</a>           
+<a class="jxr_linenumber" name="L948" href="#L948">948</a>           <strong class="jxr_keyword">if</strong> (random().nextBoolean()) {
+<a class="jxr_linenumber" name="L949" href="#L949">949</a>             <em class="jxr_comment">// sometimes we use an explicit core node name</em>
+<a class="jxr_linenumber" name="L950" href="#L950">950</a>             createCmd.setCoreNodeName(<span class="jxr_string">"anode"</span> + nodeCounter.incrementAndGet());
+<a class="jxr_linenumber" name="L951" href="#L951">951</a>           }
+<a class="jxr_linenumber" name="L952" href="#L952">952</a>           
+<a class="jxr_linenumber" name="L953" href="#L953">953</a>           <strong class="jxr_keyword">if</strong> (shardId == <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L954" href="#L954">954</a>             createCmd.setNumShards(2);
+<a class="jxr_linenumber" name="L955" href="#L955">955</a>           }
+<a class="jxr_linenumber" name="L956" href="#L956">956</a>           createCmd.setDataDir(getDataDir(createTempDir(collection).toFile().getAbsolutePath()));
+<a class="jxr_linenumber" name="L957" href="#L957">957</a>           <strong class="jxr_keyword">if</strong> (shardId != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L958" href="#L958">958</a>             createCmd.setShardId(shardId);
+<a class="jxr_linenumber" name="L959" href="#L959">959</a>           }
+<a class="jxr_linenumber" name="L960" href="#L960">960</a>           client.request(createCmd);
+<a class="jxr_linenumber" name="L961" href="#L961">961</a>         } <strong class="jxr_keyword">catch</strong> (Exception e) {
+<a class="jxr_linenumber" name="L962" href="#L962">962</a>           e.printStackTrace();
+<a class="jxr_linenumber" name="L963" href="#L963">963</a>           <em class="jxr_comment">//fail</em>
+<a class="jxr_linenumber" name="L964" href="#L964">964</a>         }
+<a class="jxr_linenumber" name="L965" href="#L965">965</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L966" href="#L966">966</a>       }
+<a class="jxr_linenumber" name="L967" href="#L967">967</a>     };
+<a class="jxr_linenumber" name="L968" href="#L968">968</a>     
+<a class="jxr_linenumber" name="L969" href="#L969">969</a>     pending.add(completionService.submit(call));
+<a class="jxr_linenumber" name="L970" href="#L970">970</a>  
+<a class="jxr_linenumber" name="L971" href="#L971">971</a>     
+<a class="jxr_linenumber" name="L972" href="#L972">972</a>     collectionClients.add(createNewSolrClient(collection + num, baseUrl));
+<a class="jxr_linenumber" name="L973" href="#L973">973</a>   }
+<a class="jxr_linenumber" name="L974" href="#L974">974</a> 
+<a class="jxr_linenumber" name="L975" href="#L975">975</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> testMultipleCollections() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L976" href="#L976">976</a>     log.info(<span class="jxr_string">"### STARTING testMultipleCollections"</span>);
+<a class="jxr_linenumber" name="L977" href="#L977">977</a>     <em class="jxr_comment">// create another 2 collections and search across them</em>
+<a class="jxr_linenumber" name="L978" href="#L978">978</a>     createNewCollection(<span class="jxr_string">"collection2"</span>);
+<a class="jxr_linenumber" name="L979" href="#L979">979</a>     createNewCollection(<span class="jxr_string">"collection3"</span>);
+<a class="jxr_linenumber" name="L980" href="#L980">980</a>     
+<a class="jxr_linenumber" name="L981" href="#L981">981</a>     <strong class="jxr_keyword">while</strong> (pending != <strong class="jxr_keyword">null</strong> &amp;&amp; pending.size() &gt; 0) {
+<a class="jxr_linenumber" name="L982" href="#L982">982</a>       
+<a class="jxr_linenumber" name="L983" href="#L983">983</a>       Future&lt;Object&gt; future = completionService.take();
+<a class="jxr_linenumber" name="L984" href="#L984">984</a>       <strong class="jxr_keyword">if</strong> (future == <strong class="jxr_keyword">null</strong>) <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L985" href="#L985">985</a>       pending.remove(future);
+<a class="jxr_linenumber" name="L986" href="#L986">986</a>     }
+<a class="jxr_linenumber" name="L987" href="#L987">987</a>     
+<a class="jxr_linenumber" name="L988" href="#L988">988</a>     indexDoc(<span class="jxr_string">"collection2"</span>, getDoc(id, <span class="jxr_string">"10000000"</span>)); 
+<a class="jxr_linenumber" name="L989" href="#L989">989</a>     indexDoc(<span class="jxr_string">"collection2"</span>, getDoc(id, <span class="jxr_string">"10000001"</span>)); 
+<a class="jxr_linenumber" name="L990" href="#L990">990</a>     indexDoc(<span class="jxr_string">"collection2"</span>, getDoc(id, <span class="jxr_string">"10000003"</span>));
+<a class="jxr_linenumber" name="L991" href="#L991">991</a>     getCommonCloudSolrClient().setDefaultCollection(<span class="jxr_string">"collection2"</span>);
+<a class="jxr_linenumber" name="L992" href="#L992">992</a>     getCommonCloudSolrClient().add(getDoc(id, <span class="jxr_string">"10000004"</span>));
+<a class="jxr_linenumber" name="L993" href="#L993">993</a>     getCommonCloudSolrClient().setDefaultCollection(<strong class="jxr_keyword">null</strong>);
+<a class="jxr_linenumber" name="L994" href="#L994">994</a>     
+<a class="jxr_linenumber" name="L995" href="#L995">995</a>     indexDoc(<span class="jxr_string">"collection3"</span>, getDoc(id, <span class="jxr_string">"20000000"</span>));
+<a class="jxr_linenumber" name="L996" href="#L996">996</a>     indexDoc(<span class="jxr_string">"collection3"</span>, getDoc(id, <span class="jxr_string">"20000001"</span>)); 
+<a class="jxr_linenumber" name="L997" href="#L997">997</a>     getCommonCloudSolrClient().setDefaultCollection(<span class="jxr_string">"collection3"</span>);
+<a class="jxr_linenumber" name="L998" href="#L998">998</a>     getCommonCloudSolrClient().add(getDoc(id, <span class="jxr_string">"10000005"</span>));
+<a class="jxr_linenumber" name="L999" href="#L999">999</a>     getCommonCloudSolrClient().setDefaultCollection(<strong class="jxr_keyword">null</strong>);
+<a class="jxr_linenumber" name="L1000" href="#L1000">1000</a>     
+<a class="jxr_linenumber" name="L1001" href="#L1001">1001</a>     otherCollectionClients.get(<span class="jxr_string">"collection2"</span>).get(0).commit();
+<a class="jxr_linenumber" name="L1002" href="#L1002">1002</a>     otherCollectionClients.get(<span class="jxr_string">"collection3"</span>).get(0).commit();
+<a class="jxr_linenumber" name="L1003" href="#L1003">1003</a>     
+<a class="jxr_linenumber" name="L1004" href="#L1004">1004</a>     getCommonCloudSolrClient().setDefaultCollection(<span class="jxr_string">"collection1"</span>);
+<a class="jxr_linenumber" name="L1005" href="#L1005">1005</a>     <strong class="jxr_keyword">long</strong> collection1Docs = getCommonCloudSolrClient().query(<strong class="jxr_keyword">new</strong> SolrQuery(<span class="jxr_string">"*:*"</span>)).getResults()
+<a class="jxr_linenumber" name="L1006" href="#L1006">1006</a>         .getNumFound();
+<a class="jxr_linenumber" name="L1007" href="#L1007">1007</a> 
+<a class="jxr_linenumber" name="L1008" href="#L1008">1008</a>     <strong class="jxr_keyword">long</strong> collection2Docs = otherCollectionClients.get(<span class="jxr_string">"collection2"</span>).get(0)
+<a class="jxr_linenumber" name="L1009" href="#L1009">1009</a>         .query(<strong class="jxr_keyword">new</strong> SolrQuery(<span class="jxr_string">"*:*"</span>)).getResults().getNumFound();
+<a class="jxr_linenumber" name="L1010" href="#L1010">1010</a>     System.out.println(<span class="jxr_string">"found2: "</span>+ collection2Docs);
+<a class="jxr_linenumber" name="L1011" href="#L1011">1011</a>     <strong class="jxr_keyword">long</strong> collection3Docs = otherCollectionClients.get(<span class="jxr_string">"collection3"</span>).get(0)
+<a class="jxr_linenumber" name="L1012" href="#L1012">1012</a>         .query(<strong class="jxr_keyword">new</strong> SolrQuery(<span class="jxr_string">"*:*"</span>)).getResults().getNumFound();
+<a class="jxr_linenumber" name="L1013" href="#L1013">1013</a>     System.out.println(<span class="jxr_string">"found3: "</span>+ collection3Docs);
+<a class="jxr_linenumber" name="L1014" href="#L1014">1014</a>     
+<a class="jxr_linenumber" name="L1015" href="#L1015">1015</a>     SolrQuery query = <strong class="jxr_keyword">new</strong> SolrQuery(<span class="jxr_string">"*:*"</span>);
+<a class="jxr_linenumber" name="L1016" href="#L1016">1016</a>     query.set(<span class="jxr_string">"collection"</span>, <span class="jxr_string">"collection2,collection3"</span>);
+<a class="jxr_linenumber" name="L1017" href="#L1017">1017</a>     <strong class="jxr_keyword">long</strong> found = clients.get(0).query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L1018" href="#L1018">1018</a>     assertEquals(collection2Docs + collection3Docs, found);
+<a class="jxr_linenumber" name="L1019" href="#L1019">1019</a>     
+<a class="jxr_linenumber" name="L1020" href="#L1020">1020</a>     query = <strong class="jxr_keyword">new</strong> SolrQuery(<span class="jxr_string">"*:*"</span>);
+<a class="jxr_linenumber" name="L1021" href="#L1021">1021</a>     query.set(<span class="jxr_string">"collection"</span>, <span class="jxr_string">"collection1,collection2,collection3"</span>);
+<a class="jxr_linenumber" name="L1022" href="#L1022">1022</a>     found = clients.get(0).query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L1023" href="#L1023">1023</a>     assertEquals(collection1Docs + collection2Docs + collection3Docs, found);
+<a class="jxr_linenumber" name="L1024" href="#L1024">1024</a>     
+<a class="jxr_linenumber" name="L1025" href="#L1025">1025</a>     <em class="jxr_comment">// try to search multiple with cloud client</em>
+<a class="jxr_linenumber" name="L1026" href="#L1026">1026</a>     found = getCommonCloudSolrClient().query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L1027" href="#L1027">1027</a>     assertEquals(collection1Docs + collection2Docs + collection3Docs, found);
+<a class="jxr_linenumber" name="L1028" href="#L1028">1028</a>     
+<a class="jxr_linenumber" name="L1029" href="#L1029">1029</a>     query.set(<span class="jxr_string">"collection"</span>, <span class="jxr_string">"collection2,collection3"</span>);
+<a class="jxr_linenumber" name="L1030" href="#L1030">1030</a>     found = getCommonCloudSolrClient().query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L1031" href="#L1031">1031</a>     assertEquals(collection2Docs + collection3Docs, found);
+<a class="jxr_linenumber" name="L1032" href="#L1032">1032</a>     
+<a class="jxr_linenumber" name="L1033" href="#L1033">1033</a>     query.set(<span class="jxr_string">"collection"</span>, <span class="jxr_string">"collection3"</span>);
+<a class="jxr_linenumber" name="L1034" href="#L1034">1034</a>     found = getCommonCloudSolrClient().query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L1035" href="#L1035">1035</a>     assertEquals(collection3Docs, found);
+<a class="jxr_linenumber" name="L1036" href="#L1036">1036</a>     
+<a class="jxr_linenumber" name="L1037" href="#L1037">1037</a>     query.remove(<span class="jxr_string">"collection"</span>);
+<a class="jxr_linenumber" name="L1038" href="#L1038">1038</a>     found = getCommonCloudSolrClient().query(query).getResults().getNumFound();
+<a class="jxr_linenumber" name="L1039" href="#L1039">1039</a>     assertEquals(collection1Docs, found);
+<a class="jxr_linenumber" name="L1040" href="#L1040">1040</a>     
+<a class="jxr_linenumber" name="L1041" href="#L1041">1041</a>     assertEquals(collection3Docs, collection2Docs - 1);
+<a class="jxr_linenumber" name="L1042" href="#L1042">1042</a>   }
+<a class="jxr_linenumber" name="L1043" href="#L1043">1043</a>   
+<a class="jxr_linenumber" name="L1044" href="#L1044">1044</a>   <strong class="jxr_keyword">protected</strong> SolrInputDocument getDoc(Object... fields) <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L1045" href="#L1045">1045</a>     SolrInputDocument doc = <strong class="jxr_keyword">new</strong> SolrInputDocument();
+<a class="jxr_linenumber" name="L1046" href="#L1046">1046</a>     addFields(doc, fields);
+<a class="jxr_linenumber" name="L1047" href="#L1047">1047</a>     <strong class="jxr_keyword">return</strong> doc;
+<a class="jxr_linenumber" name="L1048" href="#L1048">1048</a>   }
+<a class="jxr_linenumber" name="L1049" href="#L1049">1049</a>   
+<a class="jxr_linenumber" name="L1050" href="#L1050">1050</a>   <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">void</strong> indexDoc(String collection, SolrInputDocument doc) <strong class="jxr_keyword">throws</strong> IOException, SolrServerException {
+<a class="jxr_linenumber" name="L1051" href="#L1051">1051</a>     List&lt;SolrClient&gt; clients = otherCollectionClients.get(collection);
+<a class="jxr_linenumber" name="L1052" href="#L1052">1052</a>     <strong class="jxr_keyword">int</strong> which = (doc.getField(id).toString().hashCode() &amp; 0x7fffffff) % clients.size();
+<a class="jxr_linenumber" name="L1053" href="#L1053">1053</a>     SolrClient client = clients.get(which);
+<a class="jxr_linenumber" name="L1054" href="#L1054">1054</a>     client.add(doc);
+<a class="jxr_linenumber" name="L1055" href="#L1055">1055</a>   }
+<a class="jxr_linenumber" name="L1056" href="#L1056">1056</a>   
+<a class="jxr_linenumber" name="L1057" href="#L1057">1057</a>   <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> createNewCollection(<strong class="jxr_keyword">final</strong> String collection) <strong class="jxr_keyword">throws</strong> InterruptedException {
+<a class="jxr_linenumber" name="L1058" href="#L1058">1058</a>     <strong class="jxr_keyword">final</strong> List&lt;SolrClient&gt; collectionClients = <strong class="jxr_keyword">new</strong> ArrayList&lt;&gt;();
+<a class="jxr_linenumber" name="L1059" href="#L1059">1059</a>     otherCollectionClients.put(collection, collectionClients);
+<a class="jxr_linenumber" name="L1060" href="#L1060">1060</a>     <strong class="jxr_keyword">int</strong> unique = 0;
+<a class="jxr_linenumber" name="L1061" href="#L1061">1061</a>     <strong class="jxr_keyword">for</strong> (<strong class="jxr_keyword">final</strong> SolrClient client : clients) {
+<a class="jxr_linenumber" name="L1062" href="#L1062">1062</a>       unique++;
+<a class="jxr_linenumber" name="L1063" href="#L1063">1063</a>       <strong class="jxr_keyword">final</strong> String baseUrl = ((HttpSolrClient) client).getBaseURL()
+<a class="jxr_linenumber" name="L1064" href="#L1064">1064</a>           .substring(
+<a class="jxr_linenumber" name="L1065" href="#L1065">1065</a>               0,
+<a class="jxr_linenumber" name="L1066" href="#L1066">1066</a>               ((HttpSolrClient) client).getBaseURL().length()
+<a class="jxr_linenumber" name="L1067" href="#L1067">1067</a>                   - DEFAULT_COLLECTION.length() -1);
+<a class="jxr_linenumber" name="L1068" href="#L1068">1068</a>       <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> frozeUnique = unique;
+<a class="jxr_linenumber" name="L1069" href="#L1069">1069</a>       Callable call = <strong class="jxr_keyword">new</strong> Callable() {
+<a class="jxr_linenumber" name="L1070" href="#L1070">1070</a>         @Override
+<a class="jxr_linenumber" name="L1071" href="#L1071">1071</a>         <strong class="jxr_keyword">public</strong> Object call() {
+<a class="jxr_linenumber" name="L1072" href="#L1072">1072</a> 
+<a class="jxr_linenumber" name="L1073" href="#L1073">1073</a>           <strong class="jxr_keyword">try</strong> (HttpSolrClient client = <strong class="jxr_keyword">new</strong> HttpSolrClient(baseUrl)) {
+<a class="jxr_linenumber" name="L1074" href="#L1074">1074</a>             client.setConnectionTimeout(15000);
+<a class="jxr_linenumber" name="L1075" href="#L1075">1075</a>             client.setSoTimeout(60000);
+<a class="jxr_linenumber" name="L1076" href="#L1076">1076</a>             Create createCmd = <strong class="jxr_keyword">new</strong> Create();
+<a class="jxr_linenumber" name="L1077" href="#L1077">1077</a>             createCmd.setCoreName(collection);
+<a class="jxr_linenumber" name="L1078" href="#L1078">1078</a>             createCmd.setDataDir(getDataDir(createTempDir(collection).toFile().getAbsolutePath()));
+<a class="jxr_linenumber" name="L1079" href="#L1079">1079</a>             client.request(createCmd);
+<a class="jxr_linenumber" name="L1080" href="#L1080">1080</a>           } <strong class="jxr_keyword">catch</strong> (Exception e) {
+<a class="jxr_linenumber" name="L1081" href="#L1081">1081</a>             e.printStackTrace();
+<a class="jxr_linenumber" name="L1082" href="#L1082">1082</a>             <em class="jxr_comment">//fails</em>
+<a class="jxr_linenumber" name="L1083" href="#L1083">1083</a>           }
+<a class="jxr_linenumber" name="L1084" href="#L1084">1084</a>           <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L1085" href="#L1085">1085</a>         }
+<a class="jxr_linenumber" name="L1086" href="#L1086">1086</a>       };
+<a class="jxr_linenumber" name="L1087" href="#L1087">1087</a>      
+<a class="jxr_linenumber" name="L1088" href="#L1088">1088</a>       collectionClients.add(createNewSolrClient(collection, baseUrl));
+<a class="jxr_linenumber" name="L1089" href="#L1089">1089</a>       pending.add(completionService.submit(call));
+<a class="jxr_linenumber" name="L1090" href="#L1090">1090</a>       <strong class="jxr_keyword">while</strong> (pending != <strong class="jxr_keyword">null</strong> &amp;&amp; pending.size() &gt; 0) {
+<a class="jxr_linenumber" name="L1091" href="#L1091">1091</a>         
+<a class="jxr_linenumber" name="L1092" href="#L1092">1092</a>         Future&lt;Object&gt; future = completionService.take();
+<a class="jxr_linenumber" name="L1093" href="#L1093">1093</a>         <strong class="jxr_keyword">if</strong> (future == <strong class="jxr_keyword">null</strong>) <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L1094" href="#L1094">1094</a>         pending.remove(future);
+<a class="jxr_linenumber" name="L1095" href="#L1095">1095</a>       }
+<a class="jxr_linenumber" name="L1096" href="#L1096">1096</a>     }
+<a class="jxr_linenumber" name="L1097" href="#L1097">1097</a>   }
+<a class="jxr_linenumber" name="L1098" href="#L1098">1098</a>   
+<a class="jxr_linenumber" name="L1099" href="#L1099">1099</a>   <strong class="jxr_keyword">protected</strong> SolrClient createNewSolrClient(String collection, String baseUrl) {
+<a class="jxr_linenumber" name="L1100" href="#L1100">1100</a>     <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L1101" href="#L1101">1101</a>       <em class="jxr_comment">// setup the server...</em>
+<a class="jxr_linenumber" name="L1102" href="#L1102">1102</a>       HttpSolrClient client = <strong class="jxr_keyword">new</strong> HttpSolrClient(baseUrl + <span class="jxr_string">"/"</span> + collection);
+<a class="jxr_linenumber" name="L1103" href="#L1103">1103</a>       client.setSoTimeout(120000);
+<a class="jxr_linenumber" name="L1104" href="#L1104">1104</a>       client.setDefaultMaxConnectionsPerHost(100);
+<a class="jxr_linenumber" name="L1105" href="#L1105">1105</a>       client.setMaxTotalConnections(100);
+<a class="jxr_linenumber" name="L1106" href="#L1106">1106</a>       <strong class="jxr_keyword">return</strong> client;
+<a class="jxr_linenumber" name="L1107" href="#L1107">1107</a>     }
+<a class="jxr_linenumber" name="L1108" href="#L1108">1108</a>     <strong class="jxr_keyword">catch</strong> (Exception ex) {
+<a class="jxr_linenumber" name="L1109" href="#L1109">1109</a>       <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> RuntimeException(ex);
+<a class="jxr_linenumber" name="L1110" href="#L1110">1110</a>     }
+<a class="jxr_linenumber" name="L1111" href="#L1111">1111</a>   }
+<a class="jxr_linenumber" name="L1112" href="#L1112">1112</a> 
+<a class="jxr_linenumber" name="L1113" href="#L1113">1113</a>   @Override
+<a class="jxr_linenumber" name="L1114" href="#L1114">1114</a>   <strong class="jxr_keyword">protected</strong> QueryResponse queryServer(ModifiableSolrParams params) <strong class="jxr_keyword">throws</strong> SolrServerException, IOException {
+<a class="jxr_linenumber" name="L1115" href="#L1115">1115</a> 
+<a class="jxr_linenumber" name="L1116" href="#L1116">1116</a>     <strong class="jxr_keyword">if</strong> (r.nextBoolean())
+<a class="jxr_linenumber" name="L1117" href="#L1117">1117</a>       <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">super</strong>.queryServer(params);
+<a class="jxr_linenumber" name="L1118" href="#L1118">1118</a> 
+<a class="jxr_linenumber" name="L1119" href="#L1119">1119</a>     <strong class="jxr_keyword">if</strong> (r.nextBoolean())
+<a class="jxr_linenumber" name="L1120" href="#L1120">1120</a>       params.set(<span class="jxr_string">"collection"</span>,DEFAULT_COLLECTION);
+<a class="jxr_linenumber" name="L1121" href="#L1121">1121</a> 
+<a class="jxr_linenumber" name="L1122" href="#L1122">1122</a>     QueryResponse rsp = getCommonCloudSolrClient().query(params);
+<a class="jxr_linenumber" name="L1123" href="#L1123">1123</a>     <strong class="jxr_keyword">return</strong> rsp;
+<a class="jxr_linenumber" name="L1124" href="#L1124">1124</a>   }
+<a class="jxr_linenumber" name="L1125" href="#L1125">1125</a>   
+<a class="jxr_linenumber" name="L1126" href="#L1126">1126</a>   @Override
+<a class="jxr_linenumber" name="L1127" href="#L1127">1127</a>   <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> distribTearDown() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L1128" href="#L1128">1128</a>     <strong class="jxr_keyword">super</strong>.distribTearDown();
+<a class="jxr_linenumber" name="L1129" href="#L1129">1129</a>     <strong class="jxr_keyword">if</strong> (otherCollectionClients != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L1130" href="#L1130">1130</a>       <strong class="jxr_keyword">for</strong> (List&lt;SolrClient&gt; clientList : otherCollectionClients.values()) {
+<a class="jxr_linenumber" name="L1131" href="#L1131">1131</a>         IOUtils.close(clientList);
+<a class="jxr_linenumber" name="L1132" href="#L1132">1132</a>       }
+<a class="jxr_linenumber" name="L1133" href="#L1133">1133</a>     }
+<a class="jxr_linenumber" name="L1134" href="#L1134">1134</a>     otherCollectionClients = <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L1135" href="#L1135">1135</a>     List&lt;Runnable&gt; tasks = executor.shutdownNow();
+<a class="jxr_linenumber" name="L1136" href="#L1136">1136</a>     assertTrue(tasks.isEmpty());
+<a class="jxr_linenumber" name="L1137" href="#L1137">1137</a>   }
+<a class="jxr_linenumber" name="L1138" href="#L1138">1138</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

@@ -1,0 +1,196 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>StringUtilsStartsEndsWithTest xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * </em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> *      <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> * </em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <strong class="jxr_keyword">package</strong> org.apache.commons.lang3;
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  <strong class="jxr_keyword">import</strong> org.junit.Test;
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> <strong class="jxr_keyword">static</strong> org.junit.Assert.*;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> org.apache.commons.lang3.text.StrBuilder;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <em class="jxr_javadoccomment"> * Unit tests {@link org.apache.commons.lang3.StringUtils} - StartsWith/EndsWith methods</em>
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <em class="jxr_javadoccomment"> * @version $Id$</em>
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> StringUtilsStartsEndsWithTest {
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String foo    = <span class="jxr_string">"foo"</span>;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String bar    = <span class="jxr_string">"bar"</span>;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String foobar = <span class="jxr_string">"foobar"</span>;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String FOO    = <span class="jxr_string">"FOO"</span>;
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String BAR    = <span class="jxr_string">"BAR"</span>;
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>      <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">final</strong> String FOOBAR = <span class="jxr_string">"FOOBAR"</span>;
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>      <em class="jxr_comment">//-----------------------------------------------------------------------</em>
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>      <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <em class="jxr_javadoccomment">     * Test StringUtils.startsWith()</em>
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>      @Test
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testStartsWith() {
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>          assertTrue(<span class="jxr_string">"startsWith(null, null)"</span>, StringUtils.startsWith(<strong class="jxr_keyword">null</strong>, (String)<strong class="jxr_keyword">null</strong>));
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>          assertFalse(<span class="jxr_string">"startsWith(FOOBAR, null)"</span>, StringUtils.startsWith(FOOBAR, (String)<strong class="jxr_keyword">null</strong>));
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>          assertFalse(<span class="jxr_string">"startsWith(null, FOO)"</span>,    StringUtils.startsWith(<strong class="jxr_keyword">null</strong>, FOO));
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>          assertTrue(<span class="jxr_string">"startsWith(FOOBAR, \&quot;\&quot;)"</span>,  StringUtils.startsWith(FOOBAR, <span class="jxr_string">""</span>));
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>  
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>          assertTrue(<span class="jxr_string">"startsWith(foobar, foo)"</span>,  StringUtils.startsWith(foobar, foo));
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>          assertTrue(<span class="jxr_string">"startsWith(FOOBAR, FOO)"</span>,  StringUtils.startsWith(FOOBAR, FOO));
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>          assertFalse(<span class="jxr_string">"startsWith(foobar, FOO)"</span>, StringUtils.startsWith(foobar, FOO));
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>          assertFalse(<span class="jxr_string">"startsWith(FOOBAR, foo)"</span>, StringUtils.startsWith(FOOBAR, foo));
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>  
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>          assertFalse(<span class="jxr_string">"startsWith(foo, foobar)"</span>, StringUtils.startsWith(foo, foobar));
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>          assertFalse(<span class="jxr_string">"startsWith(foo, foobar)"</span>, StringUtils.startsWith(bar, foobar));
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>  
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>          assertFalse(<span class="jxr_string">"startsWith(foobar, bar)"</span>, StringUtils.startsWith(foobar, bar));
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>          assertFalse(<span class="jxr_string">"startsWith(FOOBAR, BAR)"</span>, StringUtils.startsWith(FOOBAR, BAR));
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>          assertFalse(<span class="jxr_string">"startsWith(foobar, BAR)"</span>, StringUtils.startsWith(foobar, BAR));
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>          assertFalse(<span class="jxr_string">"startsWith(FOOBAR, bar)"</span>, StringUtils.startsWith(FOOBAR, bar));
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>      }
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>  
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>      <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>  <em class="jxr_javadoccomment">     * Test StringUtils.testStartsWithIgnoreCase()</em>
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>  <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>      @Test
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testStartsWithIgnoreCase() {
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>          assertTrue(<span class="jxr_string">"startsWithIgnoreCase(null, null)"</span>,    StringUtils.startsWithIgnoreCase(<strong class="jxr_keyword">null</strong>, (String)<strong class="jxr_keyword">null</strong>));
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>          assertFalse(<span class="jxr_string">"startsWithIgnoreCase(FOOBAR, null)"</span>, StringUtils.startsWithIgnoreCase(FOOBAR, (String)<strong class="jxr_keyword">null</strong>));
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>          assertFalse(<span class="jxr_string">"startsWithIgnoreCase(null, FOO)"</span>,    StringUtils.startsWithIgnoreCase(<strong class="jxr_keyword">null</strong>, FOO));
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>          assertTrue(<span class="jxr_string">"startsWithIgnoreCase(FOOBAR, \&quot;\&quot;)"</span>,  StringUtils.startsWithIgnoreCase(FOOBAR, <span class="jxr_string">""</span>));
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>  
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>          assertTrue(<span class="jxr_string">"startsWithIgnoreCase(foobar, foo)"</span>, StringUtils.startsWithIgnoreCase(foobar, foo));
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>          assertTrue(<span class="jxr_string">"startsWithIgnoreCase(FOOBAR, FOO)"</span>, StringUtils.startsWithIgnoreCase(FOOBAR, FOO));
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>          assertTrue(<span class="jxr_string">"startsWithIgnoreCase(foobar, FOO)"</span>, StringUtils.startsWithIgnoreCase(foobar, FOO));
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>          assertTrue(<span class="jxr_string">"startsWithIgnoreCase(FOOBAR, foo)"</span>, StringUtils.startsWithIgnoreCase(FOOBAR, foo));
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>  
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>          assertFalse(<span class="jxr_string">"startsWithIgnoreCase(foo, foobar)"</span>, StringUtils.startsWithIgnoreCase(foo, foobar));
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>          assertFalse(<span class="jxr_string">"startsWithIgnoreCase(foo, foobar)"</span>, StringUtils.startsWithIgnoreCase(bar, foobar));
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>  
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>          assertFalse(<span class="jxr_string">"startsWithIgnoreCase(foobar, bar)"</span>, StringUtils.startsWithIgnoreCase(foobar, bar));
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>          assertFalse(<span class="jxr_string">"startsWithIgnoreCase(FOOBAR, BAR)"</span>, StringUtils.startsWithIgnoreCase(FOOBAR, BAR));
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>          assertFalse(<span class="jxr_string">"startsWithIgnoreCase(foobar, BAR)"</span>, StringUtils.startsWithIgnoreCase(foobar, BAR));
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>          assertFalse(<span class="jxr_string">"startsWithIgnoreCase(FOOBAR, bar)"</span>, StringUtils.startsWithIgnoreCase(FOOBAR, bar));
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>      }
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>  
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>      @Test
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>      <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testStartsWithAny() {
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>          assertFalse(StringUtils.startsWithAny(<strong class="jxr_keyword">null</strong>, (String[])<strong class="jxr_keyword">null</strong>));
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>          assertFalse(StringUtils.startsWithAny(<strong class="jxr_keyword">null</strong>, <span class="jxr_string">"abc"</span>));
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>          assertFalse(StringUtils.startsWithAny(<span class="jxr_string">"abcxyz"</span>, (String[])<strong class="jxr_keyword">null</strong>));
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>          assertFalse(StringUtils.startsWithAny(<span class="jxr_string">"abcxyz"</span>));
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>          assertTrue(StringUtils.startsWithAny(<span class="jxr_string">"abcxyz"</span>, <span class="jxr_string">"abc"</span>));
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>          assertTrue(StringUtils.startsWithAny(<span class="jxr_string">"abcxyz"</span>, <strong class="jxr_keyword">null</strong>, <span class="jxr_string">"xyz"</span>, <span class="jxr_string">"abc"</span>));
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>          assertFalse(StringUtils.startsWithAny(<span class="jxr_string">"abcxyz"</span>, <strong class="jxr_keyword">null</strong>, <span class="jxr_string">"xyz"</span>, <span class="jxr_string">"abcd"</span>));
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>  
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>          assertTrue(<span class="jxr_string">"StringUtils.startsWithAny(abcxyz, StringBuilder(xyz), StringBuffer(abc))"</span>, StringUtils.startsWithAny(<span class="jxr_string">"abcxyz"</span>, <strong class="jxr_keyword">new</strong> StringBuilder(<span class="jxr_string">"xyz"</span>), <strong class="jxr_keyword">new</strong> StringBuffer(<span class="jxr_string">"abc"</span>)));
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>          assertTrue(<span class="jxr_string">"StringUtils.startsWithAny( StrBuilder(abcxyz), StringBuilder(xyz), StringBuffer(abc))"</span>, StringUtils.startsWithAny( <strong class="jxr_keyword">new</strong> StrBuilder(<span class="jxr_string">"abcxyz"</span>), <strong class="jxr_keyword">new</strong> StringBuilder(<span class="jxr_string">"xyz"</span>), <strong class="jxr_keyword">new</strong> StringBuffer(<span class="jxr_string">"abc"</span>)));
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>      }
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>   
+<a class="jxr_linenumber" name="L100" href="#L100">100</a> 
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L102" href="#L102">102</a> <em class="jxr_javadoccomment">     * Test StringUtils.endsWith()</em>
+<a class="jxr_linenumber" name="L103" href="#L103">103</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>     @Test
+<a class="jxr_linenumber" name="L105" href="#L105">105</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testEndsWith() {
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>         assertTrue(<span class="jxr_string">"endsWith(null, null)"</span>,    StringUtils.endsWith(<strong class="jxr_keyword">null</strong>, (String)<strong class="jxr_keyword">null</strong>));
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>         assertFalse(<span class="jxr_string">"endsWith(FOOBAR, null)"</span>, StringUtils.endsWith(FOOBAR, (String)<strong class="jxr_keyword">null</strong>));
+<a class="jxr_linenumber" name="L108" href="#L108">108</a>         assertFalse(<span class="jxr_string">"endsWith(null, FOO)"</span>,    StringUtils.endsWith(<strong class="jxr_keyword">null</strong>, FOO));
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>         assertTrue(<span class="jxr_string">"endsWith(FOOBAR, \&quot;\&quot;)"</span>,  StringUtils.endsWith(FOOBAR, <span class="jxr_string">""</span>));
+<a class="jxr_linenumber" name="L110" href="#L110">110</a> 
+<a class="jxr_linenumber" name="L111" href="#L111">111</a>         assertFalse(<span class="jxr_string">"endsWith(foobar, foo)"</span>, StringUtils.endsWith(foobar, foo));
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>         assertFalse(<span class="jxr_string">"endsWith(FOOBAR, FOO)"</span>, StringUtils.endsWith(FOOBAR, FOO));
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>         assertFalse(<span class="jxr_string">"endsWith(foobar, FOO)"</span>, StringUtils.endsWith(foobar, FOO));
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>         assertFalse(<span class="jxr_string">"endsWith(FOOBAR, foo)"</span>, StringUtils.endsWith(FOOBAR, foo));
+<a class="jxr_linenumber" name="L115" href="#L115">115</a> 
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>         assertFalse(<span class="jxr_string">"endsWith(foo, foobar)"</span>, StringUtils.endsWith(foo, foobar));
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>         assertFalse(<span class="jxr_string">"endsWith(foo, foobar)"</span>, StringUtils.endsWith(bar, foobar));
+<a class="jxr_linenumber" name="L118" href="#L118">118</a> 
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>         assertTrue(<span class="jxr_string">"endsWith(foobar, bar)"</span>,  StringUtils.endsWith(foobar, bar));
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>         assertTrue(<span class="jxr_string">"endsWith(FOOBAR, BAR)"</span>,  StringUtils.endsWith(FOOBAR, BAR));
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>         assertFalse(<span class="jxr_string">"endsWith(foobar, BAR)"</span>, StringUtils.endsWith(foobar, BAR));
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>         assertFalse(<span class="jxr_string">"endsWith(FOOBAR, bar)"</span>, StringUtils.endsWith(FOOBAR, bar));
+<a class="jxr_linenumber" name="L123" href="#L123">123</a> 
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>         <em class="jxr_comment">// "alpha,beta,gamma,delta".endsWith("delta")</em>
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>         assertTrue(<span class="jxr_string">"endsWith(\u03B1\u03B2\u03B3\u03B4, \u03B4)"</span>,
+<a class="jxr_linenumber" name="L126" href="#L126">126</a>                 StringUtils.endsWith(<span class="jxr_string">"\u03B1\u03B2\u03B3\u03B4"</span>, <span class="jxr_string">"\u03B4"</span>));
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>         <em class="jxr_comment">// "alpha,beta,gamma,delta".endsWith("gamma,DELTA")</em>
+<a class="jxr_linenumber" name="L128" href="#L128">128</a>         assertFalse(<span class="jxr_string">"endsWith(\u03B1\u03B2\u03B3\u03B4, \u03B3\u0394)"</span>,
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>                 StringUtils.endsWith(<span class="jxr_string">"\u03B1\u03B2\u03B3\u03B4"</span>, <span class="jxr_string">"\u03B3\u0394"</span>));
+<a class="jxr_linenumber" name="L130" href="#L130">130</a>     }
+<a class="jxr_linenumber" name="L131" href="#L131">131</a> 
+<a class="jxr_linenumber" name="L132" href="#L132">132</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L133" href="#L133">133</a> <em class="jxr_javadoccomment">     * Test StringUtils.endsWithIgnoreCase()</em>
+<a class="jxr_linenumber" name="L134" href="#L134">134</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>     @Test
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testEndsWithIgnoreCase() {
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>         assertTrue(<span class="jxr_string">"endsWithIgnoreCase(null, null)"</span>,    StringUtils.endsWithIgnoreCase(<strong class="jxr_keyword">null</strong>, (String)<strong class="jxr_keyword">null</strong>));
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>         assertFalse(<span class="jxr_string">"endsWithIgnoreCase(FOOBAR, null)"</span>, StringUtils.endsWithIgnoreCase(FOOBAR, (String)<strong class="jxr_keyword">null</strong>));
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>         assertFalse(<span class="jxr_string">"endsWithIgnoreCase(null, FOO)"</span>,    StringUtils.endsWithIgnoreCase(<strong class="jxr_keyword">null</strong>, FOO));
+<a class="jxr_linenumber" name="L140" href="#L140">140</a>         assertTrue(<span class="jxr_string">"endsWithIgnoreCase(FOOBAR, \&quot;\&quot;)"</span>,  StringUtils.endsWithIgnoreCase(FOOBAR, <span class="jxr_string">""</span>));
+<a class="jxr_linenumber" name="L141" href="#L141">141</a> 
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>         assertFalse(<span class="jxr_string">"endsWithIgnoreCase(foobar, foo)"</span>, StringUtils.endsWithIgnoreCase(foobar, foo));
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>         assertFalse(<span class="jxr_string">"endsWithIgnoreCase(FOOBAR, FOO)"</span>, StringUtils.endsWithIgnoreCase(FOOBAR, FOO));
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>         assertFalse(<span class="jxr_string">"endsWithIgnoreCase(foobar, FOO)"</span>, StringUtils.endsWithIgnoreCase(foobar, FOO));
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>         assertFalse(<span class="jxr_string">"endsWithIgnoreCase(FOOBAR, foo)"</span>, StringUtils.endsWithIgnoreCase(FOOBAR, foo));
+<a class="jxr_linenumber" name="L146" href="#L146">146</a> 
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>         assertFalse(<span class="jxr_string">"endsWithIgnoreCase(foo, foobar)"</span>, StringUtils.endsWithIgnoreCase(foo, foobar));
+<a class="jxr_linenumber" name="L148" href="#L148">148</a>         assertFalse(<span class="jxr_string">"endsWithIgnoreCase(foo, foobar)"</span>, StringUtils.endsWithIgnoreCase(bar, foobar));
+<a class="jxr_linenumber" name="L149" href="#L149">149</a> 
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>         assertTrue(<span class="jxr_string">"endsWithIgnoreCase(foobar, bar)"</span>, StringUtils.endsWithIgnoreCase(foobar, bar));
+<a class="jxr_linenumber" name="L151" href="#L151">151</a>         assertTrue(<span class="jxr_string">"endsWithIgnoreCase(FOOBAR, BAR)"</span>, StringUtils.endsWithIgnoreCase(FOOBAR, BAR));
+<a class="jxr_linenumber" name="L152" href="#L152">152</a>         assertTrue(<span class="jxr_string">"endsWithIgnoreCase(foobar, BAR)"</span>, StringUtils.endsWithIgnoreCase(foobar, BAR));
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>         assertTrue(<span class="jxr_string">"endsWithIgnoreCase(FOOBAR, bar)"</span>, StringUtils.endsWithIgnoreCase(FOOBAR, bar));
+<a class="jxr_linenumber" name="L154" href="#L154">154</a> 
+<a class="jxr_linenumber" name="L155" href="#L155">155</a>         <em class="jxr_comment">// javadoc</em>
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>         assertTrue(StringUtils.endsWithIgnoreCase(<span class="jxr_string">"abcdef"</span>, <span class="jxr_string">"def"</span>));
+<a class="jxr_linenumber" name="L157" href="#L157">157</a>         assertTrue(StringUtils.endsWithIgnoreCase(<span class="jxr_string">"ABCDEF"</span>, <span class="jxr_string">"def"</span>));
+<a class="jxr_linenumber" name="L158" href="#L158">158</a>         assertFalse(StringUtils.endsWithIgnoreCase(<span class="jxr_string">"ABCDEF"</span>, <span class="jxr_string">"cde"</span>));
+<a class="jxr_linenumber" name="L159" href="#L159">159</a> 
+<a class="jxr_linenumber" name="L160" href="#L160">160</a>         <em class="jxr_comment">// "alpha,beta,gamma,delta".endsWith("DELTA")</em>
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>         assertTrue(<span class="jxr_string">"endsWith(\u03B1\u03B2\u03B3\u03B4, \u0394)"</span>,
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>                 StringUtils.endsWithIgnoreCase(<span class="jxr_string">"\u03B1\u03B2\u03B3\u03B4"</span>, <span class="jxr_string">"\u0394"</span>));
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>         <em class="jxr_comment">// "alpha,beta,gamma,delta".endsWith("GAMMA")</em>
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>         assertFalse(<span class="jxr_string">"endsWith(\u03B1\u03B2\u03B3\u03B4, \u0393)"</span>,
+<a class="jxr_linenumber" name="L165" href="#L165">165</a>                 StringUtils.endsWithIgnoreCase(<span class="jxr_string">"\u03B1\u03B2\u03B3\u03B4"</span>, <span class="jxr_string">"\u0393"</span>));
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>     }
+<a class="jxr_linenumber" name="L167" href="#L167">167</a> 
+<a class="jxr_linenumber" name="L168" href="#L168">168</a>     @Test
+<a class="jxr_linenumber" name="L169" href="#L169">169</a>     <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testEndsWithAny() {
+<a class="jxr_linenumber" name="L170" href="#L170">170</a>         assertFalse(<span class="jxr_string">"StringUtils.endsWithAny(null, null)"</span>, StringUtils.endsWithAny(<strong class="jxr_keyword">null</strong>, (String)<strong class="jxr_keyword">null</strong>));
+<a class="jxr_linenumber" name="L171" href="#L171">171</a>         assertFalse(<span class="jxr_string">"StringUtils.endsWithAny(null, new String[] {abc})"</span>, StringUtils.endsWithAny(<strong class="jxr_keyword">null</strong>, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"abc"</span>}));
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>         assertFalse(<span class="jxr_string">"StringUtils.endsWithAny(abcxyz, null)"</span>, StringUtils.endsWithAny(<span class="jxr_string">"abcxyz"</span>, (String)<strong class="jxr_keyword">null</strong>));
+<a class="jxr_linenumber" name="L173" href="#L173">173</a>         assertTrue(<span class="jxr_string">"StringUtils.endsWithAny(abcxyz, new String[] {\&quot;\&quot;})"</span>, StringUtils.endsWithAny(<span class="jxr_string">"abcxyz"</span>, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">""</span>}));
+<a class="jxr_linenumber" name="L174" href="#L174">174</a>         assertTrue(<span class="jxr_string">"StringUtils.endsWithAny(abcxyz, new String[] {xyz})"</span>, StringUtils.endsWithAny(<span class="jxr_string">"abcxyz"</span>, <strong class="jxr_keyword">new</strong> String[] {<span class="jxr_string">"xyz"</span>}));
+<a class="jxr_linenumber" name="L175" href="#L175">175</a>         assertTrue(<span class="jxr_string">"StringUtils.endsWithAny(abcxyz, new String[] {null, xyz, abc})"</span>, StringUtils.endsWithAny(<span class="jxr_string">"abcxyz"</span>, <strong class="jxr_keyword">new</strong> String[] {<strong class="jxr_keyword">null</strong>, <span class="jxr_string">"xyz"</span>, <span class="jxr_string">"abc"</span>}));
+<a class="jxr_linenumber" name="L176" href="#L176">176</a>         assertFalse(<span class="jxr_string">"StringUtils.endsWithAny(defg, new String[] {null, xyz, abc})"</span>, StringUtils.endsWithAny(<span class="jxr_string">"defg"</span>, <strong class="jxr_keyword">new</strong> String[] {<strong class="jxr_keyword">null</strong>, <span class="jxr_string">"xyz"</span>, <span class="jxr_string">"abc"</span>}));
+<a class="jxr_linenumber" name="L177" href="#L177">177</a> 
+<a class="jxr_linenumber" name="L178" href="#L178">178</a>         assertTrue(<span class="jxr_string">"StringUtils.endsWithAny(abcxyz, StringBuilder(abc), StringBuffer(xyz))"</span>, StringUtils.endsWithAny(<span class="jxr_string">"abcxyz"</span>, <strong class="jxr_keyword">new</strong> StringBuilder(<span class="jxr_string">"abc"</span>), <strong class="jxr_keyword">new</strong> StringBuffer(<span class="jxr_string">"xyz"</span>)));
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>         assertTrue(<span class="jxr_string">"StringUtils.endsWithAny( StrBuilder(abcxyz), StringBuilder(abc), StringBuffer(xyz))"</span>, StringUtils.endsWithAny( <strong class="jxr_keyword">new</strong> StrBuilder(<span class="jxr_string">"abcxyz"</span>), <strong class="jxr_keyword">new</strong> StringBuilder(<span class="jxr_string">"abc"</span>), <strong class="jxr_keyword">new</strong> StringBuffer(<span class="jxr_string">"xyz"</span>)));
+<a class="jxr_linenumber" name="L180" href="#L180">180</a>     }
+<a class="jxr_linenumber" name="L181" href="#L181">181</a> 
+<a class="jxr_linenumber" name="L182" href="#L182">182</a> 
+<a class="jxr_linenumber" name="L183" href="#L183">183</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

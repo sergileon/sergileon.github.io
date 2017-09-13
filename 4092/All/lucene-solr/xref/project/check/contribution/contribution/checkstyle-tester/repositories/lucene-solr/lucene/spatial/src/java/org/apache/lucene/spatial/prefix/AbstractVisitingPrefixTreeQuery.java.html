@@ -1,0 +1,394 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>AbstractVisitingPrefixTreeQuery xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.lucene.spatial.prefix;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> java.io.IOException;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> java.util.Iterator;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> com.spatial4j.core.shape.Shape;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  <strong class="jxr_keyword">import</strong> com.spatial4j.core.shape.SpatialRelation;
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.LeafReaderContext;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.index.TermsEnum;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.search.DocIdSet;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.spatial.prefix.tree.Cell;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.spatial.prefix.tree.CellIterator;
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.spatial.prefix.tree.SpatialPrefixTree;
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.util.BytesRef;
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>  
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>  <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>  <em class="jxr_javadoccomment"> * Traverses a {@link SpatialPrefixTree} indexed field, using the template and</em>
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>  <em class="jxr_javadoccomment"> * visitor design patterns for subclasses to guide the traversal and collect</em>
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>  <em class="jxr_javadoccomment"> * matching documents.</em>
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>  <em class="jxr_javadoccomment"> * &lt;p&gt;</em>
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>  <em class="jxr_javadoccomment"> * Subclasses implement {@link #getDocIdSet(org.apache.lucene.index.LeafReaderContext)}</em>
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>  <em class="jxr_javadoccomment"> * by instantiating a custom {@link VisitorTemplate} subclass (i.e. an anonymous inner class)</em>
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>  <em class="jxr_javadoccomment"> * and implement the required methods.</em>
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>  <em class="jxr_javadoccomment"> *</em>
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  <em class="jxr_javadoccomment"> * @lucene.internal</em>
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>  <em class="jxr_javadoccomment"> */</em>
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">abstract</strong> <strong class="jxr_keyword">class</strong> AbstractVisitingPrefixTreeQuery <strong class="jxr_keyword">extends</strong> AbstractPrefixTreeQuery {
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>  
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>    <em class="jxr_comment">//Historical note: this code resulted from a refactoring of RecursivePrefixTreeQuery,</em>
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>    <em class="jxr_comment">// which in turn came out of SOLR-2155</em>
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>  
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>    <em class="jxr_comment">//This class perhaps could have been implemented in terms of FilteredTermsEnum &amp; MultiTermQuery.</em>
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>    <em class="jxr_comment">//  Maybe so for simple Intersects predicate but not for when we want to collect terms</em>
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>    <em class="jxr_comment">//  differently depending on cell state like IsWithin and for fuzzy/accurate collection planned improvements.  At</em>
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>    <em class="jxr_comment">//  least it would just make things more complicated.</em>
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>  
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>    <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> prefixGridScanLevel;<em class="jxr_comment">//at least one less than grid.getMaxLevels()</em>
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>  
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>    <strong class="jxr_keyword">public</strong> AbstractVisitingPrefixTreeQuery(Shape queryShape, String fieldName, SpatialPrefixTree grid,
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>                                           <strong class="jxr_keyword">int</strong> detailLevel, <strong class="jxr_keyword">int</strong> prefixGridScanLevel) {
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>      <strong class="jxr_keyword">super</strong>(queryShape, fieldName, grid, detailLevel);
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>      <strong class="jxr_keyword">this</strong>.prefixGridScanLevel = Math.max(0, Math.min(prefixGridScanLevel, grid.getMaxLevels() - 1));
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>      assert detailLevel &lt;= grid.getMaxLevels();
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>    }
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>  
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>    <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>  <em class="jxr_javadoccomment">   * An abstract class designed to make it easy to implement predicates or</em>
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>  <em class="jxr_javadoccomment">   * other operations on a {@link SpatialPrefixTree} indexed field. An instance</em>
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>  <em class="jxr_javadoccomment">   * of this class is not designed to be re-used across LeafReaderContext</em>
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>  <em class="jxr_javadoccomment">   * instances so simply create a new one per-leaf.</em>
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>  <em class="jxr_javadoccomment">   * The {@link #getDocIdSet()} method here starts the work. It first checks</em>
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>  <em class="jxr_javadoccomment">   * that there are indexed terms; if not it quickly returns null. Then it calls</em>
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>  <em class="jxr_javadoccomment">   * {@link #start()} so a subclass can set up a return value, like an</em>
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>  <em class="jxr_javadoccomment">   * {@link org.apache.lucene.util.FixedBitSet}. Then it starts the traversal</em>
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>  <em class="jxr_javadoccomment">   * process, calling {@link #findSubCellsToVisit(org.apache.lucene.spatial.prefix.tree.Cell)}</em>
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>  <em class="jxr_javadoccomment">   * which by default finds the top cells that intersect {@code queryShape}. If</em>
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>  <em class="jxr_javadoccomment">   * there isn't an indexed cell for a corresponding cell returned for this</em>
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>  <em class="jxr_javadoccomment">   * method then it's short-circuited until it finds one, at which point</em>
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>  <em class="jxr_javadoccomment">   * {@link #visitPrefix(org.apache.lucene.spatial.prefix.tree.Cell)} is called. At</em>
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>  <em class="jxr_javadoccomment">   * some depths, of the tree, the algorithm switches to a scanning mode that</em>
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>  <em class="jxr_javadoccomment">   * calls {@link #visitScanned(org.apache.lucene.spatial.prefix.tree.Cell)}</em>
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>  <em class="jxr_javadoccomment">   * for each leaf cell found.</em>
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>  <em class="jxr_javadoccomment">   *</em>
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>  <em class="jxr_javadoccomment">   * @lucene.internal</em>
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>  <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">abstract</strong> <strong class="jxr_keyword">class</strong> VisitorTemplate <strong class="jxr_keyword">extends</strong> BaseTermsEnumTraverser {
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>  
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>    <em class="jxr_comment">/* Future potential optimizations:</em>
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>  
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>  <em class="jxr_comment">  * Can a polygon query shape be optimized / made-simpler at recursive depths</em>
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>  <em class="jxr_comment">    (e.g. intersection of shape + cell box)</em>
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>  
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>  <em class="jxr_comment">  * RE "scan" vs divide &amp; conquer performance decision:</em>
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>  <em class="jxr_comment">    We should use termsEnum.docFreq() as an estimate on the number of places at</em>
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>  <em class="jxr_comment">    this depth.  It would be nice if termsEnum knew how many terms</em>
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>  <em class="jxr_comment">    start with the current term without having to repeatedly next() &amp; test to find out.</em>
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>  
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>  <em class="jxr_comment">  * Perhaps don't do intermediate seek()'s to cells above detailLevel that have Intersects</em>
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>  <em class="jxr_comment">    relation because we won't be collecting those docs any way.  However seeking</em>
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>  <em class="jxr_comment">    does act as a short-circuit.  So maybe do some percent of the time or when the level</em>
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>  <em class="jxr_comment">    is above some threshold.</em>
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>  
+<a class="jxr_linenumber" name="L100" href="#L100">100</a> <em class="jxr_comment">  */</em>
+<a class="jxr_linenumber" name="L101" href="#L101">101</a> 
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>     <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>     <em class="jxr_comment">//  TODO MAJOR REFACTOR SIMPLIFICATION BASED ON TreeCellIterator  TODO</em>
+<a class="jxr_linenumber" name="L104" href="#L104">104</a>     <em class="jxr_comment">//</em>
+<a class="jxr_linenumber" name="L105" href="#L105">105</a> 
+<a class="jxr_linenumber" name="L106" href="#L106">106</a>     <strong class="jxr_keyword">private</strong> VNode curVNode;<em class="jxr_comment">//current pointer, derived from query shape</em>
+<a class="jxr_linenumber" name="L107" href="#L107">107</a>     <strong class="jxr_keyword">private</strong> BytesRef curVNodeTerm = <strong class="jxr_keyword">new</strong> BytesRef();<em class="jxr_comment">//curVNode.cell's term, without leaf. in main loop only</em>
+<a class="jxr_linenumber" name="L108" href="#L108">108</a> 
+<a class="jxr_linenumber" name="L109" href="#L109">109</a>     <strong class="jxr_keyword">private</strong> BytesRef thisTerm;<em class="jxr_comment">//the result of termsEnum.term()</em>
+<a class="jxr_linenumber" name="L110" href="#L110">110</a>     <strong class="jxr_keyword">private</strong> Cell indexedCell;<em class="jxr_comment">//Cell wrapper of thisTerm. Always updated when thisTerm is.</em>
+<a class="jxr_linenumber" name="L111" href="#L111">111</a> 
+<a class="jxr_linenumber" name="L112" href="#L112">112</a>     <strong class="jxr_keyword">public</strong> VisitorTemplate(LeafReaderContext context) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L113" href="#L113">113</a>       <strong class="jxr_keyword">super</strong>(context);
+<a class="jxr_linenumber" name="L114" href="#L114">114</a>     }
+<a class="jxr_linenumber" name="L115" href="#L115">115</a> 
+<a class="jxr_linenumber" name="L116" href="#L116">116</a>     <strong class="jxr_keyword">public</strong> DocIdSet getDocIdSet() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L117" href="#L117">117</a>       assert curVNode == <strong class="jxr_keyword">null</strong> : <span class="jxr_string">"Called more than once?"</span>;
+<a class="jxr_linenumber" name="L118" href="#L118">118</a>       <strong class="jxr_keyword">if</strong> (termsEnum == <strong class="jxr_keyword">null</strong>)
+<a class="jxr_linenumber" name="L119" href="#L119">119</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L120" href="#L120">120</a>       <strong class="jxr_keyword">if</strong> (!nextTerm()) {<em class="jxr_comment">//advances</em>
+<a class="jxr_linenumber" name="L121" href="#L121">121</a>         <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L122" href="#L122">122</a>       }
+<a class="jxr_linenumber" name="L123" href="#L123">123</a> 
+<a class="jxr_linenumber" name="L124" href="#L124">124</a>       curVNode = <strong class="jxr_keyword">new</strong> VNode(<strong class="jxr_keyword">null</strong>);
+<a class="jxr_linenumber" name="L125" href="#L125">125</a>       curVNode.reset(grid.getWorldCell());
+<a class="jxr_linenumber" name="L126" href="#L126">126</a> 
+<a class="jxr_linenumber" name="L127" href="#L127">127</a>       start();
+<a class="jxr_linenumber" name="L128" href="#L128">128</a> 
+<a class="jxr_linenumber" name="L129" href="#L129">129</a>       addIntersectingChildren();
+<a class="jxr_linenumber" name="L130" href="#L130">130</a> 
+<a class="jxr_linenumber" name="L131" href="#L131">131</a>       main: <strong class="jxr_keyword">while</strong> (thisTerm != <strong class="jxr_keyword">null</strong>) {<em class="jxr_comment">//terminates for other reasons too!</em>
+<a class="jxr_linenumber" name="L132" href="#L132">132</a> 
+<a class="jxr_linenumber" name="L133" href="#L133">133</a>         <em class="jxr_comment">//Advance curVNode pointer</em>
+<a class="jxr_linenumber" name="L134" href="#L134">134</a>         <strong class="jxr_keyword">if</strong> (curVNode.children != <strong class="jxr_keyword">null</strong>) {
+<a class="jxr_linenumber" name="L135" href="#L135">135</a>           <em class="jxr_comment">//-- HAVE CHILDREN: DESCEND</em>
+<a class="jxr_linenumber" name="L136" href="#L136">136</a>           assert curVNode.children.hasNext();<em class="jxr_comment">//if we put it there then it has something</em>
+<a class="jxr_linenumber" name="L137" href="#L137">137</a>           preSiblings(curVNode);
+<a class="jxr_linenumber" name="L138" href="#L138">138</a>           curVNode = curVNode.children.next();
+<a class="jxr_linenumber" name="L139" href="#L139">139</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L140" href="#L140">140</a>           <em class="jxr_comment">//-- NO CHILDREN: ADVANCE TO NEXT SIBLING</em>
+<a class="jxr_linenumber" name="L141" href="#L141">141</a>           VNode parentVNode = curVNode.parent;
+<a class="jxr_linenumber" name="L142" href="#L142">142</a>           <strong class="jxr_keyword">while</strong> (<strong class="jxr_keyword">true</strong>) {
+<a class="jxr_linenumber" name="L143" href="#L143">143</a>             <strong class="jxr_keyword">if</strong> (parentVNode == <strong class="jxr_keyword">null</strong>)
+<a class="jxr_linenumber" name="L144" href="#L144">144</a>               <strong class="jxr_keyword">break</strong> main; <em class="jxr_comment">// all done</em>
+<a class="jxr_linenumber" name="L145" href="#L145">145</a>             <strong class="jxr_keyword">if</strong> (parentVNode.children.hasNext()) {
+<a class="jxr_linenumber" name="L146" href="#L146">146</a>               <em class="jxr_comment">//advance next sibling</em>
+<a class="jxr_linenumber" name="L147" href="#L147">147</a>               curVNode = parentVNode.children.next();
+<a class="jxr_linenumber" name="L148" href="#L148">148</a>               <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L149" href="#L149">149</a>             } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L150" href="#L150">150</a>               <em class="jxr_comment">//reached end of siblings; pop up</em>
+<a class="jxr_linenumber" name="L151" href="#L151">151</a>               postSiblings(parentVNode);
+<a class="jxr_linenumber" name="L152" href="#L152">152</a>               parentVNode.children = <strong class="jxr_keyword">null</strong>;<em class="jxr_comment">//GC</em>
+<a class="jxr_linenumber" name="L153" href="#L153">153</a>               parentVNode = parentVNode.parent;
+<a class="jxr_linenumber" name="L154" href="#L154">154</a>             }
+<a class="jxr_linenumber" name="L155" href="#L155">155</a>           }
+<a class="jxr_linenumber" name="L156" href="#L156">156</a>         }
+<a class="jxr_linenumber" name="L157" href="#L157">157</a> 
+<a class="jxr_linenumber" name="L158" href="#L158">158</a>         <em class="jxr_comment">//Seek to curVNode's cell (or skip if termsEnum has moved beyond)</em>
+<a class="jxr_linenumber" name="L159" href="#L159">159</a>         <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">int</strong> compare = indexedCell.compareToNoLeaf(curVNode.cell);
+<a class="jxr_linenumber" name="L160" href="#L160">160</a>         <strong class="jxr_keyword">if</strong> (compare &gt; 0) {
+<a class="jxr_linenumber" name="L161" href="#L161">161</a>           <em class="jxr_comment">// The indexed cell is after; continue loop to next query cell</em>
+<a class="jxr_linenumber" name="L162" href="#L162">162</a>           <strong class="jxr_keyword">continue</strong>;
+<a class="jxr_linenumber" name="L163" href="#L163">163</a>         }
+<a class="jxr_linenumber" name="L164" href="#L164">164</a>         <strong class="jxr_keyword">if</strong> (compare &lt; 0) {
+<a class="jxr_linenumber" name="L165" href="#L165">165</a>           <em class="jxr_comment">// The indexed cell is before; seek ahead to query cell:</em>
+<a class="jxr_linenumber" name="L166" href="#L166">166</a>           <em class="jxr_comment">//      Seek !</em>
+<a class="jxr_linenumber" name="L167" href="#L167">167</a>           curVNode.cell.getTokenBytesNoLeaf(curVNodeTerm);
+<a class="jxr_linenumber" name="L168" href="#L168">168</a>           TermsEnum.SeekStatus seekStatus = termsEnum.seekCeil(curVNodeTerm);
+<a class="jxr_linenumber" name="L169" href="#L169">169</a>           <strong class="jxr_keyword">if</strong> (seekStatus == TermsEnum.SeekStatus.END)
+<a class="jxr_linenumber" name="L170" href="#L170">170</a>             <strong class="jxr_keyword">break</strong>; <em class="jxr_comment">// all done</em>
+<a class="jxr_linenumber" name="L171" href="#L171">171</a>           thisTerm = termsEnum.term();
+<a class="jxr_linenumber" name="L172" href="#L172">172</a>           indexedCell = grid.readCell(thisTerm, indexedCell);
+<a class="jxr_linenumber" name="L173" href="#L173">173</a>           <strong class="jxr_keyword">if</strong> (seekStatus == TermsEnum.SeekStatus.NOT_FOUND) {
+<a class="jxr_linenumber" name="L174" href="#L174">174</a>             <em class="jxr_comment">// Did we find a leaf of the cell we were looking for or something after?</em>
+<a class="jxr_linenumber" name="L175" href="#L175">175</a>             <strong class="jxr_keyword">if</strong> (!indexedCell.isLeaf() || indexedCell.compareToNoLeaf(curVNode.cell) != 0)
+<a class="jxr_linenumber" name="L176" href="#L176">176</a>               <strong class="jxr_keyword">continue</strong>; <em class="jxr_comment">// The indexed cell is after; continue loop to next query cell</em>
+<a class="jxr_linenumber" name="L177" href="#L177">177</a>           }
+<a class="jxr_linenumber" name="L178" href="#L178">178</a>         }
+<a class="jxr_linenumber" name="L179" href="#L179">179</a>         <em class="jxr_comment">// indexedCell == queryCell (disregarding leaf).</em>
+<a class="jxr_linenumber" name="L180" href="#L180">180</a> 
+<a class="jxr_linenumber" name="L181" href="#L181">181</a>         <em class="jxr_comment">// If indexedCell is a leaf then there's no prefix (prefix sorts before) -- just visit and continue</em>
+<a class="jxr_linenumber" name="L182" href="#L182">182</a>         <strong class="jxr_keyword">if</strong> (indexedCell.isLeaf()) {
+<a class="jxr_linenumber" name="L183" href="#L183">183</a>           visitLeaf(indexedCell);<em class="jxr_comment">//TODO or query cell? Though shouldn't matter.</em>
+<a class="jxr_linenumber" name="L184" href="#L184">184</a>           <strong class="jxr_keyword">if</strong> (!nextTerm()) <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L185" href="#L185">185</a>           <strong class="jxr_keyword">continue</strong>;
+<a class="jxr_linenumber" name="L186" href="#L186">186</a>         }
+<a class="jxr_linenumber" name="L187" href="#L187">187</a>         <em class="jxr_comment">// If a prefix (non-leaf) then visit; see if we descend.</em>
+<a class="jxr_linenumber" name="L188" href="#L188">188</a>         <strong class="jxr_keyword">final</strong> <strong class="jxr_keyword">boolean</strong> descend = visitPrefix(curVNode.cell);<em class="jxr_comment">//need to use curVNode.cell not indexedCell</em>
+<a class="jxr_linenumber" name="L189" href="#L189">189</a>         <strong class="jxr_keyword">if</strong> (!nextTerm()) <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L190" href="#L190">190</a>         <em class="jxr_comment">// Check for adjacent leaf with the same prefix</em>
+<a class="jxr_linenumber" name="L191" href="#L191">191</a>         <strong class="jxr_keyword">if</strong> (indexedCell.isLeaf() &amp;&amp; indexedCell.getLevel() == curVNode.cell.getLevel()) {
+<a class="jxr_linenumber" name="L192" href="#L192">192</a>           visitLeaf(indexedCell);<em class="jxr_comment">//TODO or query cell? Though shouldn't matter.</em>
+<a class="jxr_linenumber" name="L193" href="#L193">193</a>           <strong class="jxr_keyword">if</strong> (!nextTerm()) <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L194" href="#L194">194</a>         }
+<a class="jxr_linenumber" name="L195" href="#L195">195</a> 
+<a class="jxr_linenumber" name="L196" href="#L196">196</a> 
+<a class="jxr_linenumber" name="L197" href="#L197">197</a>         <strong class="jxr_keyword">if</strong> (descend) {
+<a class="jxr_linenumber" name="L198" href="#L198">198</a>           addIntersectingChildren();
+<a class="jxr_linenumber" name="L199" href="#L199">199</a>         }
+<a class="jxr_linenumber" name="L200" href="#L200">200</a> 
+<a class="jxr_linenumber" name="L201" href="#L201">201</a>       }<em class="jxr_comment">//main loop</em>
+<a class="jxr_linenumber" name="L202" href="#L202">202</a> 
+<a class="jxr_linenumber" name="L203" href="#L203">203</a>       <strong class="jxr_keyword">return</strong> finish();
+<a class="jxr_linenumber" name="L204" href="#L204">204</a>     }
+<a class="jxr_linenumber" name="L205" href="#L205">205</a> 
+<a class="jxr_linenumber" name="L206" href="#L206">206</a>     <em class="jxr_javadoccomment">/** Called initially, and whenever {@link #visitPrefix(org.apache.lucene.spatial.prefix.tree.Cell)}</em>
+<a class="jxr_linenumber" name="L207" href="#L207">207</a> <em class="jxr_javadoccomment">     * returns true. */</em>
+<a class="jxr_linenumber" name="L208" href="#L208">208</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">void</strong> addIntersectingChildren() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L209" href="#L209">209</a>       assert thisTerm != <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L210" href="#L210">210</a>       Cell cell = curVNode.cell;
+<a class="jxr_linenumber" name="L211" href="#L211">211</a>       <strong class="jxr_keyword">if</strong> (cell.getLevel() &gt;= detailLevel)
+<a class="jxr_linenumber" name="L212" href="#L212">212</a>         <strong class="jxr_keyword">throw</strong> <strong class="jxr_keyword">new</strong> IllegalStateException(<span class="jxr_string">"Spatial logic error"</span>);
+<a class="jxr_linenumber" name="L213" href="#L213">213</a> 
+<a class="jxr_linenumber" name="L214" href="#L214">214</a>       <em class="jxr_comment">//Decide whether to continue to divide &amp; conquer, or whether it's time to</em>
+<a class="jxr_linenumber" name="L215" href="#L215">215</a>       <em class="jxr_comment">// scan through terms beneath this cell.</em>
+<a class="jxr_linenumber" name="L216" href="#L216">216</a>       <em class="jxr_comment">// Scanning is a performance optimization trade-off.</em>
+<a class="jxr_linenumber" name="L217" href="#L217">217</a> 
+<a class="jxr_linenumber" name="L218" href="#L218">218</a>       <em class="jxr_comment">//TODO use termsEnum.docFreq() as heuristic</em>
+<a class="jxr_linenumber" name="L219" href="#L219">219</a>       <strong class="jxr_keyword">boolean</strong> scan = cell.getLevel() &gt;= prefixGridScanLevel;<em class="jxr_comment">//simple heuristic</em>
+<a class="jxr_linenumber" name="L220" href="#L220">220</a> 
+<a class="jxr_linenumber" name="L221" href="#L221">221</a>       <strong class="jxr_keyword">if</strong> (!scan) {
+<a class="jxr_linenumber" name="L222" href="#L222">222</a>         <em class="jxr_comment">//Divide &amp; conquer (ultimately termsEnum.seek())</em>
+<a class="jxr_linenumber" name="L223" href="#L223">223</a> 
+<a class="jxr_linenumber" name="L224" href="#L224">224</a>         Iterator&lt;Cell&gt; subCellsIter = findSubCellsToVisit(cell);
+<a class="jxr_linenumber" name="L225" href="#L225">225</a>         <strong class="jxr_keyword">if</strong> (!subCellsIter.hasNext())<em class="jxr_comment">//not expected</em>
+<a class="jxr_linenumber" name="L226" href="#L226">226</a>           <strong class="jxr_keyword">return</strong>;
+<a class="jxr_linenumber" name="L227" href="#L227">227</a>         curVNode.children = <strong class="jxr_keyword">new</strong> VNodeCellIterator(subCellsIter, <strong class="jxr_keyword">new</strong> VNode(curVNode));
+<a class="jxr_linenumber" name="L228" href="#L228">228</a> 
+<a class="jxr_linenumber" name="L229" href="#L229">229</a>       } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L230" href="#L230">230</a>         <em class="jxr_comment">//Scan (loop of termsEnum.next())</em>
+<a class="jxr_linenumber" name="L231" href="#L231">231</a> 
+<a class="jxr_linenumber" name="L232" href="#L232">232</a>         scan(detailLevel);
+<a class="jxr_linenumber" name="L233" href="#L233">233</a>       }
+<a class="jxr_linenumber" name="L234" href="#L234">234</a>     }
+<a class="jxr_linenumber" name="L235" href="#L235">235</a> 
+<a class="jxr_linenumber" name="L236" href="#L236">236</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L237" href="#L237">237</a> <em class="jxr_javadoccomment">     * Called when doing a divide and conquer to find the next intersecting cells</em>
+<a class="jxr_linenumber" name="L238" href="#L238">238</a> <em class="jxr_javadoccomment">     * of the query shape that are beneath {@code cell}. {@code cell} is</em>
+<a class="jxr_linenumber" name="L239" href="#L239">239</a> <em class="jxr_javadoccomment">     * guaranteed to have an intersection and thus this must return some number</em>
+<a class="jxr_linenumber" name="L240" href="#L240">240</a> <em class="jxr_javadoccomment">     * of nodes.</em>
+<a class="jxr_linenumber" name="L241" href="#L241">241</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L242" href="#L242">242</a>     <strong class="jxr_keyword">protected</strong> CellIterator findSubCellsToVisit(Cell cell) {
+<a class="jxr_linenumber" name="L243" href="#L243">243</a>       <strong class="jxr_keyword">return</strong> cell.getNextLevelCells(queryShape);
+<a class="jxr_linenumber" name="L244" href="#L244">244</a>     }
+<a class="jxr_linenumber" name="L245" href="#L245">245</a> 
+<a class="jxr_linenumber" name="L246" href="#L246">246</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L247" href="#L247">247</a> <em class="jxr_javadoccomment">     * Scans ({@code termsEnum.next()}) terms until a term is found that does</em>
+<a class="jxr_linenumber" name="L248" href="#L248">248</a> <em class="jxr_javadoccomment">     * not start with curVNode's cell. If it finds a leaf cell or a cell at</em>
+<a class="jxr_linenumber" name="L249" href="#L249">249</a> <em class="jxr_javadoccomment">     * level {@code scanDetailLevel} then it calls {@link</em>
+<a class="jxr_linenumber" name="L250" href="#L250">250</a> <em class="jxr_javadoccomment">     * #visitScanned(org.apache.lucene.spatial.prefix.tree.Cell)}.</em>
+<a class="jxr_linenumber" name="L251" href="#L251">251</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L252" href="#L252">252</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">void</strong> scan(<strong class="jxr_keyword">int</strong> scanDetailLevel) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L253" href="#L253">253</a>       <em class="jxr_comment">//note: this can be a do-while instead in 6x; 5x has a back-compat with redundant leaves -- LUCENE-4942</em>
+<a class="jxr_linenumber" name="L254" href="#L254">254</a>       <strong class="jxr_keyword">while</strong> (curVNode.cell.isPrefixOf(indexedCell)) {
+<a class="jxr_linenumber" name="L255" href="#L255">255</a>         <strong class="jxr_keyword">if</strong> (indexedCell.getLevel() == scanDetailLevel
+<a class="jxr_linenumber" name="L256" href="#L256">256</a>             || (indexedCell.getLevel() &lt; scanDetailLevel &amp;&amp; indexedCell.isLeaf())) {
+<a class="jxr_linenumber" name="L257" href="#L257">257</a>           visitScanned(indexedCell);
+<a class="jxr_linenumber" name="L258" href="#L258">258</a>         }
+<a class="jxr_linenumber" name="L259" href="#L259">259</a>         <em class="jxr_comment">//advance</em>
+<a class="jxr_linenumber" name="L260" href="#L260">260</a>         <strong class="jxr_keyword">if</strong> (!nextTerm()) <strong class="jxr_keyword">break</strong>;
+<a class="jxr_linenumber" name="L261" href="#L261">261</a>       }
+<a class="jxr_linenumber" name="L262" href="#L262">262</a>     }
+<a class="jxr_linenumber" name="L263" href="#L263">263</a> 
+<a class="jxr_linenumber" name="L264" href="#L264">264</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">boolean</strong> nextTerm() <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L265" href="#L265">265</a>       <strong class="jxr_keyword">if</strong> ((thisTerm = termsEnum.next()) == <strong class="jxr_keyword">null</strong>)
+<a class="jxr_linenumber" name="L266" href="#L266">266</a>         <strong class="jxr_keyword">return</strong> false;
+<a class="jxr_linenumber" name="L267" href="#L267">267</a>       indexedCell = grid.readCell(thisTerm, indexedCell);
+<a class="jxr_linenumber" name="L268" href="#L268">268</a>       <strong class="jxr_keyword">return</strong> <strong class="jxr_keyword">true</strong>;
+<a class="jxr_linenumber" name="L269" href="#L269">269</a>     }
+<a class="jxr_linenumber" name="L270" href="#L270">270</a> 
+<a class="jxr_linenumber" name="L271" href="#L271">271</a>     <em class="jxr_javadoccomment">/** Used for {@link VNode#children}. */</em>
+<a class="jxr_linenumber" name="L272" href="#L272">272</a>     <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">class</strong> VNodeCellIterator <strong class="jxr_keyword">implements</strong> Iterator&lt;VNode&gt; {
+<a class="jxr_linenumber" name="L273" href="#L273">273</a> 
+<a class="jxr_linenumber" name="L274" href="#L274">274</a>       <strong class="jxr_keyword">final</strong> Iterator&lt;Cell&gt; cellIter;
+<a class="jxr_linenumber" name="L275" href="#L275">275</a>       <strong class="jxr_keyword">private</strong> <strong class="jxr_keyword">final</strong> VNode vNode;
+<a class="jxr_linenumber" name="L276" href="#L276">276</a> 
+<a class="jxr_linenumber" name="L277" href="#L277">277</a>       VNodeCellIterator(Iterator&lt;Cell&gt; cellIter, VNode vNode) {
+<a class="jxr_linenumber" name="L278" href="#L278">278</a>         <strong class="jxr_keyword">this</strong>.cellIter = cellIter;
+<a class="jxr_linenumber" name="L279" href="#L279">279</a>         <strong class="jxr_keyword">this</strong>.vNode = vNode;
+<a class="jxr_linenumber" name="L280" href="#L280">280</a>       }
+<a class="jxr_linenumber" name="L281" href="#L281">281</a> 
+<a class="jxr_linenumber" name="L282" href="#L282">282</a>       @Override
+<a class="jxr_linenumber" name="L283" href="#L283">283</a>       <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">boolean</strong> hasNext() {
+<a class="jxr_linenumber" name="L284" href="#L284">284</a>         <strong class="jxr_keyword">return</strong> cellIter.hasNext();
+<a class="jxr_linenumber" name="L285" href="#L285">285</a>       }
+<a class="jxr_linenumber" name="L286" href="#L286">286</a> 
+<a class="jxr_linenumber" name="L287" href="#L287">287</a>       @Override
+<a class="jxr_linenumber" name="L288" href="#L288">288</a>       <strong class="jxr_keyword">public</strong> VNode next() {
+<a class="jxr_linenumber" name="L289" href="#L289">289</a>         assert hasNext();
+<a class="jxr_linenumber" name="L290" href="#L290">290</a>         vNode.reset(cellIter.next());
+<a class="jxr_linenumber" name="L291" href="#L291">291</a>         <strong class="jxr_keyword">return</strong> vNode;
+<a class="jxr_linenumber" name="L292" href="#L292">292</a>       }
+<a class="jxr_linenumber" name="L293" href="#L293">293</a> 
+<a class="jxr_linenumber" name="L294" href="#L294">294</a>       @Override
+<a class="jxr_linenumber" name="L295" href="#L295">295</a>       <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> remove() {<em class="jxr_comment">//it always removes</em>
+<a class="jxr_linenumber" name="L296" href="#L296">296</a>       }
+<a class="jxr_linenumber" name="L297" href="#L297">297</a>     }
+<a class="jxr_linenumber" name="L298" href="#L298">298</a> 
+<a class="jxr_linenumber" name="L299" href="#L299">299</a>     <em class="jxr_javadoccomment">/** Called first to setup things. */</em>
+<a class="jxr_linenumber" name="L300" href="#L300">300</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">abstract</strong> <strong class="jxr_keyword">void</strong> start() <strong class="jxr_keyword">throws</strong> IOException;
+<a class="jxr_linenumber" name="L301" href="#L301">301</a> 
+<a class="jxr_linenumber" name="L302" href="#L302">302</a>     <em class="jxr_javadoccomment">/** Called last to return the result. */</em>
+<a class="jxr_linenumber" name="L303" href="#L303">303</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">abstract</strong> DocIdSet finish() <strong class="jxr_keyword">throws</strong> IOException;
+<a class="jxr_linenumber" name="L304" href="#L304">304</a> 
+<a class="jxr_linenumber" name="L305" href="#L305">305</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L306" href="#L306">306</a> <em class="jxr_javadoccomment">     * Visit an indexed non-leaf cell. The presence of a prefix cell implies</em>
+<a class="jxr_linenumber" name="L307" href="#L307">307</a> <em class="jxr_javadoccomment">     * there are leaf cells at further levels. The cell passed should have it's</em>
+<a class="jxr_linenumber" name="L308" href="#L308">308</a> <em class="jxr_javadoccomment">     * {@link org.apache.lucene.spatial.prefix.tree.Cell#getShapeRel()} set</em>
+<a class="jxr_linenumber" name="L309" href="#L309">309</a> <em class="jxr_javadoccomment">     * relative to the filtered shape.</em>
+<a class="jxr_linenumber" name="L310" href="#L310">310</a> <em class="jxr_javadoccomment">     *</em>
+<a class="jxr_linenumber" name="L311" href="#L311">311</a> <em class="jxr_javadoccomment">     * @param cell An intersecting cell; not a leaf.</em>
+<a class="jxr_linenumber" name="L312" href="#L312">312</a> <em class="jxr_javadoccomment">     * @return true to descend to more levels.</em>
+<a class="jxr_linenumber" name="L313" href="#L313">313</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L314" href="#L314">314</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">abstract</strong> <strong class="jxr_keyword">boolean</strong> visitPrefix(Cell cell) <strong class="jxr_keyword">throws</strong> IOException;
+<a class="jxr_linenumber" name="L315" href="#L315">315</a> 
+<a class="jxr_linenumber" name="L316" href="#L316">316</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L317" href="#L317">317</a> <em class="jxr_javadoccomment">     * Called when an indexed leaf cell is found. An</em>
+<a class="jxr_linenumber" name="L318" href="#L318">318</a> <em class="jxr_javadoccomment">     * indexed leaf cell usually means associated documents won't be found at</em>
+<a class="jxr_linenumber" name="L319" href="#L319">319</a> <em class="jxr_javadoccomment">     * further detail levels.  However, if a document has</em>
+<a class="jxr_linenumber" name="L320" href="#L320">320</a> <em class="jxr_javadoccomment">     * multiple overlapping shapes at different resolutions, then this isn't true.</em>
+<a class="jxr_linenumber" name="L321" href="#L321">321</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L322" href="#L322">322</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">abstract</strong> <strong class="jxr_keyword">void</strong> visitLeaf(Cell cell) <strong class="jxr_keyword">throws</strong> IOException;
+<a class="jxr_linenumber" name="L323" href="#L323">323</a> 
+<a class="jxr_linenumber" name="L324" href="#L324">324</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L325" href="#L325">325</a> <em class="jxr_javadoccomment">     * The cell is either indexed as a leaf or is the last level of detail. It</em>
+<a class="jxr_linenumber" name="L326" href="#L326">326</a> <em class="jxr_javadoccomment">     * might not even intersect the query shape, so be sure to check for that.</em>
+<a class="jxr_linenumber" name="L327" href="#L327">327</a> <em class="jxr_javadoccomment">     * The default implementation will check that and if passes then call</em>
+<a class="jxr_linenumber" name="L328" href="#L328">328</a> <em class="jxr_javadoccomment">     * {@link #visitLeaf(org.apache.lucene.spatial.prefix.tree.Cell)} or</em>
+<a class="jxr_linenumber" name="L329" href="#L329">329</a> <em class="jxr_javadoccomment">     * {@link #visitPrefix(org.apache.lucene.spatial.prefix.tree.Cell)}.</em>
+<a class="jxr_linenumber" name="L330" href="#L330">330</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L331" href="#L331">331</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">void</strong> visitScanned(Cell cell) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L332" href="#L332">332</a>       <strong class="jxr_keyword">final</strong> SpatialRelation relate = cell.getShape().relate(queryShape);
+<a class="jxr_linenumber" name="L333" href="#L333">333</a>       <strong class="jxr_keyword">if</strong> (relate.intersects()) {
+<a class="jxr_linenumber" name="L334" href="#L334">334</a>         cell.setShapeRel(relate);<em class="jxr_comment">//just being pedantic</em>
+<a class="jxr_linenumber" name="L335" href="#L335">335</a>         <strong class="jxr_keyword">if</strong> (cell.isLeaf()) {
+<a class="jxr_linenumber" name="L336" href="#L336">336</a>           visitLeaf(cell);
+<a class="jxr_linenumber" name="L337" href="#L337">337</a>         } <strong class="jxr_keyword">else</strong> {
+<a class="jxr_linenumber" name="L338" href="#L338">338</a>           visitPrefix(cell);
+<a class="jxr_linenumber" name="L339" href="#L339">339</a>         }
+<a class="jxr_linenumber" name="L340" href="#L340">340</a>       }
+<a class="jxr_linenumber" name="L341" href="#L341">341</a>     }
+<a class="jxr_linenumber" name="L342" href="#L342">342</a> 
+<a class="jxr_linenumber" name="L343" href="#L343">343</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">void</strong> preSiblings(VNode vNode) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L344" href="#L344">344</a>     }
+<a class="jxr_linenumber" name="L345" href="#L345">345</a> 
+<a class="jxr_linenumber" name="L346" href="#L346">346</a>     <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">void</strong> postSiblings(VNode vNode) <strong class="jxr_keyword">throws</strong> IOException {
+<a class="jxr_linenumber" name="L347" href="#L347">347</a>     }
+<a class="jxr_linenumber" name="L348" href="#L348">348</a>   }<em class="jxr_comment">//class VisitorTemplate</em>
+<a class="jxr_linenumber" name="L349" href="#L349">349</a> 
+<a class="jxr_linenumber" name="L350" href="#L350">350</a>   <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L351" href="#L351">351</a> <em class="jxr_javadoccomment">   * A visitor node/cell found via the query shape for {@link VisitorTemplate}.</em>
+<a class="jxr_linenumber" name="L352" href="#L352">352</a> <em class="jxr_javadoccomment">   * Sometimes these are reset(cell). It's like a LinkedList node but forms a</em>
+<a class="jxr_linenumber" name="L353" href="#L353">353</a> <em class="jxr_javadoccomment">   * tree.</em>
+<a class="jxr_linenumber" name="L354" href="#L354">354</a> <em class="jxr_javadoccomment">   *</em>
+<a class="jxr_linenumber" name="L355" href="#L355">355</a> <em class="jxr_javadoccomment">   * @lucene.internal</em>
+<a class="jxr_linenumber" name="L356" href="#L356">356</a> <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L357" href="#L357">357</a>   <strong class="jxr_keyword">protected</strong> <strong class="jxr_keyword">static</strong> <strong class="jxr_keyword">class</strong> VNode {
+<a class="jxr_linenumber" name="L358" href="#L358">358</a>     <em class="jxr_comment">//Note: The VNode tree adds more code to debug/maintain v.s. a flattened</em>
+<a class="jxr_linenumber" name="L359" href="#L359">359</a>     <em class="jxr_comment">// LinkedList that we used to have. There is more opportunity here for</em>
+<a class="jxr_linenumber" name="L360" href="#L360">360</a>     <em class="jxr_comment">// custom behavior (see preSiblings &amp; postSiblings) but that's not</em>
+<a class="jxr_linenumber" name="L361" href="#L361">361</a>     <em class="jxr_comment">// leveraged yet. Maybe this is slightly more GC friendly.</em>
+<a class="jxr_linenumber" name="L362" href="#L362">362</a> 
+<a class="jxr_linenumber" name="L363" href="#L363">363</a>     <strong class="jxr_keyword">final</strong> VNode parent;<em class="jxr_comment">//only null at the root</em>
+<a class="jxr_linenumber" name="L364" href="#L364">364</a>     Iterator&lt;VNode&gt; children;<em class="jxr_comment">//null, then sometimes set, then null</em>
+<a class="jxr_linenumber" name="L365" href="#L365">365</a>     Cell cell;<em class="jxr_comment">//not null (except initially before reset())</em>
+<a class="jxr_linenumber" name="L366" href="#L366">366</a> 
+<a class="jxr_linenumber" name="L367" href="#L367">367</a>     <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L368" href="#L368">368</a> <em class="jxr_javadoccomment">     * call reset(cell) after to set the cell.</em>
+<a class="jxr_linenumber" name="L369" href="#L369">369</a> <em class="jxr_javadoccomment">     */</em>
+<a class="jxr_linenumber" name="L370" href="#L370">370</a>     VNode(VNode parent) { <em class="jxr_comment">// remember to call reset(cell) after</em>
+<a class="jxr_linenumber" name="L371" href="#L371">371</a>       <strong class="jxr_keyword">this</strong>.parent = parent;
+<a class="jxr_linenumber" name="L372" href="#L372">372</a>     }
+<a class="jxr_linenumber" name="L373" href="#L373">373</a> 
+<a class="jxr_linenumber" name="L374" href="#L374">374</a>     <strong class="jxr_keyword">void</strong> reset(Cell cell) {
+<a class="jxr_linenumber" name="L375" href="#L375">375</a>       assert cell != <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L376" href="#L376">376</a>       <strong class="jxr_keyword">this</strong>.cell = cell;
+<a class="jxr_linenumber" name="L377" href="#L377">377</a>       assert children == <strong class="jxr_keyword">null</strong>;
+<a class="jxr_linenumber" name="L378" href="#L378">378</a>     }
+<a class="jxr_linenumber" name="L379" href="#L379">379</a> 
+<a class="jxr_linenumber" name="L380" href="#L380">380</a>   }
+<a class="jxr_linenumber" name="L381" href="#L381">381</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>

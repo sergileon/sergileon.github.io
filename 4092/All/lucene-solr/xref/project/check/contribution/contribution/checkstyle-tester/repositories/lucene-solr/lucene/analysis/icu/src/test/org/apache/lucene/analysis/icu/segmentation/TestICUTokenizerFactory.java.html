@@ -1,0 +1,117 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head><meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<title>TestICUTokenizerFactory xref</title>
+<link type="text/css" rel="stylesheet" href="../../../../../../stylesheet.css" />
+</head>
+<body>
+<pre>
+<a class="jxr_linenumber" name="L1" href="#L1">1</a>   <strong class="jxr_keyword">package</strong> org.apache.lucene.analysis.icu.segmentation;
+<a class="jxr_linenumber" name="L2" href="#L2">2</a>   
+<a class="jxr_linenumber" name="L3" href="#L3">3</a>   <em class="jxr_comment">/*</em>
+<a class="jxr_linenumber" name="L4" href="#L4">4</a>   <em class="jxr_comment"> * Licensed to the Apache Software Foundation (ASF) under one or more</em>
+<a class="jxr_linenumber" name="L5" href="#L5">5</a>   <em class="jxr_comment"> * contributor license agreements.  See the NOTICE file distributed with</em>
+<a class="jxr_linenumber" name="L6" href="#L6">6</a>   <em class="jxr_comment"> * this work for additional information regarding copyright ownership.</em>
+<a class="jxr_linenumber" name="L7" href="#L7">7</a>   <em class="jxr_comment"> * The ASF licenses this file to You under the Apache License, Version 2.0</em>
+<a class="jxr_linenumber" name="L8" href="#L8">8</a>   <em class="jxr_comment"> * (the "License"); you may not use this file except in compliance with</em>
+<a class="jxr_linenumber" name="L9" href="#L9">9</a>   <em class="jxr_comment"> * the License.  You may obtain a copy of the License at</em>
+<a class="jxr_linenumber" name="L10" href="#L10">10</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L11" href="#L11">11</a>  <em class="jxr_comment"> *     <a href="http://www.apache.org/licenses/LICENSE-2." target="alexandria_uri">http://www.apache.org/licenses/LICENSE-2.</a>0</em>
+<a class="jxr_linenumber" name="L12" href="#L12">12</a>  <em class="jxr_comment"> *</em>
+<a class="jxr_linenumber" name="L13" href="#L13">13</a>  <em class="jxr_comment"> * Unless required by applicable law or agreed to in writing, software</em>
+<a class="jxr_linenumber" name="L14" href="#L14">14</a>  <em class="jxr_comment"> * distributed under the License is distributed on an "AS IS" BASIS,</em>
+<a class="jxr_linenumber" name="L15" href="#L15">15</a>  <em class="jxr_comment"> * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</em>
+<a class="jxr_linenumber" name="L16" href="#L16">16</a>  <em class="jxr_comment"> * See the License for the specific language governing permissions and</em>
+<a class="jxr_linenumber" name="L17" href="#L17">17</a>  <em class="jxr_comment"> * limitations under the License.</em>
+<a class="jxr_linenumber" name="L18" href="#L18">18</a>  <em class="jxr_comment"> */</em>
+<a class="jxr_linenumber" name="L19" href="#L19">19</a>  
+<a class="jxr_linenumber" name="L20" href="#L20">20</a>  <strong class="jxr_keyword">import</strong> java.io.Reader;
+<a class="jxr_linenumber" name="L21" href="#L21">21</a>  <strong class="jxr_keyword">import</strong> java.io.StringReader;
+<a class="jxr_linenumber" name="L22" href="#L22">22</a>  <strong class="jxr_keyword">import</strong> java.util.HashMap;
+<a class="jxr_linenumber" name="L23" href="#L23">23</a>  <strong class="jxr_keyword">import</strong> java.util.Map;
+<a class="jxr_linenumber" name="L24" href="#L24">24</a>  
+<a class="jxr_linenumber" name="L25" href="#L25">25</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.BaseTokenStreamTestCase;
+<a class="jxr_linenumber" name="L26" href="#L26">26</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.TokenStream;
+<a class="jxr_linenumber" name="L27" href="#L27">27</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.Tokenizer;
+<a class="jxr_linenumber" name="L28" href="#L28">28</a>  <strong class="jxr_keyword">import</strong> org.apache.lucene.analysis.util.ClasspathResourceLoader;
+<a class="jxr_linenumber" name="L29" href="#L29">29</a>  
+<a class="jxr_linenumber" name="L30" href="#L30">30</a>  <em class="jxr_javadoccomment">/** basic tests for {@link ICUTokenizerFactory} **/</em>
+<a class="jxr_linenumber" name="L31" href="#L31">31</a>  <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">class</strong> TestICUTokenizerFactory <strong class="jxr_keyword">extends</strong> BaseTokenStreamTestCase {
+<a class="jxr_linenumber" name="L32" href="#L32">32</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testMixedText() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L33" href="#L33">33</a>      Reader reader = <strong class="jxr_keyword">new</strong> StringReader(<span class="jxr_string">"การที่ได้ต้องแสดงว่างานดี  This is a test ກວ່າດອກ"</span>);
+<a class="jxr_linenumber" name="L34" href="#L34">34</a>      ICUTokenizerFactory factory = <strong class="jxr_keyword">new</strong> ICUTokenizerFactory(<strong class="jxr_keyword">new</strong> HashMap&lt;String,String&gt;());
+<a class="jxr_linenumber" name="L35" href="#L35">35</a>      factory.inform(<strong class="jxr_keyword">new</strong> ClasspathResourceLoader(getClass()));
+<a class="jxr_linenumber" name="L36" href="#L36">36</a>      Tokenizer stream = factory.create(newAttributeFactory());
+<a class="jxr_linenumber" name="L37" href="#L37">37</a>      stream.setReader(reader);
+<a class="jxr_linenumber" name="L38" href="#L38">38</a>      assertTokenStreamContents(stream,
+<a class="jxr_linenumber" name="L39" href="#L39">39</a>          <strong class="jxr_keyword">new</strong> String[] { <span class="jxr_string">"การ"</span>, <span class="jxr_string">"ที่"</span>, <span class="jxr_string">"ได้"</span>, <span class="jxr_string">"ต้อง"</span>, <span class="jxr_string">"แสดง"</span>, <span class="jxr_string">"ว่า"</span>, <span class="jxr_string">"งาน"</span>, <span class="jxr_string">"ดี"</span>,
+<a class="jxr_linenumber" name="L40" href="#L40">40</a>          <span class="jxr_string">"This"</span>, <span class="jxr_string">"is"</span>, <span class="jxr_string">"a"</span>, <span class="jxr_string">"test"</span>, <span class="jxr_string">"ກວ່າ"</span>, <span class="jxr_string">"ດອກ"</span>});
+<a class="jxr_linenumber" name="L41" href="#L41">41</a>    }
+<a class="jxr_linenumber" name="L42" href="#L42">42</a>  
+<a class="jxr_linenumber" name="L43" href="#L43">43</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testTokenizeLatinOnWhitespaceOnly() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L44" href="#L44">44</a>      <em class="jxr_comment">// “ U+201C LEFT DOUBLE QUOTATION MARK; ” U+201D RIGHT DOUBLE QUOTATION MARK</em>
+<a class="jxr_linenumber" name="L45" href="#L45">45</a>      Reader reader = <strong class="jxr_keyword">new</strong> StringReader
+<a class="jxr_linenumber" name="L46" href="#L46">46</a>          (<span class="jxr_string">"  Don't,break.at?/(punct)!  \u201Cnice\u201D\r\n\r\n85_At:all; `really\&quot; +2=3$5,&amp;813 !@#%$^)(*@#$   "</span>);
+<a class="jxr_linenumber" name="L47" href="#L47">47</a>      <strong class="jxr_keyword">final</strong> Map&lt;String,String&gt; args = <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;();
+<a class="jxr_linenumber" name="L48" href="#L48">48</a>      args.put(ICUTokenizerFactory.RULEFILES, <span class="jxr_string">"Latn:Latin-break-only-on-whitespace.rbbi"</span>);
+<a class="jxr_linenumber" name="L49" href="#L49">49</a>      ICUTokenizerFactory factory = <strong class="jxr_keyword">new</strong> ICUTokenizerFactory(args);
+<a class="jxr_linenumber" name="L50" href="#L50">50</a>      factory.inform(<strong class="jxr_keyword">new</strong> ClasspathResourceLoader(<strong class="jxr_keyword">this</strong>.getClass()));
+<a class="jxr_linenumber" name="L51" href="#L51">51</a>      Tokenizer stream = factory.create(newAttributeFactory());
+<a class="jxr_linenumber" name="L52" href="#L52">52</a>      stream.setReader(reader);
+<a class="jxr_linenumber" name="L53" href="#L53">53</a>      assertTokenStreamContents(stream,
+<a class="jxr_linenumber" name="L54" href="#L54">54</a>          <strong class="jxr_keyword">new</strong> String[] { <span class="jxr_string">"Don't,break.at?/(punct)!"</span>, <span class="jxr_string">"\u201Cnice\u201D"</span>, <span class="jxr_string">"85_At:all;"</span>, <span class="jxr_string">"`really\&quot;"</span>,  <span class="jxr_string">"+2=3$5,&amp;813"</span>, <span class="jxr_string">"!@#%$^)(*@#$"</span> },
+<a class="jxr_linenumber" name="L55" href="#L55">55</a>          <strong class="jxr_keyword">new</strong> String[] { <span class="jxr_string">"&lt;ALPHANUM&gt;"</span>,               <span class="jxr_string">"&lt;ALPHANUM&gt;"</span>,       <span class="jxr_string">"&lt;ALPHANUM&gt;"</span>, <span class="jxr_string">"&lt;ALPHANUM&gt;"</span>, <span class="jxr_string">"&lt;NUM&gt;"</span>,       <span class="jxr_string">"&lt;OTHER&gt;"</span> });
+<a class="jxr_linenumber" name="L56" href="#L56">56</a>    }
+<a class="jxr_linenumber" name="L57" href="#L57">57</a>  
+<a class="jxr_linenumber" name="L58" href="#L58">58</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testTokenizeLatinDontBreakOnHyphens() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L59" href="#L59">59</a>      Reader reader = <strong class="jxr_keyword">new</strong> StringReader
+<a class="jxr_linenumber" name="L60" href="#L60">60</a>          (<span class="jxr_string">"One-two punch.  Brang-, not brung-it.  This one--not that one--is the right one, -ish."</span>);
+<a class="jxr_linenumber" name="L61" href="#L61">61</a>      <strong class="jxr_keyword">final</strong> Map&lt;String,String&gt; args = <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;();
+<a class="jxr_linenumber" name="L62" href="#L62">62</a>      args.put(ICUTokenizerFactory.RULEFILES, <span class="jxr_string">"Latn:Latin-dont-break-on-hyphens.rbbi"</span>);
+<a class="jxr_linenumber" name="L63" href="#L63">63</a>      ICUTokenizerFactory factory = <strong class="jxr_keyword">new</strong> ICUTokenizerFactory(args);
+<a class="jxr_linenumber" name="L64" href="#L64">64</a>      factory.inform(<strong class="jxr_keyword">new</strong> ClasspathResourceLoader(getClass()));
+<a class="jxr_linenumber" name="L65" href="#L65">65</a>      Tokenizer stream = factory.create(newAttributeFactory());
+<a class="jxr_linenumber" name="L66" href="#L66">66</a>      stream.setReader(reader);
+<a class="jxr_linenumber" name="L67" href="#L67">67</a>      assertTokenStreamContents(stream,
+<a class="jxr_linenumber" name="L68" href="#L68">68</a>          <strong class="jxr_keyword">new</strong> String[] { <span class="jxr_string">"One-two"</span>, <span class="jxr_string">"punch"</span>,
+<a class="jxr_linenumber" name="L69" href="#L69">69</a>              <span class="jxr_string">"Brang"</span>, <span class="jxr_string">"not"</span>, <span class="jxr_string">"brung-it"</span>,
+<a class="jxr_linenumber" name="L70" href="#L70">70</a>              <span class="jxr_string">"This"</span>, <span class="jxr_string">"one"</span>, <span class="jxr_string">"not"</span>, <span class="jxr_string">"that"</span>, <span class="jxr_string">"one"</span>, <span class="jxr_string">"is"</span>, <span class="jxr_string">"the"</span>, <span class="jxr_string">"right"</span>, <span class="jxr_string">"one"</span>, <span class="jxr_string">"ish"</span> });
+<a class="jxr_linenumber" name="L71" href="#L71">71</a>    }
+<a class="jxr_linenumber" name="L72" href="#L72">72</a>  
+<a class="jxr_linenumber" name="L73" href="#L73">73</a>    <em class="jxr_javadoccomment">/**</em>
+<a class="jxr_linenumber" name="L74" href="#L74">74</a>  <em class="jxr_javadoccomment">   * Specify more than one script/rule file pair.</em>
+<a class="jxr_linenumber" name="L75" href="#L75">75</a>  <em class="jxr_javadoccomment">   * Override default DefaultICUTokenizerConfig Thai script tokenization.</em>
+<a class="jxr_linenumber" name="L76" href="#L76">76</a>  <em class="jxr_javadoccomment">   * Use the same rule file for both scripts.</em>
+<a class="jxr_linenumber" name="L77" href="#L77">77</a>  <em class="jxr_javadoccomment">   */</em>
+<a class="jxr_linenumber" name="L78" href="#L78">78</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testKeywordTokenizeCyrillicAndThai() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L79" href="#L79">79</a>      Reader reader = <strong class="jxr_keyword">new</strong> StringReader
+<a class="jxr_linenumber" name="L80" href="#L80">80</a>          (<span class="jxr_string">"Some English.  Немного русский.  ข้อความภาษาไทยเล็ก ๆ น้อย ๆ  More English."</span>);
+<a class="jxr_linenumber" name="L81" href="#L81">81</a>      <strong class="jxr_keyword">final</strong> Map&lt;String,String&gt; args = <strong class="jxr_keyword">new</strong> HashMap&lt;&gt;();
+<a class="jxr_linenumber" name="L82" href="#L82">82</a>      args.put(ICUTokenizerFactory.RULEFILES, <span class="jxr_string">"Cyrl:KeywordTokenizer.rbbi,Thai:KeywordTokenizer.rbbi"</span>);
+<a class="jxr_linenumber" name="L83" href="#L83">83</a>      ICUTokenizerFactory factory = <strong class="jxr_keyword">new</strong> ICUTokenizerFactory(args);
+<a class="jxr_linenumber" name="L84" href="#L84">84</a>      factory.inform(<strong class="jxr_keyword">new</strong> ClasspathResourceLoader(getClass()));
+<a class="jxr_linenumber" name="L85" href="#L85">85</a>      Tokenizer stream = factory.create(newAttributeFactory());
+<a class="jxr_linenumber" name="L86" href="#L86">86</a>      stream.setReader(reader);
+<a class="jxr_linenumber" name="L87" href="#L87">87</a>      assertTokenStreamContents(stream, <strong class="jxr_keyword">new</strong> String[] { <span class="jxr_string">"Some"</span>, <span class="jxr_string">"English"</span>,
+<a class="jxr_linenumber" name="L88" href="#L88">88</a>          <span class="jxr_string">"Немного русский.  "</span>,
+<a class="jxr_linenumber" name="L89" href="#L89">89</a>          <span class="jxr_string">"ข้อความภาษาไทยเล็ก ๆ น้อย ๆ  "</span>,
+<a class="jxr_linenumber" name="L90" href="#L90">90</a>          <span class="jxr_string">"More"</span>, <span class="jxr_string">"English"</span> });
+<a class="jxr_linenumber" name="L91" href="#L91">91</a>    }
+<a class="jxr_linenumber" name="L92" href="#L92">92</a>    
+<a class="jxr_linenumber" name="L93" href="#L93">93</a>    <em class="jxr_javadoccomment">/** Test that bogus arguments result in exception */</em>
+<a class="jxr_linenumber" name="L94" href="#L94">94</a>    <strong class="jxr_keyword">public</strong> <strong class="jxr_keyword">void</strong> testBogusArguments() <strong class="jxr_keyword">throws</strong> Exception {
+<a class="jxr_linenumber" name="L95" href="#L95">95</a>      <strong class="jxr_keyword">try</strong> {
+<a class="jxr_linenumber" name="L96" href="#L96">96</a>        <strong class="jxr_keyword">new</strong> ICUTokenizerFactory(<strong class="jxr_keyword">new</strong> HashMap&lt;String,String&gt;() {{
+<a class="jxr_linenumber" name="L97" href="#L97">97</a>          put(<span class="jxr_string">"bogusArg"</span>, <span class="jxr_string">"bogusValue"</span>);
+<a class="jxr_linenumber" name="L98" href="#L98">98</a>        }});
+<a class="jxr_linenumber" name="L99" href="#L99">99</a>        fail();
+<a class="jxr_linenumber" name="L100" href="#L100">100</a>     } <strong class="jxr_keyword">catch</strong> (IllegalArgumentException expected) {
+<a class="jxr_linenumber" name="L101" href="#L101">101</a>       assertTrue(expected.getMessage().contains(<span class="jxr_string">"Unknown parameters"</span>));
+<a class="jxr_linenumber" name="L102" href="#L102">102</a>     }
+<a class="jxr_linenumber" name="L103" href="#L103">103</a>   }
+<a class="jxr_linenumber" name="L104" href="#L104">104</a> }
+</pre>
+<hr/>
+<div id="footer"></div>
+</body>
+</html>
